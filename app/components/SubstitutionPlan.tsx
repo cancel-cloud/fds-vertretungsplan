@@ -22,8 +22,14 @@ const SubstitutionPlan: React.FC = () => {
                 const result = await fetchData();
                 console.log("Data fetched: ", result);
                 if (Array.isArray(result)) {
-                    setData(result);
-                    setFilteredData(result);
+                    // Sort data by "Stunde"
+                    const sortedData = result.sort((a, b) => {
+                        const hourA = parseInt(a.data[0], 10);
+                        const hourB = parseInt(b.data[0], 10);
+                        return hourA - hourB;
+                    });
+                    setData(sortedData);
+                    setFilteredData(sortedData);
                 } else {
                     console.error("Fetched data is not an array", result);
                 }
