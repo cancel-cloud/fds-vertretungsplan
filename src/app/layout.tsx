@@ -2,7 +2,7 @@ import type {Metadata} from "next";
 import {Inter} from "next/font/google";
 import React from "react";
 import {PHProvider} from "@/app/providers";
-import {Analytics} from "@vercel/analytics/react"
+import { Analytics } from '@vercel/analytics/react';
 import dynamic from "next/dynamic";
 
 const inter = Inter({subsets: ["latin"]});
@@ -18,12 +18,12 @@ const PostHogPageView = dynamic(() => import('@/app/PostHogPageView'), {
 
 export default function RootLayout({
                                        children,
-                                   }: Readonly<{
+                                   }: {
     children: React.ReactNode;
-}>) {
+}) {
     return (
-        <html lang="en">
-            <body className={inter.className}>
+        <html lang="en" suppressHydrationWarning>
+            <body>
             {children}
             <Analytics />
             </body>
