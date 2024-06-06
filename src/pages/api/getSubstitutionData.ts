@@ -1,9 +1,12 @@
 // src/pages/api/getSubstitutionData.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
+import generateDate from "@/pages/api/getDate";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (req.method === 'POST') {
+        const date = generateDate();
+        console.error(date)
         const myHeaders = new Headers();
         myHeaders.append('Content-Type', 'application/json');
         myHeaders.append(
