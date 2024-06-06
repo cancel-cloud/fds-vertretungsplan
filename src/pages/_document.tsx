@@ -16,6 +16,7 @@ class MyDocument extends Document {
                 <body className="w-auto mx-auto">
                 <Main />
                 <NextScript />
+                
                 </body>
             </Html>
         )

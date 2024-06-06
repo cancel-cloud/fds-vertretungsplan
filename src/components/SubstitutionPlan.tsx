@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SearchBar from './SearchBar';
+import posthog from "posthog-js";
 
 interface SubstitutionData {
     data: string[];
@@ -63,6 +64,7 @@ const SubstitutionPlan: React.FC = () => {
             setFilteredData(filtered);
         }
     };
+    posthog.capture('my event', { property: 'value' })
 
     if (loading) {
         return (
