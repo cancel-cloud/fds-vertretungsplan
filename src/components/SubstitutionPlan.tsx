@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import SearchBar from './SearchBar';
-import posthog from "posthog-js";
+import Loading from './Loading';
+import Error from './Error';
+import { Switch } from "@nextui-org/switch";
+import generateDate from "@/pages/api/getDate";
 
 interface SubstitutionData {
     data: string[];
@@ -8,87 +11,78 @@ interface SubstitutionData {
     [key: string]: any;
 }
 
+const fetchSubstitutionData = async (date: string): Promise<SubstitutionData[]> => {
+    try {
+        const response = await fetch('/api/getSubstitutionData', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ date }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const result = await response.json();
+        return result.payload?.rows || [];
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        throw error;
+    }
+};
+
 const SubstitutionPlan: React.FC = () => {
     const [data, setData] = useState<SubstitutionData[]>([]);
     const [filteredData, setFilteredData] = useState<SubstitutionData[]>([]);
-    const [specialImage, setSpecialImage] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState(false);
+    const [isTomorrow, setIsTomorrow] = useState(false);
+
+    const toggleDate = () => {
+        setIsTomorrow(!isTomorrow);
+    };
 
     useEffect(() => {
-        const getData = async () => {
+        const date = isTomorrow ? generateDate(1) : generateDate(0);
+        const fetchData = async () => {
             setLoading(true);
-            setError(null);
+            setError(false);
             try {
-                const response = await fetch('/api/getSubstitutionData', {
-                    method: 'POST',
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const result = await response.json();
-                const rows = result.payload?.rows || [];
-                if (Array.isArray(rows)) {
-                    const sortedData = rows.sort((a, b) => {
-                        const hourA = parseInt(a.data[0], 10);
-                        const hourB = parseInt(b.data[0], 10);
-                        return hourA - hourB;
-                    });
-                    setData(sortedData);
-                    setFilteredData(sortedData);
-                } else {
-                    throw new Error('Fetched data does not contain an array of rows');
-                }
-            } catch (error) {
-                console.error("Error fetching data: ", error);
-                setError('Das liegt an FDS');
-            } finally {
+                const fetchedData = await fetchSubstitutionData(date);
+                setData(fetchedData);
+                setFilteredData(fetchedData);
+                setLoading(false);
+            } catch {
+                setError(true);
                 setLoading(false);
             }
         };
-        getData();
-    }, []);
+        fetchData();
+    }, [isTomorrow]);
 
     const handleSearch = (query: string) => {
-        if (query.toLowerCase() === "mr big") {
-            setSpecialImage("/MRBIG.JPG");
-            setFilteredData([]);
-        } else {
-            setSpecialImage(null);
-            const filtered = data.filter(item =>
-                item.group.toLowerCase().includes(query.toLowerCase()) ||
-                item.data.some(cell => cell.toLowerCase().includes(query.toLowerCase()))
-            );
-            setFilteredData(filtered);
-        }
+        const filtered = data.filter(item =>
+            item.group.toLowerCase().includes(query.toLowerCase()) ||
+            item.data.some((cell: string) => cell.toLowerCase().includes(query.toLowerCase()))
+        );
+        setFilteredData(filtered);
     };
-    posthog.capture('my event', { property: 'value' })
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="loader"></div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <p className="text-red-500 text-lg">{error}</p>
-            </div>
-        );
-    }
 
     return (
         <div className="container mx-auto py-6">
             <SearchBar onSearch={handleSearch} />
-            {specialImage ? (
-                <div className="flex justify-center my-4">
-                    <img src={specialImage} alt="Mr Big" className="max-w-full h-auto" />
-                </div>
+            <div className="flex justify-center my-4">
+                <label className="mr-2">Heute</label>
+                <Switch checked={isTomorrow} onChange={toggleDate}>
+                    Morgen
+                </Switch>
+            </div>
+            {loading ? (
+                <Loading />
+            ) : error ? (
+                <Error />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredData.map((item, index) => (

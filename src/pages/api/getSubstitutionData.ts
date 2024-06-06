@@ -1,12 +1,8 @@
-// src/pages/api/getSubstitutionData.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
-import generateDate from "@/pages/api/getDate";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (req.method === 'POST') {
-        const date = generateDate();
-        console.error(date)
+        const { date } = req.body;
         const myHeaders = new Headers();
         myHeaders.append('Content-Type', 'application/json');
         myHeaders.append(
@@ -17,7 +13,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const raw = JSON.stringify({
             formatName: 'Web-Schüler-heute',
             schoolName: 'dessauer-schule-limburg',
-            date: 20240607,
+            date: date,
             dateOffset: 0,
             activityTypeIds: [],
             departmentElementType: -1,
