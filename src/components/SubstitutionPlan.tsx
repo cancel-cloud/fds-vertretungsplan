@@ -22,6 +22,7 @@ const fetchSubstitutionData = async (date: string): Promise<SubstitutionData[]> 
         });
 
         if (!response.ok) {
+            // @ts-ignore
             throw new Error('Network response was not ok');
         }
 
