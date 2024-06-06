@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     description: "Dieser Vertretungsplan, ist sortierbar, schöner anzusehen und einfacher zu verstehen.",
 };
 
-const PostHogPageView = dynamic(() => import('./PostHogPageView'), {
+const PostHogPageView = dynamic(() => import('@/app/PostHogPageView'), {
     ssr: false,
-})
+});
 
 export default function RootLayout({
                                        children,
@@ -23,13 +23,13 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <PHProvider>
-                <body className={inter.className}>
-                <PostHogPageView/>
-                {children}
-                </body>
-            </PHProvider>
-            <Analytics/>
+        <PHProvider>
+            <body className={inter.className}>
+            <PostHogPageView />
+            {children}
+            <Analytics />
+            </body>
+        </PHProvider>
         </html>
     );
 }
