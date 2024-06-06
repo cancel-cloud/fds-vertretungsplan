@@ -27,9 +27,9 @@ export default function RootLayout({
                 <body className={inter.className}>
                 <PostHogPageView/>
                 {children}
-                <Analytics/>
                 </body>
             </PHProvider>
+            <Analytics/>
         </html>
     );
 }
