@@ -1,7 +1,4 @@
-"use client";
-
 import React, { useState, useEffect } from 'react';
-import fetchData from '../utils/fetchData';
 import SearchBar from './SearchBar';
 
 interface SubstitutionData {
@@ -14,16 +11,26 @@ const SubstitutionPlan: React.FC = () => {
     const [data, setData] = useState<SubstitutionData[]>([]);
     const [filteredData, setFilteredData] = useState<SubstitutionData[]>([]);
     const [specialImage, setSpecialImage] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const getData = async () => {
-            console.log("Fetching data...");
+            setLoading(true);
+            setError(null);
             try {
-                const result = await fetchData();
-                console.log("Data fetched: ", result);
-                if (Array.isArray(result)) {
-                    // Sort data by "Stunde"
-                    const sortedData = result.sort((a, b) => {
+                const response = await fetch('/api/getSubstitutionData', {
+                    method: 'POST',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const result = await response.json();
+                const rows = result.payload?.rows || [];
+                if (Array.isArray(rows)) {
+                    const sortedData = rows.sort((a, b) => {
                         const hourA = parseInt(a.data[0], 10);
                         const hourB = parseInt(b.data[0], 10);
                         return hourA - hourB;
@@ -31,10 +38,13 @@ const SubstitutionPlan: React.FC = () => {
                     setData(sortedData);
                     setFilteredData(sortedData);
                 } else {
-                    console.error("Fetched data is not an array", result);
+                    throw new Error('Fetched data does not contain an array of rows');
                 }
             } catch (error) {
                 console.error("Error fetching data: ", error);
+                setError('Das liegt an FDS');
+            } finally {
+                setLoading(false);
             }
         };
         getData();
@@ -42,7 +52,7 @@ const SubstitutionPlan: React.FC = () => {
 
     const handleSearch = (query: string) => {
         if (query.toLowerCase() === "mr big") {
-            setSpecialImage("/MRBIG.JPG"); // Pfad zum speziellen Bild
+            setSpecialImage("/MRBIG.JPG");
             setFilteredData([]);
         } else {
             setSpecialImage(null);
@@ -53,6 +63,22 @@ const SubstitutionPlan: React.FC = () => {
             setFilteredData(filtered);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="loader"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <p className="text-red-500 text-lg">{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto py-6">

@@ -3,15 +3,16 @@
 import Header from '../components/Header';
 import SubstitutionPlan from '../components/SubstitutionPlan';
 import Footer from '../components/Footer';
+import React from "react";
 
 const Home: React.FC = () => {
     return (
         <div className="min-h-screen flex flex-col bg-gray-100 text-gray-900">
-            <Header />
+            <Header/>
             <main className="flex-grow">
-                <SubstitutionPlan />
+                <SubstitutionPlan/>
             </main>
-            <Footer />
+            <Footer/>
         </div>
     );
 };
