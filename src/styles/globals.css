@@ -26,6 +26,18 @@ body, html {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
+:root {
+    --primary-color: #001C33;
+    --secondary-color: #99D1FF;
+    --background-color: #262626;
+    --text-color: #FFF;
 }

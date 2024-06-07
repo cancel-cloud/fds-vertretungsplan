@@ -1,16 +1,16 @@
 // src/components/Button.tsx
-import React from 'react'
+import React from "react";
 
 type ButtonProps = {
-    label: string
-}
+  label: string;
+};
 
 const Button: React.FC<ButtonProps> = ({ label }) => {
-    return (
-        <button className="px-4 py-2 bg-blue-500 text-white rounded">
-            {label}
-        </button>
-    )
-}
+  return (
+    <button className="rounded bg-blue-500 px-4 py-2 text-white">
+      {label}
+    </button>
+  );
+};
 
-export default Button
+export default Button;

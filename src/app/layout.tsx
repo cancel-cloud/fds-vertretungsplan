@@ -1,32 +1,41 @@
-import { Analytics } from '@vercel/analytics/react';
-import {Metadata} from "next";
-
+import { Analytics } from "@vercel/analytics/react";
+import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "FDS Vertretungsplan",
-    description: "Dieser Vertretungsplan, ist sortierbar, schöner anzusehen und einfacher zu verstehen.",
+  title: "FDS Vertretungsplan",
+  description:
+    "Dieser Vertretungsplan, ist sortierbar, schöner anzusehen und einfacher zu verstehen.",
 };
 
-
 export default function RootLayout({
-                                       children,
-                                   }: {
-    children: React.ReactNode;
+  children,
+}: {
+  children: React.ReactNode;
 }) {
-    return (
-        <html lang="en">
-        <head>
-            <title>FDS Vertretungsplan</title>
-            <meta property="og:image" content="<generated>"/>
-            <meta property="og:image:type" content="<generated>"/>
-            <meta property="og:image:width" content="<generated>"/>
-            <meta property="og:image:height" content="<generated>"/>
-
-        </head>
-        <body>
+  return (
+    <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <meta property="og:title" content="FDS Vertretungsplan" />
+        <meta
+          property="og:description"
+          content="Dieser Vertretungsplan, ist sortierbar, schöner anzusehen und einfacher zu verstehen."
+        />
+        <meta property="og:image" content="../publi" />
+        <meta property="og:url" content="https://yourwebsite.com" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="FDS Vertretungsplan" />
+        <meta
+          name="twitter:description"
+          content="Dieser Vertretungsplan, ist sortierbar, schöner anzusehen und einfacher zu verstehen."
+        />
+        <meta name="twitter:image" content="/path/to/your/image.jpg" />
+        <title>FDS Vertretungsplan</title>
+      </head>
+      <body>
         {children}
-        <Analytics/>
-        </body>
-        </html>
-    );
+        <Analytics />
+      </body>
+    </html>
+  );
 }
