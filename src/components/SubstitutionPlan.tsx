@@ -43,6 +43,7 @@ const SubstitutionPlan: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isTomorrow, setIsTomorrow] = useState(false);
+  const [showMrBig, setShowMrBig] = useState(false);
 
   const toggleDate = () => {
     setIsTomorrow(!isTomorrow);
@@ -67,14 +68,20 @@ const SubstitutionPlan: React.FC = () => {
   }, [isTomorrow]);
 
   const handleSearch = (query: string) => {
-    const filtered = data.filter(
-      (item) =>
-        item.group.toLowerCase().includes(query.toLowerCase()) ||
-        item.data.some((cell: string) =>
-          cell.toLowerCase().includes(query.toLowerCase())
-        )
-    );
-    setFilteredData(filtered);
+    if (query.toLowerCase() === "mr big") {
+      setShowMrBig(true);
+      setFilteredData([]);
+    } else {
+      setShowMrBig(false);
+      const filtered = data.filter(
+        (item) =>
+          item.group.toLowerCase().includes(query.toLowerCase()) ||
+          item.data.some((cell: string) =>
+            cell.toLowerCase().includes(query.toLowerCase())
+          )
+      );
+      setFilteredData(filtered);
+    }
   };
 
   return (
@@ -90,6 +97,10 @@ const SubstitutionPlan: React.FC = () => {
         <Loading />
       ) : error ? (
         <Error />
+      ) : showMrBig ? (
+        <div className="flex justify-center">
+          <img src="/MRBIG.JPG" alt="Mr. Big" className="rounded shadow-md" />
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredData.map((item, index) => (
