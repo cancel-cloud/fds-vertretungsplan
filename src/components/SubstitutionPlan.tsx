@@ -30,7 +30,17 @@ const fetchSubstitutionData = async (
     }
 
     const result = await response.json();
-    return result.payload?.rows || [];
+    const rows = result.payload?.rows || [];
+
+    // Sort rows based on "Stunde"
+    rows.sort((a: SubstitutionData, b: SubstitutionData) => {
+      const stundeA = parseInt(a.data[0], 10);
+      const stundeB = parseInt(b.data[0], 10);
+      if (isNaN(stundeA) || isNaN(stundeB)) return 0; // if stunde is not a number, keep order as is
+      return stundeA - stundeB;
+    });
+
+    return rows;
   } catch (error) {
     console.error("Error fetching data:", error);
     throw error;

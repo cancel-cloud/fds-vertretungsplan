@@ -6,6 +6,9 @@ import Document, {
   Main,
   NextScript,
 } from "next/document";
+import Header from "@/components/Header";
+import React from "react";
+import Footer from "@/components/Footer";
 
 class MyDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
@@ -16,6 +19,7 @@ class MyDocument extends Document {
   render() {
     return (
       <Html>
+        <Header></Header>
         <Head>
           <link rel="icon" href="/favicon.ico" />
         </Head>
@@ -23,6 +27,7 @@ class MyDocument extends Document {
           <Main />
           <NextScript />
         </body>
+        <Footer></Footer>
       </Html>
     );
   }

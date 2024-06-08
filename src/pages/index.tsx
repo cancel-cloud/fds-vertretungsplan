@@ -8,11 +8,9 @@ import React from "react";
 const Home: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-gray-100 text-gray-900">
-      <Header />
       <main className="flex-grow">
         <SubstitutionPlan />
       </main>
-      <Footer />
     </div>
   );
 };
