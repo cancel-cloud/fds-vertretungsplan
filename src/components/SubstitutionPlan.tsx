@@ -4,6 +4,7 @@ import Loading from "./Loading";
 import Error from "./Error";
 import { Switch } from "@nextui-org/switch";
 import generateDate from "@/pages/api/getDate";
+import Image from "next/image";
 
 interface SubstitutionData {
   data: string[];
@@ -109,7 +110,7 @@ const SubstitutionPlan: React.FC = () => {
         <Error />
       ) : showMrBig ? (
         <div className="flex justify-center">
-          <img src="/MRBIG.JPG" alt="Mr. Big" className="rounded shadow-md" />
+          <Image src="/MRBIG.JPG" alt="Mr. Big" className="rounded shadow-md" />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
