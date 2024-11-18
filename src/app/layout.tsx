@@ -1,40 +1,37 @@
-import { Analytics } from "@vercel/analytics/react";
-import { Metadata } from "next";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "../styles/globals.css";
+import {ThemeProvider} from "@/components/theme-provider";
+import React from "react";
+import HeadderComponent from "@/components/page/header";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "FDS Vertretungsplan",
-  description:
-    "Dieser Vertretungsplan, ist sortierbar, schöner anzusehen und einfacher zu verstehen.",
+  description: "Ich bin einfach besser, benutzt mich doch einfach.",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-        <meta property="og:title" content="FDS Vertretungsplan" />
-        <meta
-          property="og:description"
-          content="Dieser Vertretungsplan, ist sortierbar, schöner anzusehen und einfacher zu verstehen."
-        />
-        <meta property="og:image" content="../publi" />
-        <meta property="og:url" content="https://yourwebsite.com" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="FDS Vertretungsplan" />
-        <meta
-          name="twitter:description"
-          content="Dieser Vertretungsplan, ist sortierbar, schöner anzusehen und einfacher zu verstehen."
-        />
-        <meta name="twitter:image" content="/path/to/your/image.jpg" />
-        <title>FDS Vertretungsplan</title>
-      </head>
-      <body>
-        {children}
-        <Analytics />
+    <html lang="en" suppressHydrationWarning>
+        
+      <body className={inter.className}>
+      
+      <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+      >
+          <HeadderComponent />
+          {children}
+          
+          </ThemeProvider>
       </body>
     </html>
   );
