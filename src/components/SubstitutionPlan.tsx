@@ -110,7 +110,7 @@ const SubstitutionPlan: React.FC = () => {
         <Error />
       ) : showMrBig ? (
         <div className="flex justify-center">
-          <Image src="/MRBIG.JPG" alt="Mr. Big" className="rounded shadow-md" />
+          <Image src="/MRBIG.JPG" alt="Mr. Big" className="rounded shadow-md" width={400} height={300} />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
