@@ -59,11 +59,6 @@ export default function Home() {
     }
   };
 
-  const getTomorrowDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow;
-  };
 
   const filteredSubstitutions = useMemo(() => {
     if (!searchQuery.trim()) return substitutions;
