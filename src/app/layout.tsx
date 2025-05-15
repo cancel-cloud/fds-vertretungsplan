@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "../styles/globals.css";
-import {ThemeProvider} from "@/components/theme-provider";
-import React from "react";
-import HeadderComponent from "@/components/page/header";
+import "./globals.css";
+import { ClientLayout } from "@/components/client-layout";
+import { ThemeProvider } from "next-themes";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FDS Vertretungsplan",
-  description: "Ich bin einfach besser, benutzt mich doch einfach.",
+  title: "Vertretungsplan FDS-Limburg",
+  description: "Vertretungsplan der Ferdinand-Dirichs-Schule Limburg",
 };
 
 export default function RootLayout({
@@ -18,20 +17,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-        
+    <html lang="de" suppressHydrationWarning>
       <body className={inter.className}>
-      
-      <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-      >
-          <HeadderComponent />
-          {children}
-          
-          </ThemeProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ClientLayout>{children}</ClientLayout>
+        </ThemeProvider>
       </body>
     </html>
   );
