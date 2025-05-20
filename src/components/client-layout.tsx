@@ -45,20 +45,44 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <>
       {/* Desktop header */}
-      <header className="hidden md:flex bg-primary text-primary-foreground p-4 sticky top-0 z-50 items-center justify-between">
+      <header className="hidden md:flex bg-primary text-primary-foreground p-4 sticky top-0 z-50 items-end justify-between">
         <Link href="/" className="text-lg font-bold hover:text-primary-foreground/90">
           Vertretungsplan FDS-Limburg
         </Link>
-        {mounted && (
+        <div className="flex items-center gap-2">
           <Button
-            className="ml-4 p-2 rounded-full hover:bg-primary/80 transition-colors"
-            aria-label="Toggle theme"
-            onClick={cycleTheme}
+            variant="ghost"
+            size="sm"
+            className="text-primary-foreground/90 hover:text-primary-foreground"
+            asChild
           >
-            {themeIcon}
+            <Link href="/impressum">Impressum</Link>
           </Button>
-        )}
+          <Button
+            variant="ghost" 
+            size="sm"
+            className="text-primary-foreground/90 hover:text-primary-foreground"
+            asChild
+          >
+            <Link href="/datenschutz">Datenschutzerklärung</Link>
+          </Button>
+          {mounted && (
+            <Button
+              className="ml-2 p-2 rounded-full transition-colors
+                bg-secondary hover:bg-secondary/80 
+                dark:bg-secondary/20 dark:hover:bg-secondary/30
+                border border-border dark:border-border/50
+                text-foreground dark:text-foreground/90
+                hover:scale-105 hover:shadow-md"
+              aria-label="Toggle theme"
+              onClick={cycleTheme}
+            >
+              {themeIcon}
+            </Button>
+          )}
+        </div>
       </header>
+
       {/* Mobile header */}
       <MobileHeader
         selectedDate={selectedDate}

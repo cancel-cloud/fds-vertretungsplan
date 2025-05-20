@@ -7,8 +7,8 @@ import { ThemeProvider } from "next-themes";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Vertretungsplan FDS-Limburg",
-  description: "Vertretungsplan der Ferdinand-Dirichs-Schule Limburg",
+  title: "FDS-Substitutions",
+  description: "Substitutionsplan der Friedrich-Dessauer-Schule Limburg",
 };
 
 export default function RootLayout({
@@ -18,8 +18,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <body className={`${inter.className} antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <ClientLayout>{children}</ClientLayout>
         </ThemeProvider>
       </body>

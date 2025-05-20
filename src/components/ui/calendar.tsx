@@ -3,6 +3,8 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
+import { addDays, format } from "date-fns"
+import { de } from "date-fns/locale"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -16,6 +18,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={de}
       navLayout="after"
       className={cn("p-3 w-fit", className)}
       classNames={{
@@ -23,25 +26,25 @@ function Calendar({
         month: "flex flex-col gap-4",
 
         /* Caption: month label left, nav right */
-        month_caption: "flex items-center justify-between px-2",
-        caption_label: "text-sm font-medium",
+        month_caption: "flex flex-col items-center gap-2",
+        caption_label: "text-base font-semibold",
 
-        /* Navigation buttons inline to the right */
-        nav: "flex items-center gap-1 ml-2",
+        /* Navigation buttons below month name */
+        nav: "flex items-center justify-center gap-2",
         button_previous: cn(
-          buttonVariants({ variant: "outline" }),
-          "size-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          buttonVariants({ variant: "outline", size: "icon" }),
+          "size-9 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-accent"
         ),
         button_next: cn(
-          buttonVariants({ variant: "outline" }),
-          "size-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          buttonVariants({ variant: "outline", size: "icon" }),
+          "size-9 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-accent"
         ),
 
         /* Calendar grid */
         month_grid: "border-collapse space-x-1",
         weekdays: "flex",
         weekday:
-          "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
         week: "flex w-full mt-2",
 
         /* Day cells */
@@ -53,7 +56,7 @@ function Calendar({
         ),
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
-          "size-8 p-0 font-normal aria-selected:opacity-100 hover:bg-primary hover:text-primary-foreground"
+          "size-9 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground"
         ),
 
         /* Modifiers */
@@ -63,7 +66,7 @@ function Calendar({
           "day-range-end aria-selected:bg-primary aria-selected:text-primary-foreground",
         day_selected:
           "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-md",
-        day_today: "bg-accent text-accent-foreground",
+        day_today: "bg-accent text-accent-foreground font-semibold rounded-md border-2 border-primary",
         day_outside:
           "day-outside text-muted-foreground aria-selected:text-muted-foreground",
         day_disabled: "text-muted-foreground opacity-50",
@@ -74,15 +77,20 @@ function Calendar({
         /* User overrides */
         ...classNames,
         selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-md",
-        today: "bg-accent text-accent-foreground rounded-md border border-accent hover:bg-accent hover:text-accent-foreground",
+        today: "bg-accent text-accent-foreground font-semibold rounded-md border-2 border-primary hover:bg-accent hover:text-accent-foreground",
       }}
       components={{
         Chevron: ({ orientation, className, ...p }) =>
           orientation === "left" ? (
-            <ChevronLeft className={cn("size-4", className)} {...p} />
+            <ChevronLeft className={cn("size-5", className)} {...p} />
           ) : (
-            <ChevronRight className={cn("size-4", className)} {...p} />
+            <ChevronRight className={cn("size-5", className)} {...p} />
           ),
+      }}
+      formatters={{
+        formatCaption: (date, options) => {
+          return format(date, "MMMM yyyy", { locale: options?.locale })
+        }
       }}
       {...props}
     />
