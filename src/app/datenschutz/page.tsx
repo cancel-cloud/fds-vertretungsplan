@@ -68,7 +68,7 @@ export default function Datenschutz() {
             </p>
             <p>
               Die meisten der von uns verwendeten Cookies sind so genannte
-              „Session-Cookies". Sie werden nach Ende Ihres Besuchs automatisch
+              &quot;Session-Cookies&quot;. Sie werden nach Ende Ihres Besuchs automatisch
               gelöscht.
             </p>
           </div>
