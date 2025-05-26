@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import ReactCanvasConfetti from 'react-canvas-confetti';
+import type { CreateTypes } from 'canvas-confetti';
 
 const canvasStyles = {
   position: 'fixed',
@@ -26,7 +27,7 @@ export default function WelcomeOverlay() {
     setIsLoading(false);
   }, []);
 
-  const onInit = ({ confetti }: { confetti: any }) => {
+  const onInit = ({ confetti }: { confetti: CreateTypes }) => {
     confetti({
       particleCount: 100,
       spread: 70,
@@ -59,7 +60,7 @@ export default function WelcomeOverlay() {
             onClick={handleClose}
             className="bg-accent text-accent-foreground px-4 py-2 rounded hover:bg-accent/90 transition-colors"
           >
-            Los geht's!
+            Los geht&apos;s!
           </button>
         </div>
       </div>

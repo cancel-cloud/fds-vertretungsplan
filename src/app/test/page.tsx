@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import WelcomeOverlay from "./welcomeOverlay";
+import Image from 'next/image';
 
 export default function TestingPage() {
     return (
@@ -18,11 +19,13 @@ export default function TestingPage() {
           >
             Toggle Image
           </Button>
-          <img 
+          <Image 
             id="displayedImage" 
             src="/MRBIG.jpeg" 
             alt="Example" 
-            style={{display: 'none', maxWidth: '400px'}}
+            width={400}
+            height={400}
+            style={{display: 'none'}}
           />
         </div>
       </div>
