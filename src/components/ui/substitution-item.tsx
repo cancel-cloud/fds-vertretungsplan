@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "./card";
-import { Badge } from "./badge";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./skeleton";
 
