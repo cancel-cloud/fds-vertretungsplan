@@ -59,10 +59,10 @@ export default function Impressum() {
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               <a 
-                href="mailto:0rare-reputed@icloud.com" 
+                href="mailto:info@devbrew.dev" 
                 className="text-primary hover:underline hover:text-primary/90 transition-colors"
               >
-                0rare-reputed@icloud.com
+                info@devbrew.dev
               </a>
             </div>
           </div>
