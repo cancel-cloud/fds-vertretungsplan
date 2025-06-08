@@ -375,10 +375,10 @@ export default function Home() {
         />
 
         <main className="w-full overflow-x-auto">
-          <div className="max-w-[1620px] mx-auto p-4 md:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] gap-8">
+            <div className="max-w-[1620px] mx-auto p-4 md:p-8">
+              <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8">
               {/* Desktop sidebar */}
-              <div className="hidden md:flex flex-col space-y-4 shrink-0">
+                <div className="hidden lg:flex flex-col space-y-4 shrink-0">
                 <div className="bg-card rounded-lg border p-4">
                   <Calendar
                     mode="single"
@@ -423,7 +423,7 @@ export default function Home() {
               </div>
 
               {/* Mobile search and filters */}
-              <div className="md:hidden space-y-4 mb-6">
+                <div className="lg:hidden space-y-4 mb-6">
                 <div className="bg-card rounded-lg border p-4">
                   <div className="relative">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -450,7 +450,7 @@ export default function Home() {
                 <ErrorAlert type={error} />
                 
                 {/* Mobile/Small Tablet view */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden min-w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden min-w-full">
                   {loading ? (
                     Array.from({ length: window.innerWidth >= 640 ? 4 : 3 }).map((_, index) => (
                       <SubstitutionItem key={`skeleton-${index}`} data={[]} isLoading />
@@ -462,7 +462,7 @@ export default function Home() {
                   )}
                 </div>
                 {/* Desktop/Tablet view - multi-column */}
-                <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-4 content-start auto-cols-max overflow-x-auto">
+                  <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-4 content-start auto-cols-max overflow-x-auto">
                   {loading ? (
                     Array.from({ length: loading && window.innerWidth >= 1280 ? 6 : 4 }).map((_, index) => (
                       <SubstitutionItem key={`skeleton-${index}`} data={[]} isLoading />

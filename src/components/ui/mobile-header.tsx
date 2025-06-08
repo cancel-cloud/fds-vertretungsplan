@@ -42,7 +42,7 @@ export function MobileHeader({ onDateSelect, onDateConfirm, selectedDate, loadin
     <SunIcon className="h-5 w-5" />;
 
   return (
-    <header className="md:hidden bg-primary text-primary-foreground p-4 sticky top-0 z-50 flex items-center justify-between">
+    <header className="lg:hidden bg-primary text-primary-foreground p-4 sticky top-0 z-50 flex items-center justify-between">
       <Link href="/" className="text-lg font-bold hover:text-primary-foreground/90" onClick={() => setIsOpen(false)}>
         Vertretungsplan FDS-Limburg
       </Link>

@@ -45,7 +45,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <>
       {/* Desktop header */}
-      <header className="hidden md:flex bg-primary text-primary-foreground p-4 sticky top-0 z-50 items-end justify-between">
+      <header className="hidden lg:flex bg-primary text-primary-foreground p-4 sticky top-0 z-50 items-end justify-between">
         <Link href="/" className="text-lg font-bold hover:text-primary-foreground/90">
           Vertretungsplan FDS-Limburg
         </Link>
