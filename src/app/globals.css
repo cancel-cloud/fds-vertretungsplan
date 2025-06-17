@@ -35,7 +35,7 @@
   --color-klausur: 210 186 76;
   --color-freisetzung: 19 52 59;
   --color-sonstiges: 98 108 113;
-  --color-verlegung: 0 0 0; /* Cream for light mode */
+  --color-verlegung: 250 235 215; /* Cream for light mode */
 
   /* Spacing */
   --space-1: 1px;
@@ -196,9 +196,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  /* Category colors for dark mode */
+  --color-entfall: 255 84 89;
+  --color-raumaenderung: 50 184 198;
+  --color-vertretung: 120 150 158;
+  --color-sondereinsatz: 180 100 120;
+  --color-eva: 255 213 153;
+  --color-klausur: 230 206 96;
   --color-freisetzung: 19 52 59;
   --color-sonstiges: 167 169 169;
-  --color-verlegung: 141 128, 101; /* Muted cream for dark mode */
+  --color-verlegung: 141 128 101; /* Muted cream for dark mode */
 }
 
 * {

@@ -100,7 +100,7 @@ export function CategoryFilters({
               className={`
                 h-8 px-3 text-xs font-medium transition-all duration-200 
                 ${isSelected 
-                  ? `${colorClass} text-black border-transparent` 
+                  ? `${colorClass} text--co border-transparent` 
                   : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text))] hover:bg-[rgb(var(--color-surface))]'
                 }
               `}
