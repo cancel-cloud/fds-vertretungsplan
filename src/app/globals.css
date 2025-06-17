@@ -35,7 +35,7 @@
   --color-klausur: 210 186 76;
   --color-freisetzung: 19 52 59;
   --color-sonstiges: 98 108 113;
-  --color-verlegung: 250 235 215; /* Cream for light mode */
+  --color-verlegung: 0 0 0; /* Cream for light mode */
 
   /* Spacing */
   --space-1: 1px;

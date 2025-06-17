@@ -34,19 +34,27 @@ const getCategoryColor = (type: string): string => {
   }
 };
 
-// Get badge variant based on substitution type
-const getBadgeVariant = (type: string): "default" | "secondary" | "destructive" | "outline" => {
+// Get badge color based on substitution type
+const getBadgeColor = (type: string): string => {
   switch (type) {
     case 'Entfall':
-      return 'destructive';
+      return 'bg-[rgb(var(--color-entfall))] text-white';
     case 'Raumänderung':
+      return 'bg-[rgb(var(--color-raumaenderung))] text-white';
     case 'Vertretung':
-      return 'default';
+      return 'bg-[rgb(var(--color-vertretung))] text-white';
+    case 'Sondereinsatz':
+      return 'bg-[rgb(var(--color-sondereinsatz))] text-white';
     case 'EVA':
+      return 'bg-[rgb(var(--color-eva))] text-white';
+    case 'Klausur':
+      return 'bg-[rgb(var(--color-klausur))] text-white';
     case 'Freisetzung':
-      return 'secondary';
+      return 'bg-[rgb(var(--color-freisetzung))] text-white';
+    case 'Verlegung':
+      return 'bg-[rgb(var(--color-verlegung))] text-black';
     default:
-      return 'outline';
+      return 'bg-[rgb(var(--color-sonstiges))] text-white';
   }
 };
 
@@ -66,7 +74,7 @@ const formatTimeDisplay = (time: string, hours: string): string => {
 
 export function SubstitutionCard({ substitution, className = '' }: SubstitutionCardProps) {
   const categoryColorClass = getCategoryColor(substitution.type);
-  const badgeVariant = getBadgeVariant(substitution.type);
+  const badgeColorClass = getBadgeColor(substitution.type);
   const timeDisplay = formatTimeDisplay(substitution.time, substitution.hours);
 
   return (
@@ -77,7 +85,7 @@ export function SubstitutionCard({ substitution, className = '' }: SubstitutionC
           <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">
             {substitution.group}
           </h3>
-          <Badge variant={badgeVariant} className="text-sm">
+          <Badge className={`text-sm ${badgeColorClass}`}>
             {substitution.type}
           </Badge>
         </div>
