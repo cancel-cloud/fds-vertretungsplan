@@ -1,11 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
 import { ProcessedSubstitution, FilterState } from '@/types';
 import { SubstitutionCard } from './substitution-card';
 import { SearchInput } from './search-input';
 import { CategoryFilters } from './category-filters';
-import { sortSubstitutions, filterSubstitutions, getUniqueSubstitutionTypes } from '@/lib/data-processing';
 import { Loader2, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

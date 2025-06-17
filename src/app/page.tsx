@@ -11,7 +11,7 @@ import { SubstitutionList } from '@/components/substitution-list';
 import { WelcomeOverlay } from '@/components/welcome-overlay';
 import { useSubstitutions } from '@/hooks/use-substitutions';
 import { ArrowLeft } from 'lucide-react';
-import { FilterState, ProcessedSubstitution } from '@/types';
+import { FilterState } from '@/types';
 import { sortSubstitutions, filterSubstitutions, getUniqueSubstitutionTypes } from '@/lib/data-processing';
 
 export default function HomePage() {

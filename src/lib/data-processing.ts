@@ -1,8 +1,7 @@
 import { 
   WebUntisResponse, 
   WebUntisSubstitutionRow, 
-  ProcessedSubstitution, 
-  SubstitutionData,
+  ProcessedSubstitution,
   FilterState 
 } from '@/types';
 
@@ -101,7 +100,7 @@ const extractTeacherInfo = (teacherData: string): string => {
 
 // Process a single WebUntis row into our app format
 export const processSubstitutionRow = (row: WebUntisSubstitutionRow): ProcessedSubstitution => {
-  const [hours, time, group, subject, room, teacher, type, info] = row.data;
+  const [hours, time, group, subject, room, teacher, , info] = row.data;
   
   const processedType = extractSubstitutionType(row.data, row.cellClasses);
   

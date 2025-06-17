@@ -109,13 +109,13 @@ export interface WebUntisResponse {
     showingNextDate: boolean;
     rows: WebUntisSubstitutionRow[];
     lastUpdate: string;
-    absentElements: any;
+    absentElements: unknown;
     affectedElements: Record<string, string[]>;
     messageData: {
-      messages: any[];
+      messages: unknown[];
     };
     weekDay: string;
-    regularFreeData: any;
+    regularFreeData: unknown;
   };
 }
 

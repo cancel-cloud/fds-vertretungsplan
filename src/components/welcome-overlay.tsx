@@ -151,7 +151,7 @@ export function WelcomeOverlay() {
                 onClick={handleDismiss}
                 className="w-full"
               >
-                Los geht's!
+                Los geht&rsquo;s!
               </Button>
               <p className="text-xs text-center text-[rgb(var(--color-text-secondary))]">
                 Diese Nachricht wird nur einmal pro Sitzung angezeigt

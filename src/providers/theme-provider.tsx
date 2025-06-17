@@ -28,11 +28,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       } else {
         applyTheme('system');
       }
-    } catch (e) {
+    } catch {
       console.warn('Session storage not available, using system theme');
       applyTheme('system');
     }
-  }, []);
+  }, [themes]);
 
   const applyTheme = (newTheme: ThemeMode) => {
     const root = document.documentElement;
@@ -57,7 +57,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Save to session storage
     try {
       sessionStorage.setItem('theme', newTheme);
-    } catch (e) {
+    } catch {
       console.warn('Could not save theme to session storage');
     }
   };
