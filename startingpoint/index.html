@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vertretungsplan - Dessauer Schule Limburg</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;550;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <!-- Welcome Overlay -->
+    <div id="welcome-overlay" class="welcome-overlay hidden">
+        <div class="welcome-content">
+            <h2>Willkommen zum Vertretungsplan!</h2>
+            <p>Hier finden Sie alle aktuellen Vertretungen und Änderungen für Ihre Klasse.</p>
+            <button class="btn btn--primary" onclick="dismissWelcome()">Los geht's!</button>
+        </div>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu-overlay" class="mobile-menu-overlay hidden">
+        <div class="mobile-menu">
+            <div class="mobile-menu-header">
+                <h3>Menü</h3>
+                <button id="close-mobile-menu" class="mobile-menu-close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="mobile-menu-content">
+                <!-- Calendar Widget -->
+                <div class="calendar-widget">
+                    <h4>Datum auswählen</h4>
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button id="prev-month-mobile" class="calendar-nav">
+                                <i data-lucide="chevron-left"></i>
+                            </button>
+                            <span id="current-month-mobile" class="calendar-month"></span>
+                            <button id="next-month-mobile" class="calendar-nav">
+                                <i data-lucide="chevron-right"></i>
+                            </button>
+                        </div>
+                        <div id="calendar-mobile" class="calendar-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Show Substitutions Button -->
+                <button id="show-substitutions-mobile" class="btn btn--primary btn--full-width">
+                    <span class="button-text">Vertretungen anzeigen</span>
+                    <span class="loading-spinner hidden">
+                        <i data-lucide="loader-2"></i>
+                    </span>
+                </button>
+
+                <!-- Search -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input 
+                            type="text" 
+                            id="search-input-mobile" 
+                            class="form-control search-input" 
+                            placeholder="Klasse, Lehrer, Fach oder Raum suchen..."
+                        >
+                    </div>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="filter-section">
+                    <h4>Kategorien</h4>
+                    <div id="category-filters-mobile" class="category-filters"></div>
+                </div>
+
+                <!-- Legal Links -->
+                <div class="legal-links">
+                    <a href="#impressum" onclick="showLegalPage('impressum')">Impressum</a>
+                    <a href="#datenschutz" onclick="showLegalPage('datenschutz')">Datenschutz</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="app-layout">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <button id="mobile-menu-toggle" class="mobile-menu-toggle">
+                    <i data-lucide="menu"></i>
+                </button>
+                <h1 class="app-title clickable-title" onclick="goToMainPage()" tabindex="0" role="button" aria-label="Zur Hauptseite">Vertretungsplan</h1>
+                <div class="header-actions">
+                    <nav class="header-nav">
+                        <a href="#impressum" onclick="showLegalPage('impressum')">Impressum</a>
+                        <a href="#datenschutz" onclick="showLegalPage('datenschutz')">Datenschutz</a>
+                    </nav>
+                    <button id="theme-toggle" class="theme-toggle">
+                        <i data-lucide="sun" class="theme-icon theme-icon--light"></i>
+                        <i data-lucide="moon" class="theme-icon theme-icon--dark"></i>
+                        <i data-lucide="monitor" class="theme-icon theme-icon--system"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="app-content">
+            <!-- Desktop Sidebar -->
+            <aside class="sidebar">
+                <!-- Calendar Widget -->
+                <div class="calendar-widget">
+                    <h3>Datum auswählen</h3>
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button id="prev-month" class="calendar-nav">
+                                <i data-lucide="chevron-left"></i>
+                            </button>
+                            <span id="current-month" class="calendar-month"></span>
+                            <button id="next-month" class="calendar-nav">
+                                <i data-lucide="chevron-right"></i>
+                            </button>
+                        </div>
+                        <div id="calendar" class="calendar-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Show Substitutions Button -->
+                <button id="show-substitutions" class="btn btn--primary btn--full-width">
+                    <span class="button-text">Vertretungen anzeigen</span>
+                    <span class="loading-spinner hidden">
+                        <i data-lucide="loader-2"></i>
+                    </span>
+                </button>
+
+                <!-- Search -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input 
+                            type="text" 
+                            id="search-input" 
+                            class="form-control search-input" 
+                            placeholder="Klasse, Lehrer, Fach oder Raum suchen..."
+                        >
+                    </div>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="filter-section">
+                    <h3>Kategorien</h3>
+                    <div id="category-filters" class="category-filters"></div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div id="main-view" class="main-view">
+                    <div class="content-header">
+                        <h2 id="content-title">Vertretungen für heute</h2>
+                        <div id="search-results-info" class="search-results-info hidden"></div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="loading-state" class="loading-state hidden">
+                        <div class="skeleton-cards">
+                            <div class="skeleton-card"></div>
+                            <div class="skeleton-card"></div>
+                            <div class="skeleton-card"></div>
+                            <div class="skeleton-card"></div>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="error-state" class="error-state hidden">
+                        <div class="error-message">
+                            <i data-lucide="alert-circle"></i>
+                            <h3>Fehler beim Laden der Vertretungen</h3>
+                            <p id="error-text">Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.</p>
+                            <button id="retry-button" class="btn btn--primary">Erneut versuchen</button>
+                        </div>
+                    </div>
+
+                    <!-- Substitutions Grid -->
+                    <div id="substitutions-grid" class="substitutions-grid"></div>
+
+                    <!-- No Results -->
+                    <div id="no-results" class="no-results hidden">
+                        <i data-lucide="search"></i>
+                        <h3>Keine Vertretungen gefunden</h3>
+                        <p>Für die gewählten Filter wurden keine Vertretungen gefunden.</p>
+                    </div>
+                </div>
+
+                <!-- Legal Pages -->
+                <div id="legal-view" class="legal-view hidden">
+                    <div class="legal-header">
+                        <button id="back-to-main" class="btn btn--outline">
+                            <i data-lucide="arrow-left"></i>
+                            Zurück
+                        </button>
+                    </div>
+                    <div id="legal-content" class="legal-content"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

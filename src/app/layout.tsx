@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ClientLayout } from "@/components/client-layout";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "@/providers/theme-provider";
+import { AppErrorBoundary } from "@/components/error-boundary";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
-  title: "FDS-Substitutions",
-  description: "Substitutionsplan der Friedrich-Dessauer-Schule Limburg",
+  title: "Vertretungsplan - Dessauer Schule Limburg",
+  description: "Hier finden Sie alle aktuellen Vertretungen und Änderungen für Ihre Klasse.",
 };
 
 export default function RootLayout({
@@ -18,10 +21,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <ClientLayout>{children}</ClientLayout>
-        </ThemeProvider>
+      <body className={`${inter.variable} antialiased`}>
+        <AppErrorBoundary>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </AppErrorBoundary>
       </body>
     </html>
   );
