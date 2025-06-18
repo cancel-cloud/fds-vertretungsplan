@@ -3,11 +3,12 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function MobileMenu({ isOpen, onClose, children }: MobileMenuProps) {
@@ -64,28 +65,20 @@ export function MobileMenu({ isOpen, onClose, children }: MobileMenuProps) {
 
           {/* Legal links */}
           <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-[rgb(var(--color-border)/0.2)]">
-            <a
-              href="#impressum"
+            <Link
+              href="/impressum"
               className="text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] transition-colors duration-150 py-1"
-              onClick={(e) => {
-                e.preventDefault();
-                onClose();
-                // This will be handled by the parent component
-              }}
+              onClick={onClose}
             >
               Impressum
-            </a>
-            <a
-              href="#datenschutz"
+            </Link>
+            <Link
+              href="/datenschutz"
               className="text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] transition-colors duration-150 py-1"
-              onClick={(e) => {
-                e.preventDefault();
-                onClose();
-                // This will be handled by the parent component
-              }}
+              onClick={onClose}
             >
               Datenschutz
-            </a>
+            </Link>
           </div>
         </div>
       </div>
