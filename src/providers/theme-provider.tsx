@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { ThemeMode } from '@/types';
 
 interface ThemeContextType {
@@ -15,7 +15,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>('system');
   const [mounted, setMounted] = useState(false);
 
-  const themes: ThemeMode[] = ['system', 'light', 'dark'];
+  const themes = useMemo(() => ['system', 'light', 'dark'] as ThemeMode[], []);
 
   useEffect(() => {
     setMounted(true);

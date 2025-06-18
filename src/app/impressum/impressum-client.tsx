@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { MapPin, Phone, Mail, Globe, Building2, Scale, AlertTriangle } from 'lucide-react';
+import { Phone, Mail, Building2, Scale, AlertTriangle } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { MobileMenu } from '@/components/layout/mobile-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
