@@ -3,16 +3,17 @@ import SearchBar from "./SearchBar";
 import Loading from "./Loading";
 import Error from "./Error";
 import { Switch } from "@nextui-org/switch";
-import generateDate from "@/pages/api/getDate";
+import { generateDate, sanitizeHtml, sortSubstitutionsByHour, filterSubstitutions, isHtmlContentSafe } from "@/utils";
+import { SubstitutionData, SubstitutionApiResponse, ApiError } from "@/types";
+import { UI_CONFIG, SUBSTITUTION_FIELDS } from "@/constants";
 import Image from "next/image";
 
-interface SubstitutionData {
-  data: string[];
-  group: string;
-
-  [key: string]: any;
-}
-
+/**
+ * Fetches substitution data from the API
+ * @param date - Date string in YYYYMMDD format
+ * @returns Promise resolving to sorted substitution data
+ * @throws ApiError when fetch fails
+ */
 const fetchSubstitutionData = async (
   date: string
 ): Promise<SubstitutionData[]> => {
@@ -26,25 +27,20 @@ const fetchSubstitutionData = async (
     });
 
     if (!response.ok) {
-      // @ts-ignore
-      throw new Error("Network response was not ok");
+      throw new ApiError(`Network response was not ok: ${response.status}`);
     }
 
-    const result = await response.json();
+    const result: SubstitutionApiResponse = await response.json();
     const rows = result.payload?.rows || [];
 
-    // Sort rows based on "Stunde"
-    rows.sort((a: SubstitutionData, b: SubstitutionData) => {
-      const stundeA = parseInt(a.data[0], 10);
-      const stundeB = parseInt(b.data[0], 10);
-      if (isNaN(stundeA) || isNaN(stundeB)) return 0; // if stunde is not a number, keep order as is
-      return stundeA - stundeB;
-    });
-
-    return rows;
+    // Sort rows based on hour using utility function
+    return sortSubstitutionsByHour(rows);
   } catch (error) {
     console.error("Error fetching data:", error);
-    throw error;
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError("Failed to fetch substitution data");
   }
 };
 
@@ -78,19 +74,17 @@ const SubstitutionPlan: React.FC = () => {
     fetchData();
   }, [isTomorrow]);
 
+  /**
+   * Handles search functionality with easter egg support
+   * @param query - Search query string
+   */
   const handleSearch = (query: string) => {
-    if (query.toLowerCase() === "mr big") {
+    if (query.toLowerCase() === UI_CONFIG.EASTER_EGG_TRIGGER) {
       setShowMrBig(true);
       setFilteredData([]);
     } else {
       setShowMrBig(false);
-      const filtered = data.filter(
-        (item) =>
-          item.group.toLowerCase().includes(query.toLowerCase()) ||
-          item.data.some((cell: string) =>
-            cell.toLowerCase().includes(query.toLowerCase())
-          )
-      );
+      const filtered = filterSubstitutions(data, query);
       setFilteredData(filtered);
     }
   };
@@ -110,44 +104,66 @@ const SubstitutionPlan: React.FC = () => {
         <Error />
       ) : showMrBig ? (
         <div className="flex justify-center">
-          <Image src="/MRBIG.JPG" alt="Mr. Big" className="rounded shadow-md" width={400} height={300} />
+          <Image 
+            src={UI_CONFIG.EASTER_EGG_IMAGE} 
+            alt="Mr. Big" 
+            className="rounded shadow-md" 
+            width={400} 
+            height={300} 
+          />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className={`grid gap-6 ${UI_CONFIG.GRID_BREAKPOINTS.MOBILE} ${UI_CONFIG.GRID_BREAKPOINTS.TABLET} ${UI_CONFIG.GRID_BREAKPOINTS.DESKTOP}`}>
           {filteredData.map((item, index) => (
             <div key={index} className="rounded bg-white p-4 shadow-md">
               <p>
-                <strong>Stunde:</strong> {item.data[0]}
+                <strong>Stunde:</strong> {item.data[SUBSTITUTION_FIELDS.HOUR]}
               </p>
               <p>
-                <strong>Zeit:</strong> {item.data[1]}
+                <strong>Zeit:</strong> {item.data[SUBSTITUTION_FIELDS.TIME]}
               </p>
               <p>
-                <strong>Klassen:</strong> {item.data[2]}
+                <strong>Klassen:</strong> {item.data[SUBSTITUTION_FIELDS.CLASS]}
               </p>
               <p>
-                <strong>Fach:</strong> {item.data[3]}
+                <strong>Fach:</strong> {item.data[SUBSTITUTION_FIELDS.SUBJECT]}
               </p>
               <p>
                 <strong>Raum:</strong>{" "}
-                <span dangerouslySetInnerHTML={{ __html: item.data[4] }} />
+                {isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.ROOM]) ? (
+                  <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.ROOM]) }} />
+                ) : (
+                  item.data[SUBSTITUTION_FIELDS.ROOM]
+                )}
               </p>
               <p>
                 <strong>Lehrkraft:</strong>{" "}
-                <span dangerouslySetInnerHTML={{ __html: item.data[5] }} />
+                {isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.TEACHER]) ? (
+                  <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.TEACHER]) }} />
+                ) : (
+                  item.data[SUBSTITUTION_FIELDS.TEACHER]
+                )}
               </p>
               <p>
                 <strong>Info:</strong>{" "}
-                {item.data[6] ? (
-                  <span dangerouslySetInnerHTML={{ __html: item.data[6] }} />
+                {item.data[SUBSTITUTION_FIELDS.INFO] ? (
+                  isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.INFO]) ? (
+                    <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.INFO]) }} />
+                  ) : (
+                    item.data[SUBSTITUTION_FIELDS.INFO]
+                  )
                 ) : (
                   "Keine Info"
                 )}
               </p>
               <p>
                 <strong>Vertretungstext:</strong>{" "}
-                {item.data[7] ? (
-                  <span dangerouslySetInnerHTML={{ __html: item.data[7] }} />
+                {item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT] ? (
+                  isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT]) ? (
+                    <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT]) }} />
+                  ) : (
+                    item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT]
+                  )
                 ) : (
                   "Kein Vertretungstext"
                 )}

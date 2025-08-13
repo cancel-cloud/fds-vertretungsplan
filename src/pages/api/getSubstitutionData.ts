@@ -1,73 +1,53 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { API_CONFIG, DEFAULT_SUBSTITUTION_CONFIG } from "@/constants";
 
+/**
+ * API handler for fetching substitution data from WebUntis
+ * @param req - Next.js API request object
+ * @param res - Next.js API response object
+ */
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "POST") {
     const { date } = req.body;
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append(
-      "Cookie",
-      'schoolname="_ZGVzc2F1ZXItc2NodWxlLWxpbWJ1cmc="; JSESSIONID=2EDFB9B5540CF6D997812C04BECD95BC; schoolname="_ZGVzc2F1ZXItc2NodWxlLWxpbWJ1cmc="'
-    );
+    
+    if (!date) {
+      return res.status(400).json({ error: "Date parameter is required" });
+    }
 
-    const raw = JSON.stringify({
-      formatName: "Web-Schüler-heute",
-      schoolName: "dessauer-schule-limburg",
-      date: date,
-      dateOffset: 0,
-      activityTypeIds: [],
-      departmentElementType: -1,
-      departmentIds: [],
-      enableSubstitutionFrom: false,
-      groupBy: 1,
-      hideAbsent: false,
-      hideCancelCausedByEvent: false,
-      hideCancelWithSubstitution: true,
-      mergeBlocks: true,
-      showAbsentElements: [],
-      showAbsentTeacher: true,
-      showAffectedElements: [1],
-      showBreakSupervisions: false,
-      showCancel: true,
-      showClass: true,
-      showEvent: true,
-      showExamSupervision: false,
-      showHour: true,
-      showInfo: true,
-      showMessages: true,
-      showOnlyCancel: false,
-      showOnlyFutureSub: true,
-      showRoom: true,
-      showStudentgroup: false,
-      showSubject: true,
-      showSubstText: true,
-      showSubstTypeColor: false,
-      showSubstitutionFrom: 0,
-      showTeacher: true,
-      showTeacherOnEvent: false,
-      showTime: true,
-      showUnheraldedExams: false,
-      showUnitTime: false,
-      strikethrough: true,
-      strikethroughAbsentTeacher: true,
+    const myHeaders = new Headers();
+    Object.entries(API_CONFIG.DEFAULT_HEADERS).forEach(([key, value]) => {
+      myHeaders.append(key, value);
     });
+
+    const requestBody = {
+      ...DEFAULT_SUBSTITUTION_CONFIG,
+      date: date,
+    };
 
     const requestOptions = {
       method: "POST",
       headers: myHeaders,
-      body: raw,
+      body: JSON.stringify(requestBody),
       redirect: "follow" as RequestRedirect,
     };
 
     try {
       const response = await fetch(
-        "https://hepta.webuntis.com/WebUntis/monitor/substitution/data?school=dessauer-schule-limburg",
+        `${API_CONFIG.WEBUNTIS_BASE_URL}?school=${API_CONFIG.SCHOOL_NAME}`,
         requestOptions
       );
+      
+      if (!response.ok) {
+        console.error(`WebUntis API error: ${response.status} ${response.statusText}`);
+        return res.status(response.status).json({ 
+          error: `Failed to fetch data from WebUntis: ${response.statusText}` 
+        });
+      }
+      
       const result = await response.json();
       res.status(200).json(result);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching substitution data:", error);
       res.status(500).json({ error: "Failed to fetch data" });
     }
   } else {
