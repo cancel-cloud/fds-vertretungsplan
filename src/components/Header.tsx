@@ -49,7 +49,7 @@ const Header: React.FC = () => {
         </div>
       </div>
       {isMenuOpen && (
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 md:hidden">
+        <div className="bg-primary md:hidden">
           <nav className="flex flex-col items-center py-2">
             <Link
               href="/"

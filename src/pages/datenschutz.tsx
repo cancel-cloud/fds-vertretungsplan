@@ -1,8 +1,12 @@
 import React from "react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const Datenschutz: React.FC = () => {
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex min-h-screen flex-col bg-gray-100 text-gray-900">
+      <Header />
+      <div className="container mx-auto flex-grow p-6">
       <h1 className="mb-4 text-2xl font-bold">Datenschutzerklärung</h1>
 
       <p className="mb-4">
@@ -91,6 +95,8 @@ const Datenschutz: React.FC = () => {
         Falle der unverlangten Zusendung von Werbeinformationen, etwa durch
         Spam-E-Mails, vor.
       </p>
+      </div>
+      <Footer />
     </div>
   );
 };
