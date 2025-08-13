@@ -20,59 +20,59 @@ A web application to display the substitution plan for FDS Limburg.
 ## Installation
 
 1. Clone the repository:
-    ```sh
-    git clone https://github.com/yourusername/vertretungsplan-fds-limburg.git
-    ```
+   ```sh
+   git clone https://github.com/yourusername/vertretungsplan-fds-limburg.git
+   ```
 2. Navigate to the project directory:
-    ```sh
-    cd vertretungsplan-fds-limburg
-    ```
+   ```sh
+   cd vertretungsplan-fds-limburg
+   ```
 3. Install the dependencies:
-    ```sh
-    npm install
-    ```
+   ```sh
+   npm install
+   ```
 
 ## Usage
 
 1. Start the development server:
-    ```sh
-    npm run dev
-    ```
+   ```sh
+   npm run dev
+   ```
 2. Open your browser and navigate to `http://localhost:3000`.
 
 ## Folder Structure
 
 - `src/`
-    - `components/`
-        - `Header.tsx`
-        - `Footer.tsx`
-        - `SearchBar.tsx`
-        - `SubstitutionPlan.tsx`
-    - `pages/`
-        - `index.tsx`
-        - `impressum.tsx`
-        - `datenschutz.tsx`
-        - `_app.tsx`
-        - `_document.tsx`
-    - `styles/`
-        - `globals.css`
+  - `components/`
+    - `Header.tsx`
+    - `Footer.tsx`
+    - `SearchBar.tsx`
+    - `SubstitutionPlan.tsx`
+  - `pages/`
+    - `index.tsx`
+    - `impressum.tsx`
+    - `datenschutz.tsx`
+    - `_app.tsx`
+    - `_document.tsx`
+  - `styles/`
+    - `globals.css`
 
 ## Contributing
 
 1. Fork the repository.
 2. Create a new branch:
-    ```sh
-    git checkout -b feature/YourFeature
-    ```
+   ```sh
+   git checkout -b feature/YourFeature
+   ```
 3. Make your changes.
 4. Commit your changes:
-    ```sh
-    git commit -m 'Add some feature'
-    ```
+   ```sh
+   git commit -m 'Add some feature'
+   ```
 5. Push to the branch:
-    ```sh
-    git push origin feature/YourFeature
-    ```
+   ```sh
+   git push origin feature/YourFeature
+   ```
 6. Open a pull request.
 
 ## License
