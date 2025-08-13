@@ -1,9 +1,12 @@
 import React from "react";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const Impressum: React.FC = () => {
   return (
-    <div className="container mx-auto p-6">
+    <div className="flex min-h-screen flex-col bg-gray-100 text-gray-900">
+      <Header />
+      <div className="container mx-auto flex-grow p-6">
       <h1 className="mb-4 text-2xl font-bold">Impressum</h1>
       <p className="mb-4">
         <strong>Angaben gemäß § 5 TMG:</strong>
@@ -60,6 +63,8 @@ const Impressum: React.FC = () => {
         entsprechenden Rechtsverletzungen werden wir diese Inhalte umgehend
         entfernen.
       </p>
+      </div>
+      <Footer />
     </div>
   );
 };
