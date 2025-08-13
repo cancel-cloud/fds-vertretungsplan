@@ -5,12 +5,17 @@ import SubstitutionPlan from "../components/SubstitutionPlan";
 import Footer from "../components/Footer";
 import React from "react";
 
+/**
+ * Home page component displaying the substitution plan
+ */
 const Home: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-gray-100 text-gray-900">
+      <Header />
       <main className="flex-grow">
         <SubstitutionPlan />
       </main>
+      <Footer />
     </div>
   );
 };
