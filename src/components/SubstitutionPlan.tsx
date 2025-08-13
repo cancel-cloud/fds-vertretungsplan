@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import SearchBar from "./SearchBar";
 import Loading from "./Loading";
+import SkeletonLoader from "./SkeletonLoader";
 import Error from "./Error";
 import { Switch } from "@nextui-org/switch";
 import { generateDate, sanitizeHtml, sortSubstitutionsByHour, filterSubstitutions, isHtmlContentSafe } from "@/utils";
@@ -93,20 +94,27 @@ const SubstitutionPlan: React.FC = () => {
     <div className="container mx-auto py-6">
       <SearchBar onSearch={handleSearch} />
       <div className="my-4 flex justify-center">
-        <label className="mr-2">Heute</label>
-        <Switch checked={isTomorrow} onChange={toggleDate}>
+        <label htmlFor="date-toggle" className="mr-2 flex items-center">
+          Heute
+        </label>
+        <Switch 
+          id="date-toggle"
+          checked={isTomorrow} 
+          onChange={toggleDate}
+          aria-label="Zwischen heute und morgen wechseln"
+        >
           Morgen
         </Switch>
       </div>
       {loading ? (
-        <Loading />
+        <SkeletonLoader />
       ) : error ? (
         <Error />
       ) : showMrBig ? (
         <div className="flex justify-center">
           <Image 
             src={UI_CONFIG.EASTER_EGG_IMAGE} 
-            alt="Mr. Big" 
+            alt="Mr. Big Easter Egg" 
             className="rounded shadow-md" 
             width={400} 
             height={300} 
@@ -114,62 +122,72 @@ const SubstitutionPlan: React.FC = () => {
         </div>
       ) : (
         <div className={`grid gap-6 ${UI_CONFIG.GRID_BREAKPOINTS.MOBILE} ${UI_CONFIG.GRID_BREAKPOINTS.TABLET} ${UI_CONFIG.GRID_BREAKPOINTS.DESKTOP}`}>
-          {filteredData.map((item, index) => (
-            <div key={index} className="rounded bg-white p-4 shadow-md">
-              <p>
-                <strong>Stunde:</strong> {item.data[SUBSTITUTION_FIELDS.HOUR]}
-              </p>
-              <p>
-                <strong>Zeit:</strong> {item.data[SUBSTITUTION_FIELDS.TIME]}
-              </p>
-              <p>
-                <strong>Klassen:</strong> {item.data[SUBSTITUTION_FIELDS.CLASS]}
-              </p>
-              <p>
-                <strong>Fach:</strong> {item.data[SUBSTITUTION_FIELDS.SUBJECT]}
-              </p>
-              <p>
-                <strong>Raum:</strong>{" "}
-                {isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.ROOM]) ? (
-                  <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.ROOM]) }} />
-                ) : (
-                  item.data[SUBSTITUTION_FIELDS.ROOM]
-                )}
-              </p>
-              <p>
-                <strong>Lehrkraft:</strong>{" "}
-                {isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.TEACHER]) ? (
-                  <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.TEACHER]) }} />
-                ) : (
-                  item.data[SUBSTITUTION_FIELDS.TEACHER]
-                )}
-              </p>
-              <p>
-                <strong>Info:</strong>{" "}
-                {item.data[SUBSTITUTION_FIELDS.INFO] ? (
-                  isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.INFO]) ? (
-                    <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.INFO]) }} />
-                  ) : (
-                    item.data[SUBSTITUTION_FIELDS.INFO]
-                  )
-                ) : (
-                  "Keine Info"
-                )}
-              </p>
-              <p>
-                <strong>Vertretungstext:</strong>{" "}
-                {item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT] ? (
-                  isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT]) ? (
-                    <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT]) }} />
-                  ) : (
-                    item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT]
-                  )
-                ) : (
-                  "Kein Vertretungstext"
-                )}
+          {filteredData.length === 0 ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-gray-500 text-lg">
+                {data.length === 0 
+                  ? "Keine Vertretungen für diesen Tag vorhanden." 
+                  : "Keine Vertretungen entsprechen Ihrer Suche."}
               </p>
             </div>
-          ))}
+          ) : (
+            filteredData.map((item, index) => (
+              <div key={index} className="rounded bg-white p-4 shadow-md transition-shadow hover:shadow-lg">
+                <p>
+                  <strong>Stunde:</strong> {item.data[SUBSTITUTION_FIELDS.HOUR]}
+                </p>
+                <p>
+                  <strong>Zeit:</strong> {item.data[SUBSTITUTION_FIELDS.TIME]}
+                </p>
+                <p>
+                  <strong>Klassen:</strong> {item.data[SUBSTITUTION_FIELDS.CLASS]}
+                </p>
+                <p>
+                  <strong>Fach:</strong> {item.data[SUBSTITUTION_FIELDS.SUBJECT]}
+                </p>
+                <p>
+                  <strong>Raum:</strong>{" "}
+                  {isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.ROOM]) ? (
+                    <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.ROOM]) }} />
+                  ) : (
+                    item.data[SUBSTITUTION_FIELDS.ROOM]
+                  )}
+                </p>
+                <p>
+                  <strong>Lehrkraft:</strong>{" "}
+                  {isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.TEACHER]) ? (
+                    <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.TEACHER]) }} />
+                  ) : (
+                    item.data[SUBSTITUTION_FIELDS.TEACHER]
+                  )}
+                </p>
+                <p>
+                  <strong>Info:</strong>{" "}
+                  {item.data[SUBSTITUTION_FIELDS.INFO] ? (
+                    isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.INFO]) ? (
+                      <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.INFO]) }} />
+                    ) : (
+                      item.data[SUBSTITUTION_FIELDS.INFO]
+                    )
+                  ) : (
+                    "Keine Info"
+                  )}
+                </p>
+                <p>
+                  <strong>Vertretungstext:</strong>{" "}
+                  {item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT] ? (
+                    isHtmlContentSafe(item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT]) ? (
+                      <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT]) }} />
+                    ) : (
+                      item.data[SUBSTITUTION_FIELDS.SUBSTITUTION_TEXT]
+                    )
+                  ) : (
+                    "Kein Vertretungstext"
+                  )}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
