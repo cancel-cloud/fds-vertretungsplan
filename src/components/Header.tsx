@@ -22,7 +22,10 @@ const Header: React.FC = () => {
           <Link href="/datenschutz" className="mx-2 hover:underline">
             Datenschutz
           </Link>
-          <Link href="https://fds-limburg.schule/iserv" className="inline-block bg-gradient-to-r from-lime-600 via-slate-500 to-blue-600 bg-clip-text text-transparent">
+          <Link
+            href="https://fds-limburg.schule/iserv"
+            className="inline-block bg-gradient-to-r from-lime-600 via-slate-500 to-blue-600 bg-clip-text text-transparent"
+          >
             FDS-IServ
           </Link>
         </nav>
