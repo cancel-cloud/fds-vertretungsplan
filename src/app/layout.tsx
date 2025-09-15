@@ -1,5 +1,6 @@
 import { Analytics } from "@vercel/analytics/react";
 import { Metadata } from "next";
+import { PostHogProvider } from "./providers";
 
 export const metadata: Metadata = {
   title: "FDS Vertretungsplan",
@@ -33,8 +34,10 @@ export default function RootLayout({
         <title>FDS Vertretungsplan</title>
       </head>
       <body>
-        {children}
-        <Analytics />
+        <PostHogProvider>
+          {children}
+          <Analytics />
+        </PostHogProvider>
       </body>
     </html>
   );
