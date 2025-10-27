@@ -15,7 +15,7 @@ const cache = new Map<string, { data: ProcessedSubstitution[]; timestamp: number
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const getCacheKey = (date: Date): string => {
-  return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  return formatDateForApi(date); // Preserve local day boundaries
 };
 
 export function useSubstitutions(selectedDate: Date): UseSubstitutionsResult {
