@@ -102,7 +102,7 @@ export interface WebUntisSubstitutionRow {
 }
 
 export interface WebUntisResponse {
-  payload: {
+  payload?: {
     importInProgress: boolean;
     date: number;
     nextDate: number;
@@ -123,4 +123,23 @@ export interface ApiError {
   message: string;
   status?: number;
   code?: string;
-} 
+}
+
+export interface SubstitutionApiMetaResponse {
+  type: 'meta';
+  date: number;
+  schoolName: string;
+  config: Record<string, unknown>;
+  message: string;
+}
+
+export interface SubstitutionApiSuccessResponse {
+  type: 'substitution';
+  date: number;
+  rows: WebUntisSubstitutionRow[];
+  lastUpdate?: string | null;
+}
+
+export type SubstitutionApiResponse =
+  | SubstitutionApiMetaResponse
+  | SubstitutionApiSuccessResponse;

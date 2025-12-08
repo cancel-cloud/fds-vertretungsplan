@@ -20,7 +20,7 @@ export default function HomePage() {
   });
   
   // Fetch substitution data
-  const { substitutions, isLoading, error, refetch } = useSubstitutions(selectedDate);
+  const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
 
   // Process and filter substitutions
   const { filteredSubstitutions, availableCategories, stats } = useMemo(() => {
@@ -130,6 +130,7 @@ export default function HomePage() {
             error={error}
             onRetry={refetch}
             selectedDate={selectedDate}
+            metaResponse={metaResponse}
           />
         </main>
       </div>

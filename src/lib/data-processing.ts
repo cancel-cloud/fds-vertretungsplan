@@ -121,12 +121,18 @@ export const processSubstitutionRow = (row: WebUntisSubstitutionRow): ProcessedS
 };
 
 // Process WebUntis API response into app format
-export const processApiResponse = (response: WebUntisResponse): ProcessedSubstitution[] => {
-  if (!response.payload || !response.payload.rows) {
+export const processApiResponse = (
+  source: WebUntisResponse | WebUntisSubstitutionRow[]
+): ProcessedSubstitution[] => {
+  const rows = Array.isArray(source)
+    ? source
+    : source?.payload?.rows;
+
+  if (!rows || rows.length === 0) {
     return [];
   }
 
-  return response.payload.rows.map(processSubstitutionRow);
+  return rows.map(processSubstitutionRow);
 };
 
 // Sort substitutions by priority (Entfall first) and then by hour

@@ -1,6 +1,6 @@
 'use client';
 
-import { ProcessedSubstitution, FilterState } from '@/types';
+import { ProcessedSubstitution, FilterState, SubstitutionApiMetaResponse } from '@/types';
 import { SubstitutionCard } from './substitution-card';
 import { SearchInput } from './search-input';
 import { CategoryFilters } from './category-filters';
@@ -25,6 +25,7 @@ interface SubstitutionListProps {
   error?: string | null;
   onRetry?: () => void;
   selectedDate: Date;
+  metaResponse?: SubstitutionApiMetaResponse | null;
   className?: string;
 }
 
@@ -42,6 +43,7 @@ export function SubstitutionList({
   error = null,
   onRetry,
   selectedDate,
+  metaResponse = null,
   className = ""
 }: SubstitutionListProps) {
 
@@ -129,6 +131,22 @@ export function SubstitutionList({
           <div className="flex items-center gap-3 text-[rgb(var(--color-text-secondary))]">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span>Vertretungen werden geladen...</span>
+          </div>
+        </div>
+      ) : metaResponse ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center space-y-4 max-w-lg">
+            <div className="flex justify-center">
+              <Calendar className="h-12 w-12 text-[rgb(var(--color-text-secondary))]" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">
+                Kein Vertretungsplan verfügbar
+              </h3>
+              <p className="text-[rgb(var(--color-text-secondary))]">
+                Kein Vertretungsplan verfügbar. {metaResponse.message}
+              </p>
+            </div>
           </div>
         </div>
       ) : filteredSubstitutions.length > 0 ? (
