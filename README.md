@@ -3,8 +3,10 @@
 Eine moderne Web-Anwendung zur Anzeige des Vertretungsplans der Friedrich-Dessauer-Schule Limburg.
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Version](https://img.shields.io/badge/version-0.1.1-blue)
+![Version](https://img.shields.io/badge/version-0.2.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+
+> **Version 2.0** - Die neue und verbesserte Version ist jetzt auf dem `main` Branch verfügbar!
 
 ## 🚀 Features
 
