@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AppErrorBoundary } from "@/components/error-boundary";
@@ -27,6 +28,7 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
         </AppErrorBoundary>
+        <Analytics />
       </body>
     </html>
   );
