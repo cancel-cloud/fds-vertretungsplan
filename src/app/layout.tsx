@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/providers/theme-provider";
 import { AppErrorBoundary } from "@/components/error-boundary";
+import { ThemeProvider } from "@/providers/theme-provider";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,6 +26,7 @@ export default function RootLayout({
         <AppErrorBoundary>
           <ThemeProvider>
             {children}
+            <Analytics />
           </ThemeProvider>
         </AppErrorBoundary>
       </body>
