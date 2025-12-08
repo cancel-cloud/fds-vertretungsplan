@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppErrorBoundary } from "@/components/error-boundary";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,6 +28,7 @@ export default function RootLayout({
           <ThemeProvider>
             {children}
             <Analytics />
+            <SpeedInsights />
           </ThemeProvider>
         </AppErrorBoundary>
       </body>
