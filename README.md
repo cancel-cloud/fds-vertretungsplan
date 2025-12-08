@@ -21,7 +21,7 @@ Eine moderne Web-Anwendung zur Anzeige des Vertretungsplans der Friedrich-Dessau
 
 ## 🛠 Technologien
 
-- **Frontend**: React 18, Next.js 14, TypeScript
+- **Frontend**: React 18, Next.js 15, TypeScript
 - **Styling**: Tailwind CSS, NextUI Components
 - **API**: Next.js API Routes
 - **Datenquelle**: WebUntis API
