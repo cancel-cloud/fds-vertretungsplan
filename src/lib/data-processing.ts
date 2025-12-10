@@ -171,6 +171,7 @@ export const filterSubstitutions = (
       sub.room.toLowerCase().includes(searchTerm) ||
       sub.teacher.toLowerCase().includes(searchTerm) ||
       sub.type.toLowerCase().includes(searchTerm) ||
+      sub.hours.toLowerCase().includes(searchTerm) ||
       sub.info.toLowerCase().includes(searchTerm)
     );
   }
