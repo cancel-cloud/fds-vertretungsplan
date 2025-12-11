@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { MobileMenu } from '@/components/layout/mobile-menu';
@@ -27,10 +27,28 @@ function HomePageContent() {
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  
+  // Extract search parameter value for dependency tracking
+  const searchParamValue = searchParams.get('search') || '';
+  
   const [filterState, setFilterState] = useState<FilterState>({
-    search: searchParams.get('search') || '',
+    search: searchParamValue,
     categories: []
   });
+  
+  // Sync search state with URL parameters when they change (e.g., browser back/forward)
+  useEffect(() => {
+    setFilterState(prev => {
+      // Only update if the search value has changed
+      if (prev.search !== searchParamValue) {
+        return {
+          ...prev,
+          search: searchParamValue
+        };
+      }
+      return prev;
+    });
+  }, [searchParamValue]);
   
   // Fetch substitution data
   const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
