@@ -11,7 +11,7 @@ export function WelcomeOverlay() {
 
   useEffect(() => {
     // Check if welcome has been shown before
-    const hasSeenWelcome = sessionStorage.getItem('fds-welcome-seen');
+    const hasSeenWelcome = localStorage.getItem('fds-welcome-seen');
     
     if (!hasSeenWelcome) {
       setIsVisible(true);
@@ -72,7 +72,7 @@ export function WelcomeOverlay() {
 
   const handleDismiss = () => {
     setIsVisible(false);
-    sessionStorage.setItem('fds-welcome-seen', 'true');
+    localStorage.setItem('fds-welcome-seen', 'true');
   };
 
   if (!isVisible) return null;
@@ -154,7 +154,7 @@ export function WelcomeOverlay() {
                 Los geht&rsquo;s!
               </Button>
               <p className="text-xs text-center text-[rgb(var(--color-text-secondary))]">
-                Diese Nachricht wird nur einmal pro Sitzung angezeigt
+                Diese Nachricht wird nur einmal angezeigt
               </p>
             </div>
           </div>
