@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { MobileMenu } from '@/components/layout/mobile-menu';
 import { CalendarWidget } from '@/components/calendar-widget';
@@ -12,12 +13,42 @@ import { FilterState } from '@/types';
 import { sortSubstitutions, filterSubstitutions, getUniqueSubstitutionTypes } from '@/lib/data-processing';
 
 export default function HomePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
+  );
+}
+
+function HomePageContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  
+  // Extract search parameter value for dependency tracking
+  const searchParamValue = searchParams.get('search') || '';
+  
   const [filterState, setFilterState] = useState<FilterState>({
-    search: '',
+    search: searchParamValue,
     categories: []
   });
+  
+  // Sync search state with URL parameters when they change (e.g., browser back/forward)
+  useEffect(() => {
+    setFilterState(prev => {
+      // Only update if the search value has changed
+      if (prev.search !== searchParamValue) {
+        return {
+          ...prev,
+          search: searchParamValue
+        };
+      }
+      return prev;
+    });
+  }, [searchParamValue]);
   
   // Fetch substitution data
   const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
@@ -41,6 +72,15 @@ export default function HomePage() {
 
   const handleSearchChange = (value: string) => {
     setFilterState(prev => ({ ...prev, search: value }));
+    
+    // Update URL
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set('search', value);
+    } else {
+      params.delete('search');
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleCategoryToggle = (category: string) => {
@@ -58,6 +98,10 @@ export default function HomePage() {
 
   const handleClearAllFilters = () => {
     setFilterState({ search: '', categories: [] });
+    // Clear URL search param
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('search');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleMobileMenuToggle = () => {
@@ -137,3 +181,4 @@ export default function HomePage() {
     </div>
   );
 }
+
