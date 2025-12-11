@@ -14,7 +14,7 @@ import { sortSubstitutions, filterSubstitutions, getUniqueSubstitutionTypes } fr
 
 export default function HomePage() {
   return (
-    <Suspense>
+    <Suspense fallback={<div>Loading...</div>}>
       <HomePageContent />
     </Suspense>
   );
