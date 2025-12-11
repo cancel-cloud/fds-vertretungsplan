@@ -27,19 +27,22 @@ function HomePageContent() {
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  
+  // Extract search parameter value for dependency tracking
+  const searchParamValue = searchParams.get('search') || '';
+  
   const [filterState, setFilterState] = useState<FilterState>({
-    search: searchParams.get('search') || '',
+    search: searchParamValue,
     categories: []
   });
   
   // Sync search state with URL parameters when they change (e.g., browser back/forward)
   useEffect(() => {
-    const searchParam = searchParams.get('search') || '';
     setFilterState(prev => ({
       ...prev,
-      search: searchParam
+      search: searchParamValue
     }));
-  }, [searchParams]);
+  }, [searchParamValue]);
   
   // Fetch substitution data
   const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
