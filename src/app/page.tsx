@@ -38,10 +38,16 @@ function HomePageContent() {
   
   // Sync search state with URL parameters when they change (e.g., browser back/forward)
   useEffect(() => {
-    setFilterState(prev => ({
-      ...prev,
-      search: searchParamValue
-    }));
+    setFilterState(prev => {
+      // Only update if the search value has changed
+      if (prev.search !== searchParamValue) {
+        return {
+          ...prev,
+          search: searchParamValue
+        };
+      }
+      return prev;
+    });
   }, [searchParamValue]);
   
   // Fetch substitution data
