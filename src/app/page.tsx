@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { MobileMenu } from '@/components/layout/mobile-menu';
@@ -31,6 +31,15 @@ function HomePageContent() {
     search: searchParams.get('search') || '',
     categories: []
   });
+  
+  // Sync search state with URL parameters when they change (e.g., browser back/forward)
+  useEffect(() => {
+    const searchParam = searchParams.get('search') || '';
+    setFilterState(prev => ({
+      ...prev,
+      search: searchParam
+    }));
+  }, [searchParams]);
   
   // Fetch substitution data
   const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
