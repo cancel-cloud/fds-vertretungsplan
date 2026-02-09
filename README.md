@@ -144,12 +144,20 @@ A modern, fast, and user-friendly substitution plan viewer for the Friedrich-Des
    UNTIS_SCHOOL=your-school-name
    UNTIS_BASE_URL=https://your-school.webuntis.com
    
-   # Optional: Analytics (remove if not needed)
-   NEXT_PUBLIC_POSTHOG_KEY=your-posthog-key
-   
-   # Optional: Feature flags
-   NEXT_PUBLIC_ENABLE_WELCOME=true
-   NEXT_PUBLIC_USE_SAMPLE_DATA=false
+   # Optional: Client Analytics (PostHog)
+   NEXT_PUBLIC_POSTHOG_KEY=phc_xxx
+   NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
+
+   # Optional: Server-side analytics capture (PostHog)
+   POSTHOG_API_KEY=phx_xxx
+   POSTHOG_HOST=https://eu.i.posthog.com
+
+   # Feature flags are configured in PostHog (recommended defaults):
+   # - ui.new_homepage: 0% rollout
+   # - ui.welcome_overlay: enabled/disabled by rollout
+   # - ui.advanced_calendar: enabled/disabled by rollout
+   # - analytics.debug_mode: false
+   # - analytics.client_capture_sample_rate: 100
    ```
 
 4. **Run the development server**

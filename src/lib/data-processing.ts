@@ -1,14 +1,17 @@
-import { 
-  WebUntisResponse, 
-  WebUntisSubstitutionRow, 
+import {
+  FilterState,
   ProcessedSubstitution,
-  FilterState 
+  SubstitutionType,
+  WebUntisResponse,
+  WebUntisSubstitutionRow,
 } from '@/types';
+import { SUBSTITUTION_PRIORITY } from '@/lib/substitution-config';
 
-// Create utility functions for HTML parsing and type extraction
-const parseHtmlContent = (content: string): string => {
-  return content
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
+const TYPE_TEXT_INDEX = 6;
+
+const parseHtmlContent = (content: string): string =>
+  content
+    .replace(/<[^>]*>/g, '')
     .replace(/&auml;/g, 'ä')
     .replace(/&ouml;/g, 'ö')
     .replace(/&uuml;/g, 'ü')
@@ -21,89 +24,71 @@ const parseHtmlContent = (content: string): string => {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'");
-};
 
-const extractSubstitutionType = (data: string[], cellClasses: Record<string, string[]>): string => {
-  const typeText = data[6] || '';
-  
-  const hasCancelStyle = Object.values(cellClasses).some(classes => 
-    classes.includes('cancelStyle')
-  );
-  
+export const extractSubstitutionType = (
+  data: string[],
+  cellClasses: Record<string, string[]> = {}
+): SubstitutionType => {
+  const typeText = data[TYPE_TEXT_INDEX] || '';
+
+  const hasCancelStyle = Object.values(cellClasses).some((classes) => classes.includes('cancelStyle'));
+
   if (hasCancelStyle || typeText.includes('Entfall')) {
     return 'Entfall';
   }
-  
-  if (typeText.includes('Raumänderung') || typeText.includes('Raum')) {
+
+  if (typeText.includes('Raumänderung') || /\bRaum\b/.test(typeText)) {
     return 'Raumänderung';
   }
-  
+
   if (typeText.includes('Vertretung')) {
     return 'Vertretung';
   }
-  
+
   if (typeText.includes('Verlegung')) {
     return 'Verlegung';
   }
-  
+
   if (typeText.includes('Sondereinsatz')) {
     return 'Sondereinsatz';
   }
-  
+
   if (typeText.includes('EVA')) {
     return 'EVA';
   }
-  
+
   if (typeText.includes('Klausur')) {
     return 'Klausur';
   }
-  
+
   if (typeText.includes('Freisetzung')) {
     return 'Freisetzung';
   }
-  
-  return typeText || 'Sonstiges';
+
+  return 'Sonstiges';
 };
 
-// Priority mapping for sorting substitutions
-const SUBSTITUTION_PRIORITY: Record<string, number> = {
-  'Entfall': 0,
-  'Raumänderung': 1,
-  'Vertretung': 2,
-  'Verlegung': 3,
-  'Sondereinsatz': 4,
-  'EVA': 5,
-  'Klausur': 6,
-  'Freisetzung': 7,
-  'Sonstiges': 8,
-};
-
-// Parse hour range to get start hour for sorting
 const parseHourForSorting = (hourString: string): number => {
   const match = hourString.match(/^(\d+)/);
-  return match ? parseInt(match[1]) : 999;
+  return match ? Number.parseInt(match[1], 10) : 999;
 };
 
-// Extract room information, handling substitution markup
 const extractRoomInfo = (roomData: string): string => {
   const cleanRoom = parseHtmlContent(roomData);
   const roomMatch = cleanRoom.match(/^([^(]+)(?:\s*\([^)]+\))?/);
   return roomMatch ? roomMatch[1].trim() : cleanRoom;
 };
 
-// Extract teacher information, handling substitution markup
 const extractTeacherInfo = (teacherData: string): string => {
   const cleanTeacher = parseHtmlContent(teacherData);
   const teacherMatch = cleanTeacher.match(/^([^(]+)(?:\s*\([^)]+\))?/);
   return teacherMatch ? teacherMatch[1].trim() : cleanTeacher;
 };
 
-// Process a single WebUntis row into our app format
 export const processSubstitutionRow = (row: WebUntisSubstitutionRow): ProcessedSubstitution => {
   const [hours, time, group, subject, room, teacher, , info] = row.data;
-  
-  const processedType = extractSubstitutionType(row.data, row.cellClasses);
-  
+  const processedType = extractSubstitutionType(row.data, row.cellClasses || {});
+
   return {
     hours: hours || '',
     time: time || '',
@@ -116,17 +101,15 @@ export const processSubstitutionRow = (row: WebUntisSubstitutionRow): ProcessedS
     originalData: {
       data: row.data,
       group: row.group,
+      cellClasses: row.cellClasses || {},
     },
   };
 };
 
-// Process WebUntis API response into app format
 export const processApiResponse = (
   source: WebUntisResponse | WebUntisSubstitutionRow[]
 ): ProcessedSubstitution[] => {
-  const rows = Array.isArray(source)
-    ? source
-    : source?.payload?.rows;
+  const rows = Array.isArray(source) ? source : source?.payload?.rows;
 
   if (!rows || rows.length === 0) {
     return [];
@@ -135,28 +118,25 @@ export const processApiResponse = (
   return rows.map(processSubstitutionRow);
 };
 
-// Sort substitutions by priority (Entfall first) and then by hour
-export const sortSubstitutions = (substitutions: ProcessedSubstitution[]): ProcessedSubstitution[] => {
-  return [...substitutions].sort((a, b) => {
-    const priorityA = SUBSTITUTION_PRIORITY[a.type] ?? SUBSTITUTION_PRIORITY['Sonstiges'];
-    const priorityB = SUBSTITUTION_PRIORITY[b.type] ?? SUBSTITUTION_PRIORITY['Sonstiges'];
-    
+export const sortSubstitutions = (substitutions: ProcessedSubstitution[]): ProcessedSubstitution[] =>
+  [...substitutions].sort((a, b) => {
+    const priorityA = SUBSTITUTION_PRIORITY[a.type] ?? SUBSTITUTION_PRIORITY.Sonstiges;
+    const priorityB = SUBSTITUTION_PRIORITY[b.type] ?? SUBSTITUTION_PRIORITY.Sonstiges;
+
     if (priorityA !== priorityB) {
       return priorityA - priorityB;
     }
-    
+
     const hourA = parseHourForSorting(a.hours);
     const hourB = parseHourForSorting(b.hours);
-    
+
     if (hourA !== hourB) {
       return hourA - hourB;
     }
-    
+
     return a.group.localeCompare(b.group, 'de');
   });
-};
 
-// Filter substitutions based on search and categories
 export const filterSubstitutions = (
   substitutions: ProcessedSubstitution[],
   filterState: FilterState
@@ -165,32 +145,33 @@ export const filterSubstitutions = (
 
   if (filterState.search.trim()) {
     const searchTerm = filterState.search.toLowerCase().trim();
-    filtered = filtered.filter(sub => 
-      sub.group.toLowerCase().includes(searchTerm) ||
-      sub.subject.toLowerCase().includes(searchTerm) ||
-      sub.room.toLowerCase().includes(searchTerm) ||
-      sub.teacher.toLowerCase().includes(searchTerm) ||
-      sub.type.toLowerCase().includes(searchTerm) ||
-      sub.hours.toLowerCase().includes(searchTerm) ||
-      sub.info.toLowerCase().includes(searchTerm)
+    filtered = filtered.filter((substitution) =>
+      [
+        substitution.group,
+        substitution.subject,
+        substitution.room,
+        substitution.teacher,
+        substitution.type,
+        substitution.hours,
+        substitution.info,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(searchTerm)
     );
   }
 
   if (filterState.categories.length > 0) {
-    filtered = filtered.filter(sub => 
-      filterState.categories.includes(sub.type)
-    );
+    filtered = filtered.filter((substitution) => filterState.categories.includes(substitution.type));
   }
 
   return filtered;
 };
 
-// Get unique substitution types for filter options
-export const getUniqueSubstitutionTypes = (substitutions: ProcessedSubstitution[]): string[] => {
-  const types = new Set(substitutions.map(sub => sub.type));
-  return Array.from(types).sort((a, b) => {
-    const priorityA = SUBSTITUTION_PRIORITY[a] ?? SUBSTITUTION_PRIORITY['Sonstiges'];
-    const priorityB = SUBSTITUTION_PRIORITY[b] ?? SUBSTITUTION_PRIORITY['Sonstiges'];
-    return priorityA - priorityB;
-  });
-}; 
+export const getUniqueSubstitutionTypes = (substitutions: ProcessedSubstitution[]): SubstitutionType[] => {
+  const uniqueTypes = new Set<SubstitutionType>(substitutions.map((substitution) => substitution.type));
+
+  return Array.from(uniqueTypes).sort(
+    (a, b) => (SUBSTITUTION_PRIORITY[a] ?? 99) - (SUBSTITUTION_PRIORITY[b] ?? 99)
+  );
+};

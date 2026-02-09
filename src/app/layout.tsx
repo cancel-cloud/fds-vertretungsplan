@@ -1,19 +1,14 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { AppErrorBoundary } from "@/components/error-boundary";
-import { ThemeProvider } from "@/providers/theme-provider";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+import type { Metadata } from 'next';
+import './globals.css';
+import { AppErrorBoundary } from '@/components/error-boundary';
+import { ThemeProvider } from '@/providers/theme-provider';
+import { PostHogProvider } from '@/providers/posthog-provider';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
-  title: "Vertretungsplan - Dessauer Schule Limburg",
-  description: "Hier finden Sie alle aktuellen Vertretungen und Änderungen für Ihre Klasse.",
+  title: 'Vertretungsplan - Dessauer Schule Limburg',
+  description: 'Hier finden Sie alle aktuellen Vertretungen und Änderungen für Ihre Klasse.',
 };
 
 export default function RootLayout({
@@ -23,12 +18,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" suppressHydrationWarning>
-      <body className={`${inter.variable} antialiased`}>
+      <body className="antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground"
+        >
+          Zum Inhalt springen
+        </a>
         <AppErrorBoundary>
           <ThemeProvider>
-            {children}
-            <Analytics />
-            <SpeedInsights />
+            <PostHogProvider>
+              {children}
+              <Analytics />
+              <SpeedInsights />
+            </PostHogProvider>
           </ThemeProvider>
         </AppErrorBoundary>
       </body>

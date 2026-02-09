@@ -1,6 +1,18 @@
+export type SubstitutionType =
+  | 'Entfall'
+  | 'Raumänderung'
+  | 'Vertretung'
+  | 'Verlegung'
+  | 'Sondereinsatz'
+  | 'EVA'
+  | 'Klausur'
+  | 'Freisetzung'
+  | 'Sonstiges';
+
 export interface SubstitutionData {
   data: [string, string, string, string, string, string, string, string];
   group: string;
+  cellClasses?: Record<string, string[]>;
 }
 
 export interface ProcessedSubstitution {
@@ -10,7 +22,7 @@ export interface ProcessedSubstitution {
   subject: string;
   room: string;
   teacher: string;
-  type: string;
+  type: SubstitutionType;
   info: string;
   originalData: SubstitutionData;
 }
@@ -27,16 +39,6 @@ export interface SampleData {
   categories: Category[];
 }
 
-export type SubstitutionType = 
-  | 'Entfall'
-  | 'Raumänderung'
-  | 'Vertretung'
-  | 'Sondereinsatz'
-  | 'EVA'
-  | 'Klausur'
-  | 'Freisetzung'
-  | 'Sonstiges';
-
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 export interface CalendarDate {
@@ -48,7 +50,7 @@ export interface CalendarDate {
 
 export interface FilterState {
   search: string;
-  categories: string[];
+  categories: SubstitutionType[];
 }
 
 // WebUntis API Types
@@ -129,7 +131,6 @@ export interface SubstitutionApiMetaResponse {
   type: 'meta';
   date: number;
   schoolName: string;
-  config: Record<string, unknown>;
   message: string;
 }
 
