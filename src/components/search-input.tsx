@@ -30,6 +30,10 @@ export function SearchInput({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
           className="pl-10 pr-10 bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] focus:border-[rgb(var(--color-primary))] focus:ring-[rgb(var(--color-focus-ring))]"
         />
         {value && (
