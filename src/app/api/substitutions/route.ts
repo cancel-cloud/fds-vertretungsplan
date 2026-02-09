@@ -1,11 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { WebUntisRequest, WebUntisResponse } from '@/types';
+import {
+  SubstitutionApiResponse,
+  WebUntisRequest,
+  WebUntisResponse,
+} from '@/types';
+import { captureServerEvent } from '@/lib/analytics/posthog-server';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
+import { sanitizeDeviceId } from '@/lib/analytics/device-id';
+import {
+  buildSubstitutionUrl,
+  normalizeDateParam,
+  resolveBaseUrl,
+  resolveSchoolName,
+} from '@/app/api/substitutions/route-utils';
 
-const DEFAULT_SCHOOL_NAME = 'friedrich-dessauer-schule-limburg';
-const SUBSTITUTION_PATH = '/WebUntis/monitor/substitution/data';
 const META_RESPONSE_MESSAGE = 'No substitution data found. Only configuration returned.';
 const JSON_CONTENT_TYPE = /application\/json/i;
 const ERROR_SNIPPET_LIMIT = 500;
+const RESPONSE_CACHE_TTL_MS = 30_000;
+const RESPONSE_CACHE_MAX_AGE_SECONDS = Math.floor(RESPONSE_CACHE_TTL_MS / 1000);
+const RESPONSE_CACHE_SWR_SECONDS = 60;
+const RESPONSE_CACHE_MAX_ENTRIES = 200;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 60;
+const RATE_LIMIT_MAX_ENTRIES = 1000;
+
+// Best-effort in-memory controls for serverless instances.
+// State is not durable across cold starts.
+const responseCache = new Map<string, { timestamp: number; data: SubstitutionApiResponse }>();
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
 interface ParsedResponseBody {
   contentType: string;
@@ -13,56 +36,82 @@ interface ParsedResponseBody {
   json?: unknown;
 }
 
-function resolveSchoolName() {
-  const configured = process.env.UNTIS_SCHOOL?.trim();
-  return configured && configured.length > 0 ? configured : DEFAULT_SCHOOL_NAME;
-}
 
-function resolveBaseUrl(schoolName: string) {
-  const envUrl = process.env.UNTIS_BASE_URL?.trim();
-  if (envUrl) {
-    return envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
-  }
-  return `https://${schoolName}.webuntis.com`;
-}
-
-function buildSubstitutionUrl(baseUrl: string, schoolName: string) {
-  return `${baseUrl}${SUBSTITUTION_PATH}?school=${encodeURIComponent(schoolName)}`;
-}
-
-const SCHOOL_NAME = resolveSchoolName();
-const BASE_URL = resolveBaseUrl(SCHOOL_NAME);
-const SUBSTITUTION_URL = buildSubstitutionUrl(BASE_URL, SCHOOL_NAME);
-
-function formatDateForUntis(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  const formatted = `${year}${month}${day}`;
-  return {
-    raw: formatted,
-    numeric: Number.parseInt(formatted, 10),
-  };
-}
-
-function normalizeDateParam(dateParam: string | null, offsetParam: string | null) {
-  if (dateParam && /^\d{8}$/.test(dateParam)) {
-    return {
-      raw: dateParam,
-      numeric: Number.parseInt(dateParam, 10),
-    };
+function getClientIp(req: NextRequest) {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0]?.trim() || 'unknown';
   }
 
-  const offset = offsetParam ? Number.parseInt(offsetParam, 10) : 0;
-  const targetDate = new Date();
-  targetDate.setHours(0, 0, 0, 0);
-
-  if (!Number.isNaN(offset) && offset !== 0) {
-    targetDate.setDate(targetDate.getDate() + offset);
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) {
+    return realIp.trim();
   }
 
-  return formatDateForUntis(targetDate);
+  return 'unknown';
 }
+
+function getDistinctId(req: NextRequest): string {
+  const incoming = sanitizeDeviceId(req.headers.get('x-device-id'));
+  return incoming ?? 'api-anonymous';
+}
+
+function pruneRateLimitStore(now: number) {
+  for (const [ip, entry] of rateLimitStore.entries()) {
+    if (now > entry.resetAt) {
+      rateLimitStore.delete(ip);
+    }
+  }
+
+  if (rateLimitStore.size <= RATE_LIMIT_MAX_ENTRIES) {
+    return;
+  }
+
+  const entries = [...rateLimitStore.entries()].sort((a, b) => a[1].resetAt - b[1].resetAt);
+  const overflow = rateLimitStore.size - RATE_LIMIT_MAX_ENTRIES;
+  for (let index = 0; index < overflow; index += 1) {
+    rateLimitStore.delete(entries[index][0]);
+  }
+}
+
+function pruneResponseCache(now: number) {
+  for (const [key, entry] of responseCache.entries()) {
+    if (now - entry.timestamp > RESPONSE_CACHE_TTL_MS) {
+      responseCache.delete(key);
+    }
+  }
+
+  if (responseCache.size <= RESPONSE_CACHE_MAX_ENTRIES) {
+    return;
+  }
+
+  const entries = [...responseCache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
+  const overflow = responseCache.size - RESPONSE_CACHE_MAX_ENTRIES;
+
+  for (let index = 0; index < overflow; index += 1) {
+    responseCache.delete(entries[index][0]);
+  }
+}
+
+function checkRateLimit(ip: string) {
+  const now = Date.now();
+  const entry = rateLimitStore.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitStore.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
+    return { allowed: false, retryAfterSeconds };
+  }
+
+  entry.count += 1;
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
+const cacheControlHeader = `public, max-age=${RESPONSE_CACHE_MAX_AGE_SECONDS}, s-maxage=${RESPONSE_CACHE_MAX_AGE_SECONDS}, stale-while-revalidate=${RESPONSE_CACHE_SWR_SECONDS}`;
 
 async function parseResponseBody(response: Response): Promise<ParsedResponseBody> {
   const contentType = response.headers.get('content-type') || '';
@@ -95,12 +144,12 @@ function extractErrorSnippet(body: ParsedResponseBody): string | undefined {
     }
 
     if (errorField && typeof errorField === 'object') {
-      const errObj = errorField as Record<string, unknown>;
-      if (typeof errObj.message === 'string' && errObj.message.trim()) {
-        return errObj.message.trim().slice(0, ERROR_SNIPPET_LIMIT);
+      const errorObject = errorField as Record<string, unknown>;
+      if (typeof errorObject.message === 'string' && errorObject.message.trim()) {
+        return errorObject.message.trim().slice(0, ERROR_SNIPPET_LIMIT);
       }
-      if (typeof errObj.data === 'string' && errObj.data.trim()) {
-        return errObj.data.trim().slice(0, ERROR_SNIPPET_LIMIT);
+      if (typeof errorObject.data === 'string' && errorObject.data.trim()) {
+        return errorObject.data.trim().slice(0, ERROR_SNIPPET_LIMIT);
       }
     }
 
@@ -120,9 +169,7 @@ function extractErrorSnippet(body: ParsedResponseBody): string | undefined {
 }
 
 function formatUntisError(context: string, response: Response, body: ParsedResponseBody): Error {
-  const statusInfo = `${response.status}${
-    response.statusText ? ` ${response.statusText}` : ''
-  }`.trim();
+  const statusInfo = `${response.status}${response.statusText ? ` ${response.statusText}` : ''}`.trim();
   const snippet = extractErrorSnippet(body);
   const baseMessage = `${context} failed with status ${statusInfo || 'unknown'}`;
   return new Error(snippet ? `${baseMessage}: ${snippet}` : baseMessage);
@@ -134,18 +181,7 @@ function hasSubstitutionPayload(data: unknown): data is WebUntisResponse {
   }
 
   const payload = (data as WebUntisResponse).payload;
-  return Boolean(
-    payload &&
-    typeof payload === 'object' &&
-    Array.isArray(payload.rows)
-  );
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  if (value && typeof value === 'object') {
-    return value as Record<string, unknown>;
-  }
-  return { raw: value };
+  return Boolean(payload && typeof payload === 'object' && Array.isArray(payload.rows));
 }
 
 function buildRequestPayload(date: number, schoolName: string): WebUntisRequest {
@@ -192,8 +228,11 @@ function buildRequestPayload(date: number, schoolName: string): WebUntisRequest 
   };
 }
 
-async function requestSubstitutionData(payload: WebUntisRequest): Promise<WebUntisResponse> {
-  const substitutionResponse = await fetch(SUBSTITUTION_URL, {
+async function requestSubstitutionData(
+  substitutionUrl: string,
+  payload: WebUntisRequest
+): Promise<WebUntisResponse> {
+  const substitutionResponse = await fetch(substitutionUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -218,47 +257,125 @@ async function requestSubstitutionData(payload: WebUntisRequest): Promise<WebUnt
 }
 
 export async function GET(req: NextRequest) {
-  const { numeric } = normalizeDateParam(
-    req.nextUrl.searchParams.get('date'),
-    req.nextUrl.searchParams.get('dateOffset')
-  );
-  const payload = buildRequestPayload(numeric, SCHOOL_NAME);
+  const startedAt = Date.now();
+  const distinctId = getDistinctId(req);
+  const clientIp = getClientIp(req);
+
+  pruneRateLimitStore(startedAt);
+  pruneResponseCache(startedAt);
+
+  const rateLimit = checkRateLimit(clientIp);
+  if (!rateLimit.allowed) {
+    void captureServerEvent(ANALYTICS_EVENTS.API_SUBSTITUTIONS_RATE_LIMITED, distinctId, {
+      retry_after_seconds: rateLimit.retryAfterSeconds,
+      ip_hash_source: clientIp !== 'unknown',
+    });
+
+    return NextResponse.json(
+      { error: 'Zu viele Anfragen. Bitte versuchen Sie es in Kürze erneut.' },
+      {
+        status: 429,
+        headers: {
+          'Cache-Control': 'no-store',
+          'Retry-After': rateLimit.retryAfterSeconds.toString(),
+        },
+      }
+    );
+  }
 
   try {
-    const rawData = await requestSubstitutionData(payload);
+    const schoolName = resolveSchoolName();
+    const baseUrl = resolveBaseUrl(schoolName);
+    const substitutionUrl = buildSubstitutionUrl(baseUrl, schoolName);
+
+    const { numeric } = normalizeDateParam(
+      req.nextUrl.searchParams.get('date'),
+      req.nextUrl.searchParams.get('dateOffset')
+    );
+
+    const cacheKey = `${schoolName}:${numeric}`;
+    const cached = responseCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < RESPONSE_CACHE_TTL_MS) {
+      void captureServerEvent(ANALYTICS_EVENTS.API_SUBSTITUTIONS_CACHE_HIT, distinctId, {
+        date: numeric,
+        duration_ms: Date.now() - startedAt,
+      });
+
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': cacheControlHeader,
+        },
+      });
+    }
+
+    const payload = buildRequestPayload(numeric, schoolName);
+    const rawData = await requestSubstitutionData(substitutionUrl, payload);
 
     if (hasSubstitutionPayload(rawData)) {
       const payloadData = rawData.payload!;
-      return NextResponse.json({
+      const responsePayload: SubstitutionApiResponse = {
         type: 'substitution',
         date: payloadData.date ?? numeric,
         rows: payloadData.rows ?? [],
         lastUpdate: payloadData.lastUpdate ?? null,
+      };
+
+      responseCache.set(cacheKey, { timestamp: Date.now(), data: responsePayload });
+      pruneResponseCache(Date.now());
+
+      void captureServerEvent(ANALYTICS_EVENTS.API_SUBSTITUTIONS_SUCCESS, distinctId, {
+        date: payloadData.date ?? numeric,
+        row_count: responsePayload.rows.length,
+        duration_ms: Date.now() - startedAt,
+      });
+
+      return NextResponse.json(responsePayload, {
+        headers: {
+          'Cache-Control': cacheControlHeader,
+        },
       });
     }
 
-    const config = asRecord(rawData);
-    const responseSchoolName =
-      typeof config.schoolName === 'string' ? config.schoolName : SCHOOL_NAME;
-
-    console.warn('WebUntis returned configuration metadata without payload', {
-      date: config.date ?? numeric,
+    console.warn('WebUntis returned metadata without substitution payload', {
+      date: numeric,
     });
 
-    return NextResponse.json({
+    const responsePayload: SubstitutionApiResponse = {
       type: 'meta',
-      date: typeof config.date === 'number' ? config.date : numeric,
-      schoolName: responseSchoolName,
-      config,
+      date: numeric,
+      schoolName,
       message: META_RESPONSE_MESSAGE,
+    };
+
+    responseCache.set(cacheKey, { timestamp: Date.now(), data: responsePayload });
+    pruneResponseCache(Date.now());
+
+    void captureServerEvent(ANALYTICS_EVENTS.API_SUBSTITUTIONS_META, distinctId, {
+      date: numeric,
+      duration_ms: Date.now() - startedAt,
+    });
+
+    return NextResponse.json(responsePayload, {
+      headers: {
+        'Cache-Control': cacheControlHeader,
+      },
     });
   } catch (error) {
     console.error('Failed to fetch WebUntis substitution data', error);
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'Unknown error while fetching WebUntis substitution data.';
-    return NextResponse.json({ error: message }, { status: 500 });
+    void captureServerEvent(ANALYTICS_EVENTS.API_SUBSTITUTIONS_ERROR, distinctId, {
+      duration_ms: Date.now() - startedAt,
+      message_length: error instanceof Error ? error.message.length : 0,
+    });
+
+    return NextResponse.json(
+      { error: 'Fehler beim Laden der Vertretungen. Bitte versuchen Sie es später erneut.' },
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
   }
 }
