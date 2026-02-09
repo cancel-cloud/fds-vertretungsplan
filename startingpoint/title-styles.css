@@ -1,9 +1,0 @@
-/* Add to the existing CSS file */
-.clickable-title {
-  cursor: pointer;
-  transition: color var(--duration-fast) var(--ease-standard);
-}
-
-.clickable-title:hover {
-  color: var(--color-primary);
-}
