@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const isProd = process.env.NODE_ENV === 'production';
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim() || 'https://eu.i.posthog.com';
@@ -8,8 +8,8 @@ const posthogAssetsHost = posthogHost.includes('us.i.posthog.com')
 const vercelScriptsHost = 'https://va.vercel-scripts.com';
 const vercelInsightsHost = 'https://vitals.vercel-insights.com';
 
-const buildCsp = (nonce: string) => {
-  const scriptSrc = ["'self'", `'nonce-${nonce}'`];
+const buildCsp = () => {
+  const scriptSrc = ["'self'", "'unsafe-inline'", vercelScriptsHost];
   if (!isProd) {
     scriptSrc.push("'unsafe-eval'");
   }
@@ -23,7 +23,6 @@ const buildCsp = (nonce: string) => {
     "img-src 'self' data: https:",
     "font-src 'self' data:",
     `script-src ${scriptSrc.join(' ')}`,
-    `script-src-elem ${scriptSrc.join(' ')} ${vercelScriptsHost}`,
     "style-src 'self' 'unsafe-inline'",
     `connect-src 'self' https://eu.posthog.com ${posthogHost} ${posthogAssetsHost} ${vercelInsightsHost} ${vercelScriptsHost}`,
   ];
@@ -35,21 +34,11 @@ const buildCsp = (nonce: string) => {
   return directives.join('; ');
 };
 
-export function middleware(request: NextRequest) {
-  const nonce = crypto.randomUUID().replace(/-/g, '');
-  const csp = buildCsp(nonce);
-
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
-
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+export function middleware() {
+  const csp = buildCsp();
+  const response = NextResponse.next();
 
   response.headers.set('Content-Security-Policy', csp);
-  response.headers.set('x-nonce', nonce);
 
   return response;
 }
