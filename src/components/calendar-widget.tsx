@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { type KeyboardEvent, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { startOfLocalDay, isSameDay } from '@/lib/date-utils';
 
 interface CalendarDate {
   date: Date;
@@ -15,185 +16,201 @@ interface CalendarWidgetProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
   className?: string;
+  enableAdvancedFeatures?: boolean;
 }
 
-export function CalendarWidget({ selectedDate, onDateSelect, className = '' }: CalendarWidgetProps) {
-  const [currentMonth, setCurrentMonth] = useState(selectedDate.getMonth());
-  const [currentYear, setCurrentYear] = useState(selectedDate.getFullYear());
+const MONTH_NAMES = [
+  'Januar',
+  'Februar',
+  'März',
+  'April',
+  'Mai',
+  'Juni',
+  'Juli',
+  'August',
+  'September',
+  'Oktober',
+  'November',
+  'Dezember',
+];
 
-  // German month names
-  const monthNames = [
-    'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-    'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
-  ];
+const DAY_NAMES = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-  // German day names (starting with Monday)
-  const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const addDays = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
 
-  const today = new Date();
+const toDateId = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
-  const generateCalendarDates = (): CalendarDate[] => {
+export function CalendarWidget({
+  selectedDate,
+  onDateSelect,
+  className = '',
+  enableAdvancedFeatures = true,
+}: CalendarWidgetProps) {
+  const [viewDate, setViewDate] = useState(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+  const today = useMemo(() => startOfLocalDay(new Date()), []);
+
+  const currentMonth = viewDate.getMonth();
+  const currentYear = viewDate.getFullYear();
+
+  const calendarDates = useMemo<CalendarDate[]>(() => {
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-    const startingDay = firstDayOfMonth.getDay() || 7; // Convert Sunday (0) to 7 for European calendar
+    const startingDay = firstDayOfMonth.getDay() || 7;
     const totalDays = lastDayOfMonth.getDate();
 
     const dates: CalendarDate[] = [];
 
-    // Days from previous month
     const prevMonthDays = startingDay - 1;
     const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
-    
-    for (let i = prevMonthDays; i > 0; i--) {
-      const day = prevMonthLastDay - i + 1;
+
+    for (let index = prevMonthDays; index > 0; index -= 1) {
+      const day = prevMonthLastDay - index + 1;
       const date = new Date(currentYear, currentMonth - 1, day);
       dates.push({
         date,
-        isToday: false,
-        isSelected: false,
-        isOtherMonth: true
+        isToday: isSameDay(date, today),
+        isSelected: isSameDay(date, selectedDate),
+        isOtherMonth: true,
       });
     }
 
-    // Days of current month
-    for (let i = 1; i <= totalDays; i++) {
-      const date = new Date(currentYear, currentMonth, i);
-      const isToday = date.toDateString() === today.toDateString();
-      const isSelected = date.toDateString() === selectedDate.toDateString();
-
+    for (let day = 1; day <= totalDays; day += 1) {
+      const date = new Date(currentYear, currentMonth, day);
       dates.push({
         date,
-        isToday,
-        isSelected,
-        isOtherMonth: false
+        isToday: isSameDay(date, today),
+        isSelected: isSameDay(date, selectedDate),
+        isOtherMonth: false,
       });
     }
 
-    // Calculate days needed from next month
-    const totalCells = 42; // 6 rows of 7 days
-    const remainingCells = totalCells - dates.length;
-
-    // Days from next month
-    for (let i = 1; i <= remainingCells; i++) {
-      const date = new Date(currentYear, currentMonth + 1, i);
+    const remainingCells = 42 - dates.length;
+    for (let day = 1; day <= remainingCells; day += 1) {
+      const date = new Date(currentYear, currentMonth + 1, day);
       dates.push({
         date,
-        isToday: false,
-        isSelected: false,
-        isOtherMonth: true
+        isToday: isSameDay(date, today),
+        isSelected: isSameDay(date, selectedDate),
+        isOtherMonth: true,
       });
     }
 
     return dates;
-  };
+  }, [currentMonth, currentYear, selectedDate, today]);
 
-  const handleDateClick = (calendarDate: CalendarDate) => {
-    if (calendarDate.isOtherMonth) {
-      // Navigate to the other month first
-      const newMonth = calendarDate.date.getMonth();
-      const newYear = calendarDate.date.getFullYear();
-      setCurrentMonth(newMonth);
-      setCurrentYear(newYear);
-      
-      // Then select the date after a small delay to let the month change
-      setTimeout(() => {
-        onDateSelect(calendarDate.date);
-      }, 50);
-    } else {
-      onDateSelect(calendarDate.date);
-    }
+  const handleDateSelect = (date: Date) => {
+    const normalized = startOfLocalDay(date);
+    onDateSelect(normalized);
+    setViewDate(new Date(normalized.getFullYear(), normalized.getMonth(), 1));
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
-    if (direction === 'prev') {
-      if (currentMonth === 0) {
-        setCurrentMonth(11);
-        setCurrentYear(currentYear - 1);
-      } else {
-        setCurrentMonth(currentMonth - 1);
-      }
-    } else {
-      if (currentMonth === 11) {
-        setCurrentMonth(0);
-        setCurrentYear(currentYear + 1);
-      } else {
-        setCurrentMonth(currentMonth + 1);
-      }
+    setViewDate((previous) =>
+      direction === 'prev'
+        ? new Date(previous.getFullYear(), previous.getMonth() - 1, 1)
+        : new Date(previous.getFullYear(), previous.getMonth() + 1, 1)
+    );
+  };
+
+  const handleDayKeyDown = (event: KeyboardEvent<HTMLButtonElement>, date: Date) => {
+    if (!enableAdvancedFeatures) {
+      return;
+    }
+
+    let offset = 0;
+    if (event.key === 'ArrowRight') offset = 1;
+    if (event.key === 'ArrowLeft') offset = -1;
+    if (event.key === 'ArrowDown') offset = 7;
+    if (event.key === 'ArrowUp') offset = -7;
+
+    if (offset !== 0) {
+      event.preventDefault();
+      handleDateSelect(addDays(date, offset));
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      handleDateSelect(new Date(currentYear, currentMonth, 1));
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      handleDateSelect(new Date(currentYear, currentMonth + 1, 0));
     }
   };
 
-  const calendarDates = generateCalendarDates();
-
   return (
     <div className={`calendar-widget ${className}`}>
-      <h3 className="text-lg font-medium text-[rgb(var(--color-text))] mb-3">
-        Datum auswählen
-      </h3>
-      
-      <div className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border)/0.2)] rounded-lg overflow-hidden">
-        {/* Calendar header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-[rgb(var(--color-border)/0.2)]">
+      <h3 className="mb-3 text-lg font-medium text-foreground">Datum auswählen</h3>
+
+      <div className="overflow-hidden rounded-lg border bg-card">
+        <div className="flex items-center justify-between border-b px-3 py-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigateMonth('prev')}
-            className="text-[rgb(var(--color-text))] hover:bg-[rgb(var(--color-secondary)/0.12)] h-8 w-8"
+            className="h-8 w-8"
+            aria-label="Vorheriger Monat"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </Button>
-          
-          <span className="font-medium text-[rgb(var(--color-text))]">
-            {monthNames[currentMonth]} {currentYear}
+
+          <span className="font-medium text-foreground">
+            {MONTH_NAMES[currentMonth]} {currentYear}
           </span>
-          
+
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigateMonth('next')}
-            className="text-[rgb(var(--color-text))] hover:bg-[rgb(var(--color-secondary)/0.12)] h-8 w-8"
+            className="h-8 w-8"
+            aria-label="Nächster Monat"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
 
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-0 p-2">
-          {/* Day headers */}
-          {dayNames.map((day) => (
+        <div role="grid" aria-label="Kalender" className="grid grid-cols-7 gap-0 p-2">
+          {DAY_NAMES.map((day) => (
             <div
               key={day}
-              className="flex items-center justify-center p-2 text-xs font-medium text-[rgb(var(--color-text-secondary))]"
+              role="columnheader"
+              className="flex items-center justify-center p-2 text-xs font-medium text-muted-foreground"
             >
               {day}
             </div>
           ))}
 
-          {/* Calendar dates */}
-          {calendarDates.map((calendarDate, index) => (
-            <button
-              key={index}
-              onClick={() => handleDateClick(calendarDate)}
-              className={`
-                flex items-center justify-center p-2 text-sm rounded-md m-0.5 transition-colors duration-150
-                ${calendarDate.isOtherMonth 
-                  ? 'text-[rgb(var(--color-text-secondary))] opacity-50' 
-                  : 'text-[rgb(var(--color-text))]'
-                }
-                ${calendarDate.isSelected
-                  ? 'bg-[rgb(var(--color-primary))] text-white'
-                  : 'hover:bg-[rgb(var(--color-secondary)/0.12)]'
-                }
-                ${calendarDate.isToday && !calendarDate.isSelected
-                  ? 'border border-[rgb(var(--color-primary))]'
-                  : ''
-                }
-              `}
-            >
-              {calendarDate.date.getDate()}
-            </button>
-          ))}
+          {calendarDates.map((calendarDate) => {
+            const id = toDateId(calendarDate.date);
+            return (
+              <button
+                key={id}
+                type="button"
+                role="gridcell"
+                aria-selected={calendarDate.isSelected}
+                aria-current={calendarDate.isToday ? 'date' : undefined}
+                onClick={() => handleDateSelect(calendarDate.date)}
+                onKeyDown={(event) => handleDayKeyDown(event, calendarDate.date)}
+                className={[
+                  'm-0.5 flex items-center justify-center rounded-md p-2 text-sm transition-colors duration-150',
+                  calendarDate.isOtherMonth ? 'text-muted-foreground opacity-60' : 'text-foreground',
+                  calendarDate.isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-accent',
+                  calendarDate.isToday && !calendarDate.isSelected ? 'border border-primary' : '',
+                ].join(' ')}
+              >
+                {calendarDate.date.getDate()}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
   );
-} 
+}

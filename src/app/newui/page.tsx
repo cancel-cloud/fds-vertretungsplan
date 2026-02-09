@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertCircle,
@@ -26,12 +26,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useSubstitutions } from '@/hooks/use-substitutions';
-import { FilterState, ProcessedSubstitution, SubstitutionApiMetaResponse } from '@/types';
+import { FilterState, ProcessedSubstitution, SubstitutionApiMetaResponse, SubstitutionType } from '@/types';
 import {
   filterSubstitutions,
   getUniqueSubstitutionTypes,
   sortSubstitutions,
 } from '@/lib/data-processing';
+import { ANALYTICS_EVENTS, redactSearch } from '@/lib/analytics/events';
+import { usePostHogContext } from '@/providers/posthog-provider';
 
 const startOfLocalDay = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -227,6 +229,7 @@ function NewUiPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { capture, isFeatureEnabled } = usePostHogContext();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
@@ -236,7 +239,16 @@ function NewUiPageContent() {
     categories: [],
   });
 
+  const advancedCalendarEnabled = isFeatureEnabled('ui.advanced_calendar', false);
+
   const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
+
+  useEffect(() => {
+    capture(ANALYTICS_EVENTS.UI_VARIANT_EXPOSED, {
+      variant: 'newui',
+      source: 'newui_route',
+    });
+  }, [capture]);
 
   const { filteredSubstitutions, availableCategories, stats } = useMemo(() => {
     const sorted = sortSubstitutions(substitutions);
@@ -264,19 +276,35 @@ function NewUiPageContent() {
       params.delete('search');
     }
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+
+    capture(ANALYTICS_EVENTS.SEARCH_UPDATED, {
+      ...redactSearch(value),
+      location: 'newui',
+    });
   };
 
-  const handleCategoryToggle = (category: string) => {
-    setFilterState((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(category)
+  const handleCategoryToggle = (category: SubstitutionType) => {
+    setFilterState((prev) => {
+      const next = prev.categories.includes(category)
         ? prev.categories.filter((entry) => entry !== category)
-        : [...prev.categories, category],
-    }));
+        : [...prev.categories, category];
+
+      capture(ANALYTICS_EVENTS.CATEGORY_TOGGLED, {
+        category,
+        selected_count: next.length,
+        location: 'newui',
+      });
+
+      return {
+        ...prev,
+        categories: next,
+      };
+    });
   };
 
   const handleClearCategories = () => {
     setFilterState((prev) => ({ ...prev, categories: [] }));
+    capture(ANALYTICS_EVENTS.FILTERS_CLEARED, { scope: 'categories', location: 'newui' });
   };
 
   const handleClearAllFilters = () => {
@@ -284,6 +312,8 @@ function NewUiPageContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('search');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+
+    capture(ANALYTICS_EVENTS.FILTERS_CLEARED, { scope: 'all', location: 'newui' });
   };
 
   const schoolToday = useMemo(() => adjustWeekendToMonday(new Date()), []);
@@ -294,9 +324,23 @@ function NewUiPageContent() {
     [schoolYesterday, schoolToday, schoolTomorrow]
   );
 
+  const setDateAndTrack = (date: Date, source: string) => {
+    setSelectedDate(date);
+    capture(ANALYTICS_EVENTS.DATE_SELECTED, {
+      source,
+      day_of_week: date.getDay(),
+      timestamp: date.getTime(),
+    });
+  };
+
   const mobileMenuContent = (
     <div className="flex flex-col gap-6 p-6">
-      <CalendarWidget selectedDate={selectedDate} onDateSelect={setSelectedDate} className="w-full" />
+      <CalendarWidget
+        selectedDate={selectedDate}
+        onDateSelect={(date) => setDateAndTrack(date, 'newui_mobile_menu_calendar')}
+        className="w-full"
+        enableAdvancedFeatures={advancedCalendarEnabled}
+      />
       <div className="flex items-center justify-between border-t border-[rgb(var(--color-border)/0.2)] pt-4">
         <span className="text-[rgb(var(--color-text-secondary))]">Theme</span>
         <ThemeToggle />
@@ -306,8 +350,22 @@ function NewUiPageContent() {
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-background))]">
-      <Header onMenuToggle={() => setIsMobileMenuOpen((current) => !current)} />
-      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)}>
+      <Header
+        onMenuToggle={() => {
+          setIsMobileMenuOpen((current) => {
+            const next = !current;
+            capture(ANALYTICS_EVENTS.MOBILE_MENU_TOGGLED, { open: next, location: 'newui' });
+            return next;
+          });
+        }}
+      />
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => {
+          setIsMobileMenuOpen(false);
+          capture(ANALYTICS_EVENTS.MOBILE_MENU_TOGGLED, { open: false, location: 'newui' });
+        }}
+      >
         {mobileMenuContent}
       </MobileMenu>
 
@@ -348,14 +406,14 @@ function NewUiPageContent() {
               <Button
                 variant={isSameDay(selectedDate, schoolToday) ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSelectedDate(schoolToday)}
+                onClick={() => setDateAndTrack(schoolToday, 'newui_today_mobile')}
               >
                 Heute {formatChipDate(schoolToday)}
               </Button>
               <Button
                 variant={isSameDay(selectedDate, schoolTomorrow) ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSelectedDate(schoolTomorrow)}
+                onClick={() => setDateAndTrack(schoolTomorrow, 'newui_tomorrow_mobile')}
               >
                 Morgen {formatChipDate(schoolTomorrow)}
               </Button>
@@ -379,7 +437,7 @@ function NewUiPageContent() {
                     variant={selected ? 'default' : 'outline'}
                     size="sm"
                     className="h-9 shrink-0 px-3 text-xs touch-manipulation"
-                    onClick={() => setSelectedDate(date)}
+                    onClick={() => setDateAndTrack(date, 'newui_quick_strip')}
                     aria-pressed={selected}
                   >
                     {formatChipDate(date)}
@@ -392,7 +450,7 @@ function NewUiPageContent() {
               <CategoryFilters
                 categories={availableCategories}
                 selectedCategories={filterState.categories}
-                onCategoryToggle={handleCategoryToggle}
+                onCategoryToggle={(category) => handleCategoryToggle(category as SubstitutionType)}
                 onClearAll={handleClearCategories}
               />
             ) : null}
@@ -405,7 +463,11 @@ function NewUiPageContent() {
               <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[rgb(var(--color-text-secondary))]">
                 Datum wählen
               </h2>
-              <CalendarWidget selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+              <CalendarWidget
+                selectedDate={selectedDate}
+                onDateSelect={(date) => setDateAndTrack(date, 'newui_sidebar_calendar')}
+                enableAdvancedFeatures={advancedCalendarEnabled}
+              />
             </Card>
           </aside>
 
@@ -416,7 +478,10 @@ function NewUiPageContent() {
             selectedDate={selectedDate}
             isLoading={isLoading}
             error={error}
-            onRetry={refetch}
+            onRetry={() => {
+              capture(ANALYTICS_EVENTS.RETRY_CLICKED, { location: 'newui' });
+              refetch();
+            }}
             metaResponse={metaResponse}
             onClearAllFilters={handleClearAllFilters}
           />
@@ -432,10 +497,11 @@ function NewUiPageContent() {
           <CalendarWidget
             selectedDate={selectedDate}
             onDateSelect={(date) => {
-              setSelectedDate(date);
+              setDateAndTrack(date, 'newui_mobile_dialog_calendar');
               setIsMobileCalendarOpen(false);
             }}
             className="w-full"
+            enableAdvancedFeatures={advancedCalendarEnabled}
           />
         </DialogContent>
       </Dialog>

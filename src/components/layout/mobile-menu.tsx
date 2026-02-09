@@ -35,8 +35,10 @@ export function MobileMenu({ isOpen, onClose, children }: MobileMenuProps) {
 
   return (
     <div
-      className={`mobile-menu-overlay fixed inset-0 bg-black/50 z-20 flex justify-start ${
-        isOpen ? 'active' : ''
+      className={`fixed inset-0 z-20 justify-start bg-black/50 transition-opacity duration-200 md:hidden ${
+        isOpen
+          ? 'visible flex opacity-100 pointer-events-auto'
+          : 'invisible flex opacity-0 pointer-events-none'
       }`}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -44,7 +46,10 @@ export function MobileMenu({ isOpen, onClose, children }: MobileMenuProps) {
         }
       }}
     >
-      <div className="mobile-menu bg-[rgb(var(--color-surface))] w-[85%] max-w-[350px] h-full overflow-y-auto">
+      <div
+        className={`h-full w-[85%] max-w-[350px] overflow-y-auto bg-[rgb(var(--color-surface))]
+          transition-transform duration-200 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
         {/* Mobile menu header */}
         <div className="flex items-center justify-between p-4 border-b border-[rgb(var(--color-border)/0.3)]">
           <h3 className="text-lg font-medium text-[rgb(var(--color-text))]">Menü</h3>

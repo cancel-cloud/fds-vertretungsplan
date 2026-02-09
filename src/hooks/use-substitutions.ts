@@ -1,11 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
-import { 
-  ProcessedSubstitution, 
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  ProcessedSubstitution,
   SubstitutionApiResponse,
-  SubstitutionApiMetaResponse 
+  SubstitutionApiMetaResponse,
 } from '@/types';
 import { processApiResponse } from '@/lib/data-processing';
 import { formatDateForApi } from '@/lib/utils';
+import { getDeviceId } from '@/lib/analytics/device-id';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
+import { captureClientEvent } from '@/lib/analytics/posthog-client';
 
 interface UseSubstitutionsResult {
   substitutions: ProcessedSubstitution[];
@@ -15,12 +18,23 @@ interface UseSubstitutionsResult {
   refetch: () => void;
 }
 
-// Simple in-memory cache for API responses
 const cache = new Map<string, { data: ProcessedSubstitution[]; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000;
+const MAX_CACHE_ENTRIES = 50;
 
-const getCacheKey = (date: Date): string => {
-  return formatDateForApi(date); // Preserve local day boundaries
+const getCacheKey = (date: Date): string => formatDateForApi(date);
+
+const pruneCache = () => {
+  if (cache.size <= MAX_CACHE_ENTRIES) {
+    return;
+  }
+
+  const entries = [...cache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
+  const overflow = cache.size - MAX_CACHE_ENTRIES;
+
+  for (let index = 0; index < overflow; index += 1) {
+    cache.delete(entries[index][0]);
+  }
 };
 
 export function useSubstitutions(selectedDate: Date): UseSubstitutionsResult {
@@ -28,101 +42,148 @@ export function useSubstitutions(selectedDate: Date): UseSubstitutionsResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metaResponse, setMetaResponse] = useState<SubstitutionApiMetaResponse | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const buildErrorMessage = useCallback(async (response: Response) => {
     const defaultMessage = `Request failed with status ${response.status}`;
-    const contentType = response.headers.get('content-type') || '';
-
-    if (contentType.includes('application/json')) {
-      try {
-        const data = await response.json();
-        if (data && typeof data === 'object') {
-          const { error, message } = data as { error?: unknown; message?: unknown };
-          const parsedError = typeof error === 'string' ? error.trim() : undefined;
-          const parsedMessage = typeof message === 'string' ? message.trim() : undefined;
-          if (parsedError) return parsedError;
-          if (parsedMessage) return parsedMessage;
-        }
-      } catch (jsonError) {
-        console.warn('Failed to parse JSON error response', jsonError);
-        return defaultMessage;
-      }
-    }
 
     try {
       const text = await response.text();
-      if (text && text.trim().length > 0) {
-        return text.trim();
+      if (!text.trim()) {
+        return defaultMessage;
       }
-    } catch (textError) {
-      console.warn('Failed to read error response text', textError);
-    }
 
-    return defaultMessage;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        try {
+          const data = JSON.parse(text) as { error?: unknown; message?: unknown };
+          if (typeof data.error === 'string' && data.error.trim()) {
+            return data.error.trim();
+          }
+          if (typeof data.message === 'string' && data.message.trim()) {
+            return data.message.trim();
+          }
+        } catch {
+          return text.trim();
+        }
+      }
+
+      return text.trim();
+    } catch {
+      return defaultMessage;
+    }
   }, []);
 
   const fetchSubstitutions = useCallback(async () => {
     const cacheKey = getCacheKey(selectedDate);
-    
-    // Check cache first
+    const start = Date.now();
+
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       setSubstitutions(cached.data);
       setIsLoading(false);
       setError(null);
       setMetaResponse(null);
+      captureClientEvent(ANALYTICS_EVENTS.SUBSTITUTIONS_FETCH_SUCCESS, {
+        source: 'cache',
+        result_count: cached.data.length,
+        duration_ms: Date.now() - start,
+      });
       return;
     }
+
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setIsLoading(true);
     setError(null);
     setMetaResponse(null);
 
+    const dateString = formatDateForApi(selectedDate);
+
+    captureClientEvent(ANALYTICS_EVENTS.SUBSTITUTIONS_FETCH_STARTED, {
+      date: dateString,
+      source: 'network',
+    });
+
     try {
-      const dateString = formatDateForApi(selectedDate);
-      const response = await fetch(`/api/substitutions?date=${dateString}`);
-      
+      const deviceId = getDeviceId();
+      const response = await fetch(`/api/substitutions?date=${dateString}`, {
+        signal: controller.signal,
+        headers: deviceId ? { 'x-device-id': deviceId } : undefined,
+      });
+
       if (!response.ok) {
         const message = await buildErrorMessage(response);
         throw new Error(message);
       }
-      
+
       const data: SubstitutionApiResponse = await response.json();
 
       if (data.type === 'meta') {
         setSubstitutions([]);
         setMetaResponse(data);
-      } else {
-        const processed = processApiResponse(data.rows);
-        
-        // Cache only substitution results
-        cache.set(cacheKey, { data: processed, timestamp: Date.now() });
-        
-        setSubstitutions(processed);
-        setMetaResponse(null);
+        captureClientEvent(ANALYTICS_EVENTS.SUBSTITUTIONS_FETCH_META, {
+          date: data.date,
+          duration_ms: Date.now() - start,
+        });
+        return;
       }
+
+      const processed = processApiResponse(data.rows);
+      cache.set(cacheKey, { data: processed, timestamp: Date.now() });
+      pruneCache();
+
+      setSubstitutions(processed);
+      setMetaResponse(null);
+
+      captureClientEvent(ANALYTICS_EVENTS.SUBSTITUTIONS_FETCH_SUCCESS, {
+        source: 'network',
+        date: data.date,
+        result_count: processed.length,
+        duration_ms: Date.now() - start,
+      });
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
+
       console.error('Failed to fetch substitutions:', err);
-      setError(
-        err instanceof Error 
-          ? err.message 
-          : 'Fehler beim Laden der Vertretungen. Bitte versuchen Sie es später erneut.'
-      );
+
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Fehler beim Laden der Vertretungen. Bitte versuchen Sie es später erneut.';
+
+      setError(message);
       setSubstitutions([]);
       setMetaResponse(null);
+
+      captureClientEvent(ANALYTICS_EVENTS.SUBSTITUTIONS_FETCH_ERROR, {
+        date: dateString,
+        duration_ms: Date.now() - start,
+        message_length: message.length,
+      });
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [selectedDate, buildErrorMessage]);
 
   const refetch = useCallback(() => {
     const cacheKey = getCacheKey(selectedDate);
-    cache.delete(cacheKey); // Clear cache for this date
+    cache.delete(cacheKey);
     fetchSubstitutions();
   }, [selectedDate, fetchSubstitutions]);
 
   useEffect(() => {
     fetchSubstitutions();
+
+    return () => {
+      abortControllerRef.current?.abort();
+    };
   }, [fetchSubstitutions]);
 
   return {

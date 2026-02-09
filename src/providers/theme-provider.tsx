@@ -1,7 +1,9 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ThemeMode } from '@/types';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
+import { captureClientEvent } from '@/lib/analytics/posthog-client';
 
 interface ThemeContextType {
   theme: ThemeMode;
@@ -9,92 +11,104 @@ interface ThemeContextType {
   cycleTheme: () => void;
 }
 
+const STORAGE_KEY = 'theme';
+const themes: ThemeMode[] = ['system', 'light', 'dark'];
+
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>('system');
+  const [theme, setThemeState] = useState<ThemeMode>('light');
   const [mounted, setMounted] = useState(false);
 
-  const themes = useMemo(() => ['system', 'light', 'dark'] as ThemeMode[], []);
+  const applyTheme = useCallback((newTheme: ThemeMode) => {
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+
+    if (newTheme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.add(prefersDark ? 'dark' : 'light');
+      return;
+    }
+
+    root.classList.add(newTheme);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
-    // Load saved theme from session storage
+
     try {
-      const savedTheme = sessionStorage.getItem('theme') as ThemeMode;
-      if (savedTheme && themes.includes(savedTheme)) {
-        setThemeState(savedTheme);
-        applyTheme(savedTheme);
-      } else {
-        applyTheme('system');
+      const savedTheme = localStorage.getItem(STORAGE_KEY);
+      const parsedTheme = themes.includes(savedTheme as ThemeMode)
+        ? (savedTheme as ThemeMode)
+        : 'light';
+
+      setThemeState(parsedTheme);
+      applyTheme(parsedTheme);
+    } catch {
+      applyTheme('light');
+    }
+  }, [applyTheme]);
+
+  const setTheme = useCallback(
+    (newTheme: ThemeMode) => {
+      setThemeState(newTheme);
+      applyTheme(newTheme);
+
+      try {
+        localStorage.setItem(STORAGE_KEY, newTheme);
+      } catch {
+        // no-op for private mode
       }
-    } catch {
-      console.warn('Session storage not available, using system theme');
-      applyTheme('system');
-    }
-  }, [themes]);
 
-  const applyTheme = (newTheme: ThemeMode) => {
-    const root = document.documentElement;
-    
-    // Remove existing theme classes
-    root.classList.remove('light', 'dark');
-    
-    if (newTheme === 'system') {
-      // Use system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.classList.add(prefersDark ? 'dark' : 'light');
-    } else {
-      // Set explicit theme
-      root.classList.add(newTheme);
-    }
-  };
+      captureClientEvent(ANALYTICS_EVENTS.THEME_CHANGED, { theme: newTheme });
+    },
+    [applyTheme]
+  );
 
-  const setTheme = (newTheme: ThemeMode) => {
-    setThemeState(newTheme);
-    applyTheme(newTheme);
-    
-    // Save to session storage
-    try {
-      sessionStorage.setItem('theme', newTheme);
-    } catch {
-      console.warn('Could not save theme to session storage');
-    }
-  };
+  const cycleTheme = useCallback(() => {
+    setThemeState((currentTheme) => {
+      const currentIndex = themes.indexOf(currentTheme);
+      const nextIndex = (currentIndex + 1) % themes.length;
+      const nextTheme = themes[nextIndex];
 
-  const cycleTheme = () => {
-    const currentIndex = themes.indexOf(theme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    const nextTheme = themes[nextIndex];
-    setTheme(nextTheme);
-  };
+      applyTheme(nextTheme);
+      try {
+        localStorage.setItem(STORAGE_KEY, nextTheme);
+      } catch {
+        // no-op
+      }
 
-  // Listen for system theme changes when in system mode
+      captureClientEvent(ANALYTICS_EVENTS.THEME_CHANGED, { theme: nextTheme });
+      return nextTheme;
+    });
+  }, [applyTheme]);
+
   useEffect(() => {
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = () => applyTheme('system');
-      
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
+    if (theme !== 'system') {
+      return;
     }
-  }, [theme]);
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => applyTheme('system');
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [applyTheme, theme]);
+
+  const value = useMemo(
+    () => ({
+      theme,
+      setTheme,
+      cycleTheme,
+    }),
+    [cycleTheme, setTheme, theme]
+  );
 
   if (!mounted) {
     return null;
   }
 
-  const value = {
-    theme,
-    setTheme,
-    cycleTheme,
-  };
-
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export const useTheme = () => {
@@ -103,4 +117,4 @@ export const useTheme = () => {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-}; 
+};

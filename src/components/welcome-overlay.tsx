@@ -1,165 +1,191 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Sparkles, X, Calendar, Search, Filter } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
+import { Calendar, Filter, Search, Sparkles, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
+import { captureClientEvent } from '@/lib/analytics/posthog-client';
 
-export function WelcomeOverlay() {
-  const [isVisible, setIsVisible] = useState(false);
+interface WelcomeOverlayProps {
+  enabled?: boolean;
+}
+
+const STORAGE_KEY = 'fds-welcome-seen';
+
+export function WelcomeOverlay({ enabled = true }: WelcomeOverlayProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const animationFrameRef = useRef<number | null>(null);
+  const burstTimeoutRef = useRef<number | null>(null);
+  const loopStartTimeoutRef = useRef<number | null>(null);
+  const overlayShownRef = useRef(false);
 
   useEffect(() => {
-    // Check if welcome has been shown before
-    const hasSeenWelcome = localStorage.getItem('fds-welcome-seen');
-    
+    if (!enabled) {
+      return;
+    }
+
+    const hasSeenWelcome = localStorage.getItem(STORAGE_KEY);
     if (!hasSeenWelcome) {
-      setIsVisible(true);
+      setIsOpen(true);
     }
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
-    // Trigger confetti when overlay becomes visible
-    if (isVisible) {
-      // Small delay to let the overlay render first
-      const timer = setTimeout(() => {
-        triggerWelcomeConfetti();
-      }, 300);
-
-      return () => clearTimeout(timer);
+    if (!isOpen || !enabled) {
+      return;
     }
-  }, [isVisible]);
 
-  const triggerWelcomeConfetti = () => {
-    const duration = 3000;
-    const end = Date.now() + duration;
+    if (!overlayShownRef.current) {
+      overlayShownRef.current = true;
+      captureClientEvent(ANALYTICS_EVENTS.WELCOME_SHOWN, { source: 'first_visit' });
+    }
 
-    // Initial burst from center
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
-
-    // Continuous confetti from both sides
-    const frame = () => {
+    burstTimeoutRef.current = window.setTimeout(() => {
       confetti({
-        particleCount: 2,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.8 },
-        colors: ['#218095', '#5E5240', '#C0152F', '#1FB8CD']
-      });
-      
-      confetti({
-        particleCount: 2,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.8 },
-        colors: ['#218095', '#5E5240', '#C0152F', '#1FB8CD']
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
       });
 
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
+      const end = Date.now() + 3000;
+
+      const frame = () => {
+        confetti({
+          particleCount: 2,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.8 },
+          colors: ['#218095', '#5E5240', '#C0152F', '#1FB8CD'],
+        });
+
+        confetti({
+          particleCount: 2,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.8 },
+          colors: ['#218095', '#5E5240', '#C0152F', '#1FB8CD'],
+        });
+
+        if (Date.now() < end) {
+          animationFrameRef.current = requestAnimationFrame(frame);
+        }
+      };
+
+      loopStartTimeoutRef.current = window.setTimeout(() => {
+        animationFrameRef.current = requestAnimationFrame(frame);
+      }, 350);
+    }, 250);
+
+    return () => {
+      if (burstTimeoutRef.current) {
+        window.clearTimeout(burstTimeoutRef.current);
+      }
+      if (loopStartTimeoutRef.current) {
+        window.clearTimeout(loopStartTimeoutRef.current);
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
+  }, [enabled, isOpen]);
 
-    // Start the continuous animation after a short delay
-    setTimeout(() => {
-      requestAnimationFrame(frame);
-    }, 500);
+  const dismiss = () => {
+    setIsOpen(false);
+    localStorage.setItem(STORAGE_KEY, 'true');
+    captureClientEvent(ANALYTICS_EVENTS.WELCOME_DISMISSED, { source: 'button' });
   };
 
-  const handleDismiss = () => {
-    setIsVisible(false);
-    localStorage.setItem('fds-welcome-seen', 'true');
-  };
-
-  if (!isVisible) return null;
+  if (!enabled) {
+    return null;
+  }
 
   return (
-    <>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          dismiss();
+        }
+      }}
+    >
+      <DialogContent className="max-w-md" showCloseButton={false}>
+        <DialogHeader className="sr-only">
+          <DialogTitle>Willkommen</DialogTitle>
+          <DialogDescription>Kurzer Überblick über die wichtigsten Funktionen.</DialogDescription>
+        </DialogHeader>
 
-
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <div className="p-6 space-y-6">
-            {/* Header */}
+        <Card className="border-none p-0 shadow-none">
+          <div className="space-y-6 p-6">
             <div className="relative text-center">
               <button
-                onClick={handleDismiss}
-                className="absolute -top-2 -right-2 p-1 rounded-full bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-border))] transition-colors"
+                type="button"
+                onClick={dismiss}
+                className="absolute -right-2 -top-2 rounded-full bg-[rgb(var(--color-surface))] p-1 transition-colors hover:bg-[rgb(var(--color-border))]"
+                aria-label="Willkommenshinweis schließen"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
-              <div className="flex justify-center mb-4">
-                <div className="p-3 bg-[rgb(var(--color-primary)/0.1)] rounded-full">
-                  <Sparkles className="h-8 w-8 text-[rgb(var(--color-primary))]" />
+              <div className="mb-4 flex justify-center">
+                <div className="rounded-full bg-[rgb(var(--color-primary)/0.1)] p-3">
+                  <Sparkles className="h-8 w-8 text-[rgb(var(--color-primary))]" aria-hidden="true" />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-[rgb(var(--color-text))]">
-                Willkommen!
-              </h2>
-              <p className="text-[rgb(var(--color-text-secondary))] mt-2">
-                Entdecken Sie den neuen Vertretungsplan der Friedrich-Dessauer-Schule
+              <h2 className="text-2xl font-bold text-[rgb(var(--color-text))]">Willkommen!</h2>
+              <p className="mt-2 text-[rgb(var(--color-text-secondary))]">
+                Entdecken Sie den neuen Vertretungsplan der Friedrich-Dessauer-Schule.
               </p>
             </div>
 
-            {/* Features */}
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-[rgb(var(--color-primary)/0.1)] rounded-lg flex-shrink-0">
-                  <Calendar className="h-4 w-4 text-[rgb(var(--color-primary))]" />
+                <div className="rounded-lg bg-[rgb(var(--color-primary)/0.1)] p-2">
+                  <Calendar className="h-4 w-4 text-[rgb(var(--color-primary))]" aria-hidden="true" />
                 </div>
                 <div>
                   <h3 className="font-medium text-[rgb(var(--color-text))]">Kalender-Navigation</h3>
-                  <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                    Wählen Sie einfach ein Datum im Kalender aus
-                  </p>
+                  <p className="text-sm text-[rgb(var(--color-text-secondary))]">Wählen Sie ein Datum direkt im Kalender.</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-[rgb(var(--color-primary)/0.1)] rounded-lg flex-shrink-0">
-                  <Search className="h-4 w-4 text-[rgb(var(--color-primary))]" />
+                <div className="rounded-lg bg-[rgb(var(--color-primary)/0.1)] p-2">
+                  <Search className="h-4 w-4 text-[rgb(var(--color-primary))]" aria-hidden="true" />
                 </div>
                 <div>
                   <h3 className="font-medium text-[rgb(var(--color-text))]">Intelligente Suche</h3>
-                  <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                    Suchen Sie nach Klassen, Lehrern oder Fächern
-                  </p>
+                  <p className="text-sm text-[rgb(var(--color-text-secondary))]">Suchen Sie nach Klassen, Lehrern oder Fächern.</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-[rgb(var(--color-primary)/0.1)] rounded-lg flex-shrink-0">
-                  <Filter className="h-4 w-4 text-[rgb(var(--color-primary))]" />
+                <div className="rounded-lg bg-[rgb(var(--color-primary)/0.1)] p-2">
+                  <Filter className="h-4 w-4 text-[rgb(var(--color-primary))]" aria-hidden="true" />
                 </div>
                 <div>
                   <h3 className="font-medium text-[rgb(var(--color-text))]">Kategorien-Filter</h3>
-                  <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                    Filtern Sie nach Vertretungsart (Entfall, Verlegung, etc.)
-                  </p>
+                  <p className="text-sm text-[rgb(var(--color-text-secondary))]">Filtern Sie nach Vertretungsart.</p>
                 </div>
               </div>
             </div>
 
-            {/* Actions */}
             <div className="space-y-3">
-              <Button 
-                onClick={handleDismiss}
-                className="w-full"
-              >
-                Los geht&rsquo;s!
+              <Button onClick={dismiss} className="w-full">
+                Los geht&apos;s!
               </Button>
-              <p className="text-xs text-center text-[rgb(var(--color-text-secondary))]">
-                Diese Nachricht wird nur einmal angezeigt
-              </p>
+              <p className="text-center text-xs text-[rgb(var(--color-text-secondary))]">Diese Nachricht wird nur einmal angezeigt</p>
             </div>
           </div>
         </Card>
-      </div>
-    </>
+      </DialogContent>
+    </Dialog>
   );
-} 
+}

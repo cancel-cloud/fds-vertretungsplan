@@ -1,184 +1,227 @@
 'use client';
 
-import { useState, useMemo, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Header } from '@/components/layout/header';
-import { MobileMenu } from '@/components/layout/mobile-menu';
+import dynamic from 'next/dynamic';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { AppShell } from '@/components/layout/app-shell';
+import { MobileThemePanel } from '@/components/layout/mobile-theme-panel';
 import { CalendarWidget } from '@/components/calendar-widget';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { SubstitutionList } from '@/components/substitution-list';
 import { WelcomeOverlay } from '@/components/welcome-overlay';
 import { useSubstitutions } from '@/hooks/use-substitutions';
-import { FilterState } from '@/types';
-import { sortSubstitutions, filterSubstitutions, getUniqueSubstitutionTypes } from '@/lib/data-processing';
+import { FilterState, SubstitutionType } from '@/types';
+import { filterSubstitutions, getUniqueSubstitutionTypes, sortSubstitutions } from '@/lib/data-processing';
+import { adjustWeekendToMonday } from '@/lib/date-utils';
+import { ANALYTICS_EVENTS, redactSearch } from '@/lib/analytics/events';
+import { usePostHogContext } from '@/providers/posthog-provider';
+
+const FlaggedNewUiPage = dynamic(() => import('@/app/newui/page'), {
+  ssr: false,
+  loading: () => <div className="p-6">Lade Oberfläche…</div>,
+});
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="p-6">Lade…</div>}>
       <HomePageContent />
     </Suspense>
   );
 }
 
 function HomePageContent() {
+  const { capture, featureFlagsReady, isFeatureEnabled } = usePostHogContext();
+
+  const useNewUi = featureFlagsReady ? isFeatureEnabled('ui.new_homepage', false) : false;
+  const showWelcomeOverlay = isFeatureEnabled('ui.welcome_overlay', false);
+  const advancedCalendar = isFeatureEnabled('ui.advanced_calendar', false);
+
+  useEffect(() => {
+    capture(ANALYTICS_EVENTS.UI_VARIANT_EXPOSED, {
+      variant: useNewUi ? 'newui' : 'legacy',
+      source: 'home_flag',
+    });
+  }, [capture, useNewUi]);
+
+  if (useNewUi) {
+    return <FlaggedNewUiPage />;
+  }
+
+  return <LegacyHome advancedCalendar={advancedCalendar} showWelcomeOverlay={showWelcomeOverlay} />;
+}
+
+function LegacyHome({
+  advancedCalendar,
+  showWelcomeOverlay,
+}: {
+  advancedCalendar: boolean;
+  showWelcomeOverlay: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  
-  // Extract search parameter value for dependency tracking
+  const { capture } = usePostHogContext();
+
   const searchParamValue = searchParams.get('search') || '';
-  
+  const [selectedDate, setSelectedDate] = useState<Date>(() => adjustWeekendToMonday(new Date()));
   const [filterState, setFilterState] = useState<FilterState>({
     search: searchParamValue,
-    categories: []
+    categories: [],
   });
-  
-  // Sync search state with URL parameters when they change (e.g., browser back/forward)
-  useEffect(() => {
-    setFilterState(prev => {
-      // Only update if the search value has changed
-      if (prev.search !== searchParamValue) {
-        return {
-          ...prev,
-          search: searchParamValue
-        };
+  const [searchDebounceTimer, setSearchDebounceTimer] = useState<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (searchDebounceTimer) {
+        window.clearTimeout(searchDebounceTimer);
       }
-      return prev;
+    },
+    [searchDebounceTimer]
+  );
+
+  useEffect(() => {
+    setFilterState((prev) => {
+      if (prev.search === searchParamValue) {
+        return prev;
+      }
+      return {
+        ...prev,
+        search: searchParamValue,
+      };
     });
   }, [searchParamValue]);
-  
-  // Fetch substitution data
+
   const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
 
-  // Process and filter substitutions
   const { filteredSubstitutions, availableCategories, stats } = useMemo(() => {
     const sorted = sortSubstitutions(substitutions);
     const categories = getUniqueSubstitutionTypes(substitutions);
     const filtered = filterSubstitutions(sorted, filterState);
-    
+
     return {
       filteredSubstitutions: filtered,
       availableCategories: categories,
       stats: {
         total: substitutions.length,
         filtered: filtered.length,
-        hasActiveFilters: filterState.search.trim() !== '' || filterState.categories.length > 0
-      }
+        hasActiveFilters: filterState.search.trim() !== '' || filterState.categories.length > 0,
+      },
     };
   }, [substitutions, filterState]);
 
-  const handleSearchChange = (value: string) => {
-    setFilterState(prev => ({ ...prev, search: value }));
-    
-    // Update URL
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set('search', value);
-    } else {
-      params.delete('search');
+  const scheduleSearchUrlSync = (value: string) => {
+    if (searchDebounceTimer) {
+      window.clearTimeout(searchDebounceTimer);
     }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) {
+        params.set('search', value);
+      } else {
+        params.delete('search');
+      }
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }, 300);
+
+    setSearchDebounceTimer(timer);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setFilterState((prev) => ({ ...prev, search: value }));
+    scheduleSearchUrlSync(value);
+
+    capture(ANALYTICS_EVENTS.SEARCH_UPDATED, {
+      ...redactSearch(value),
+      location: 'legacy',
+    });
   };
 
   const handleCategoryToggle = (category: string) => {
-    setFilterState(prev => ({
-      ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter(c => c !== category)
-        : [...prev.categories, category]
-    }));
+    const categoryAsType = category as SubstitutionType;
+    setFilterState((prev) => {
+      const next = prev.categories.includes(categoryAsType)
+        ? prev.categories.filter((entry) => entry !== categoryAsType)
+        : [...prev.categories, categoryAsType];
+
+      capture(ANALYTICS_EVENTS.CATEGORY_TOGGLED, {
+        category: categoryAsType,
+        selected_count: next.length,
+        location: 'legacy',
+      });
+
+      return {
+        ...prev,
+        categories: next,
+      };
+    });
   };
 
   const handleClearCategories = () => {
-    setFilterState(prev => ({ ...prev, categories: [] }));
+    setFilterState((prev) => ({ ...prev, categories: [] }));
+    capture(ANALYTICS_EVENTS.FILTERS_CLEARED, { scope: 'categories', location: 'legacy' });
   };
 
   const handleClearAllFilters = () => {
     setFilterState({ search: '', categories: [] });
-    // Clear URL search param
     const params = new URLSearchParams(searchParams.toString());
     params.delete('search');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    capture(ANALYTICS_EVENTS.FILTERS_CLEARED, { scope: 'all', location: 'legacy' });
   };
 
-  const handleMobileMenuToggle = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const handleDateSelect = (date: Date) => {
+  const setDateAndTrack = (date: Date, source: string) => {
     setSelectedDate(date);
+    capture(ANALYTICS_EVENTS.DATE_SELECTED, {
+      source,
+      day_of_week: date.getDay(),
+      timestamp: date.getTime(),
+    });
   };
-
-  const mobileMenuContent = (
-    <div className="flex flex-col gap-6 p-6">
-      {/* Calendar for mobile */}
-      <div>
-        <CalendarWidget
-          selectedDate={selectedDate}
-          onDateSelect={handleDateSelect}
-          className="w-full"
-        />
-      </div>
-
-      {/* Theme toggle for mobile */}
-      <div className="flex items-center justify-between pt-4 border-t border-[rgb(var(--color-border)/0.2)]">
-        <span className="text-[rgb(var(--color-text-secondary))]">Theme</span>
-        <ThemeToggle />
-      </div>
-    </div>
-  );
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-background))]">
-      <WelcomeOverlay />
-      
-      <Header onMenuToggle={handleMobileMenuToggle} />
-
-      <MobileMenu
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-      >
-        {mobileMenuContent}
-      </MobileMenu>
-
-      <div className="flex max-w-7xl mx-auto">
-        {/* Desktop Sidebar */}
-        <aside className="hidden md:block w-80 p-6 border-r border-[rgb(var(--color-border)/0.2)] min-h-[calc(100vh-64px)]">
-          <div className="sticky top-6 space-y-6">
-            {/* Calendar Widget */}
-            <div>
-              <CalendarWidget
-                selectedDate={selectedDate}
-                onDateSelect={handleDateSelect}
-              />
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          <SubstitutionList
-            substitutions={substitutions}
-            filteredSubstitutions={filteredSubstitutions}
-            availableCategories={availableCategories}
-            stats={stats}
-            filterState={filterState}
-            onSearchChange={handleSearchChange}
-            onCategoryToggle={handleCategoryToggle}
-            onClearCategories={handleClearCategories}
-            onClearAllFilters={handleClearAllFilters}
-            isLoading={isLoading}
-            error={error}
-            onRetry={refetch}
+    <>
+      <AppShell
+        sidebar={
+          <CalendarWidget
             selectedDate={selectedDate}
-            metaResponse={metaResponse}
+            onDateSelect={(date) => setDateAndTrack(date, 'sidebar')}
+            enableAdvancedFeatures={advancedCalendar}
           />
-        </main>
-      </div>
-    </div>
+        }
+        mobileMenuContent={
+          <div className="flex flex-col gap-6 p-2">
+            <CalendarWidget
+              selectedDate={selectedDate}
+              onDateSelect={(date) => setDateAndTrack(date, 'mobile_menu')}
+              className="w-full"
+              enableAdvancedFeatures={advancedCalendar}
+            />
+            <MobileThemePanel />
+          </div>
+        }
+      >
+        <SubstitutionList
+          substitutions={substitutions}
+          filteredSubstitutions={filteredSubstitutions}
+          availableCategories={availableCategories}
+          stats={stats}
+          filterState={filterState}
+          onSearchChange={handleSearchChange}
+          onCategoryToggle={handleCategoryToggle}
+          onClearCategories={handleClearCategories}
+          onClearAllFilters={handleClearAllFilters}
+          isLoading={isLoading}
+          error={error}
+          onRetry={() => {
+            capture(ANALYTICS_EVENTS.RETRY_CLICKED, { location: 'legacy' });
+            refetch();
+          }}
+          selectedDate={selectedDate}
+          metaResponse={metaResponse}
+        />
+      </AppShell>
+
+      <WelcomeOverlay enabled={showWelcomeOverlay} />
+    </>
   );
 }
-
