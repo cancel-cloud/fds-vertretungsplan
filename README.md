@@ -152,13 +152,39 @@ A modern, fast, and user-friendly substitution plan viewer for the Friedrich-Des
    POSTHOG_API_KEY=phx_xxx
    POSTHOG_HOST=https://eu.i.posthog.com
 
+   # User system / database
+   DATABASE_URL=postgresql://fds:fds-password@localhost:5432/fds?schema=public
+   AUTH_SECRET=replace-with-a-long-random-secret
+   ADMIN_EMAILS=admin@example.com
+
+   # Push and internal dispatch auth
+   CRON_SECRET=replace-with-a-long-random-secret
+   VAPID_PUBLIC_KEY=...
+   VAPID_PRIVATE_KEY=...
+   APP_TIMEZONE=Europe/Berlin
+
+   # Optional: Upstash QStash scheduler
+   QSTASH_TOKEN=...
+   QSTASH_CURRENT_SIGNING_KEY=...
+   QSTASH_NEXT_SIGNING_KEY=...
+   QSTASH_URL=https://qstash.upstash.io
+   APP_BASE_URL=http://localhost:3000
+   QSTASH_CRON=*/15 * * * *
+   QSTASH_SCHEDULE_LABEL=fds-dispatch-v1
+
    # Feature flags are configured in PostHog (recommended defaults):
    # - ui.new_homepage: 0% rollout
    # - ui.welcome_overlay: enabled/disabled by rollout
    # - ui.advanced_calendar: enabled/disabled by rollout
    # - analytics.debug_mode: false
    # - analytics.client_capture_sample_rate: 100
+  ```
+
+6. **Optional: Create or update QStash schedule**
+   ```bash
+   npm run qstash:schedule
    ```
+   This configures a 15-minute schedule that calls `/api/internal/push/dispatch`.
 
 4. **Run the development server**
    ```bash

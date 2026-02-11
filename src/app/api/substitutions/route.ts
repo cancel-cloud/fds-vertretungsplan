@@ -18,9 +18,21 @@ const META_RESPONSE_MESSAGE = 'No substitution data found. Only configuration re
 const JSON_CONTENT_TYPE = /application\/json/i;
 const ERROR_SNIPPET_LIMIT = 500;
 const RESPONSE_CACHE_TTL_MS = 30_000;
+const RESPONSE_CACHE_STALE_IF_ERROR_TTL_MS = 30 * 60 * 1000;
 const RESPONSE_CACHE_MAX_AGE_SECONDS = Math.floor(RESPONSE_CACHE_TTL_MS / 1000);
 const RESPONSE_CACHE_SWR_SECONDS = 60;
 const RESPONSE_CACHE_MAX_ENTRIES = 200;
+const UPSTREAM_MAX_ATTEMPTS = 3;
+const UPSTREAM_RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
+const NETWORK_RETRYABLE_CODES = new Set([
+  'UND_ERR_CONNECT_TIMEOUT',
+  'UND_ERR_HEADERS_TIMEOUT',
+  'UND_ERR_BODY_TIMEOUT',
+  'ETIMEDOUT',
+  'ECONNRESET',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+]);
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 60;
 const RATE_LIMIT_MAX_ENTRIES = 1000;
@@ -36,6 +48,49 @@ interface ParsedResponseBody {
   json?: unknown;
 }
 
+class UntisUpstreamError extends Error {
+  status?: number;
+  retryable: boolean;
+  code?: string;
+
+  constructor(message: string, options?: { status?: number; retryable?: boolean; code?: string; cause?: unknown }) {
+    super(message, options?.cause ? { cause: options.cause } : undefined);
+    this.name = 'UntisUpstreamError';
+    this.status = options?.status;
+    this.retryable = Boolean(options?.retryable);
+    this.code = options?.code;
+  }
+}
+
+function getErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') {
+    return undefined;
+  }
+
+  const directCode = (error as { code?: unknown }).code;
+  if (typeof directCode === 'string' && directCode.length > 0) {
+    return directCode;
+  }
+
+  const cause = (error as { cause?: unknown }).cause;
+  if (cause && typeof cause === 'object') {
+    const causeCode = (cause as { code?: unknown }).code;
+    if (typeof causeCode === 'string' && causeCode.length > 0) {
+      return causeCode;
+    }
+  }
+
+  return undefined;
+}
+
+function isRetryableNetworkError(error: unknown): boolean {
+  const code = getErrorCode(error);
+  return Boolean(code && NETWORK_RETRYABLE_CODES.has(code));
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function getClientIp(req: NextRequest) {
   const forwardedFor = req.headers.get('x-forwarded-for');
@@ -76,7 +131,7 @@ function pruneRateLimitStore(now: number) {
 
 function pruneResponseCache(now: number) {
   for (const [key, entry] of responseCache.entries()) {
-    if (now - entry.timestamp > RESPONSE_CACHE_TTL_MS) {
+    if (now - entry.timestamp > RESPONSE_CACHE_STALE_IF_ERROR_TTL_MS) {
       responseCache.delete(key);
     }
   }
@@ -172,7 +227,10 @@ function formatUntisError(context: string, response: Response, body: ParsedRespo
   const statusInfo = `${response.status}${response.statusText ? ` ${response.statusText}` : ''}`.trim();
   const snippet = extractErrorSnippet(body);
   const baseMessage = `${context} failed with status ${statusInfo || 'unknown'}`;
-  return new Error(snippet ? `${baseMessage}: ${snippet}` : baseMessage);
+  return new UntisUpstreamError(snippet ? `${baseMessage}: ${snippet}` : baseMessage, {
+    status: response.status,
+    retryable: UPSTREAM_RETRYABLE_STATUS_CODES.has(response.status),
+  });
 }
 
 function hasSubstitutionPayload(data: unknown): data is WebUntisResponse {
@@ -232,28 +290,62 @@ async function requestSubstitutionData(
   substitutionUrl: string,
   payload: WebUntisRequest
 ): Promise<WebUntisResponse> {
-  const substitutionResponse = await fetch(substitutionUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify(payload),
-    redirect: 'manual',
-    cache: 'no-store',
-  });
+  for (let attempt = 1; attempt <= UPSTREAM_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const substitutionResponse = await fetch(substitutionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+        redirect: 'manual',
+        cache: 'no-store',
+      });
 
-  const responseBody = await parseResponseBody(substitutionResponse);
+      const responseBody = await parseResponseBody(substitutionResponse);
 
-  if (!substitutionResponse.ok) {
-    throw formatUntisError('WebUntis substitution request', substitutionResponse, responseBody);
+      if (!substitutionResponse.ok) {
+        const error = formatUntisError('WebUntis substitution request', substitutionResponse, responseBody);
+        if (
+          error instanceof UntisUpstreamError &&
+          error.retryable &&
+          attempt < UPSTREAM_MAX_ATTEMPTS
+        ) {
+          await sleep(attempt * 250);
+          continue;
+        }
+        throw error;
+      }
+
+      if (!responseBody.json || typeof responseBody.json !== 'object') {
+        throw new UntisUpstreamError('WebUntis response was not JSON.', { retryable: false });
+      }
+
+      return responseBody.json as WebUntisResponse;
+    } catch (error) {
+      if (attempt < UPSTREAM_MAX_ATTEMPTS && isRetryableNetworkError(error)) {
+        await sleep(attempt * 250);
+        continue;
+      }
+
+      if (error instanceof UntisUpstreamError) {
+        throw error;
+      }
+
+      if (isRetryableNetworkError(error)) {
+        throw new UntisUpstreamError('WebUntis network request timed out or failed.', {
+          retryable: true,
+          code: getErrorCode(error),
+          cause: error,
+        });
+      }
+
+      throw new UntisUpstreamError('WebUntis request failed unexpectedly.', { retryable: false, cause: error });
+    }
   }
 
-  if (!responseBody.json || typeof responseBody.json !== 'object') {
-    throw new Error('WebUntis response was not JSON.');
-  }
-
-  return responseBody.json as WebUntisResponse;
+  throw new UntisUpstreamError('WebUntis request failed after retries.', { retryable: true });
 }
 
 export async function GET(req: NextRequest) {
@@ -309,7 +401,26 @@ export async function GET(req: NextRequest) {
     }
 
     const payload = buildRequestPayload(numeric, schoolName);
-    const rawData = await requestSubstitutionData(substitutionUrl, payload);
+    let rawData: WebUntisResponse;
+    try {
+      rawData = await requestSubstitutionData(substitutionUrl, payload);
+    } catch (upstreamError) {
+      const staleCached = responseCache.get(cacheKey);
+      if (staleCached) {
+        console.warn('Serving stale substitution cache after upstream failure', {
+          date: numeric,
+        });
+
+        return NextResponse.json(staleCached.data, {
+          headers: {
+            'Cache-Control': 'public, max-age=0, s-maxage=0, stale-while-revalidate=60',
+            'X-Data-Source': 'stale-cache',
+          },
+        });
+      }
+
+      throw upstreamError;
+    }
 
     if (hasSubstitutionPayload(rawData)) {
       const payloadData = rawData.payload!;
@@ -368,10 +479,17 @@ export async function GET(req: NextRequest) {
       message_length: error instanceof Error ? error.message.length : 0,
     });
 
+    const isUpstreamUnavailable =
+      error instanceof UntisUpstreamError && (error.retryable || error.status === 503 || error.status === 504);
+
     return NextResponse.json(
-      { error: 'Fehler beim Laden der Vertretungen. Bitte versuchen Sie es später erneut.' },
       {
-        status: 500,
+        error: isUpstreamUnavailable
+          ? 'Vertretungsdaten sind aktuell nicht erreichbar. Bitte versuche es in ein paar Minuten erneut.'
+          : 'Fehler beim Laden der Vertretungen. Bitte versuchen Sie es später erneut.',
+      },
+      {
+        status: isUpstreamUnavailable ? 503 : 500,
         headers: {
           'Cache-Control': 'no-store',
         },

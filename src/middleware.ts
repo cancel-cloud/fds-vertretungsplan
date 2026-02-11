@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
 const isProd = process.env.NODE_ENV === 'production';
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim() || 'https://eu.i.posthog.com';
@@ -13,6 +15,9 @@ const buildCsp = () => {
   if (!isProd) {
     scriptSrc.push("'unsafe-eval'");
   }
+  const connectSrc = isProd
+    ? ["'self'", 'https://eu.posthog.com', posthogHost, posthogAssetsHost, vercelInsightsHost, vercelScriptsHost]
+    : ['*', 'data:', 'blob:', 'ws:', 'wss:'];
 
   const directives = [
     "default-src 'self'",
@@ -22,9 +27,10 @@ const buildCsp = () => {
     "object-src 'none'",
     "img-src 'self' data: https:",
     "font-src 'self' data:",
+    "worker-src 'self' blob:",
     `script-src ${scriptSrc.join(' ')}`,
     "style-src 'self' 'unsafe-inline'",
-    `connect-src 'self' https://eu.posthog.com ${posthogHost} ${posthogAssetsHost} ${vercelInsightsHost} ${vercelScriptsHost}`,
+    `connect-src ${connectSrc.join(' ')}`,
   ];
 
   if (isProd) {
@@ -34,8 +40,47 @@ const buildCsp = () => {
   return directives.join('; ');
 };
 
-export function middleware() {
+const STUNDENPLAN_PUBLIC_PATHS = new Set(['/stundenplan/login', '/stundenplan/register']);
+const normalizePathname = (pathname: string): string => {
+  if (pathname.length > 1 && pathname.endsWith('/')) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+};
+
+export async function middleware(req: NextRequest) {
   const csp = buildCsp();
+  const pathname = req.nextUrl.pathname;
+  const normalizedPathname = normalizePathname(pathname);
+
+  if (normalizedPathname.startsWith('/stundenplan')) {
+    const token = await getToken({
+      req,
+      secret: process.env.AUTH_SECRET,
+    });
+    const isAuthenticated = Boolean(token);
+    const isPublicStundenplanPath = STUNDENPLAN_PUBLIC_PATHS.has(normalizedPathname);
+
+    if (!isAuthenticated && !isPublicStundenplanPath) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/stundenplan/login';
+      if (!STUNDENPLAN_PUBLIC_PATHS.has(normalizedPathname)) {
+        url.searchParams.set('next', normalizedPathname);
+      }
+      const redirectResponse = NextResponse.redirect(url);
+      redirectResponse.headers.set('Content-Security-Policy', csp);
+      return redirectResponse;
+    }
+
+    if (isAuthenticated && isPublicStundenplanPath) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/stundenplan';
+      const redirectResponse = NextResponse.redirect(url);
+      redirectResponse.headers.set('Content-Security-Policy', csp);
+      return redirectResponse;
+    }
+  }
+
   const response = NextResponse.next();
 
   response.headers.set('Content-Security-Policy', csp);

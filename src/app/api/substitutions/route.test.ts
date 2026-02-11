@@ -109,8 +109,8 @@ describe('api/substitutions route', () => {
     expect(lastResponse?.headers.get('Retry-After')).toBeTruthy();
   });
 
-  it('returns 500 on upstream failures', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
+  it('returns 503 on upstream availability failures', async () => {
+    const fetchMock = vi.fn().mockImplementation(async () =>
       new Response(JSON.stringify({ error: 'upstream down' }), {
         status: 503,
         statusText: 'Service Unavailable',
@@ -125,7 +125,7 @@ describe('api/substitutions route', () => {
     const response = await GET(req);
     const json = await response.json();
 
-    expect(response.status).toBe(500);
-    expect(json.error).toContain('Fehler beim Laden');
+    expect(response.status).toBe(503);
+    expect(json.error).toContain('nicht erreichbar');
   });
 });
