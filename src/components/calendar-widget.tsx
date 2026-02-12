@@ -10,6 +10,7 @@ interface CalendarDate {
   isToday: boolean;
   isSelected: boolean;
   isOtherMonth: boolean;
+  isWeekend: boolean;
 }
 
 interface CalendarWidgetProps {
@@ -40,6 +41,21 @@ const addDays = (date: Date, days: number) => {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+};
+
+const isWeekend = (date: Date) => {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+};
+
+const normalizeSchoolDay = (date: Date, direction: 'forward' | 'backward' = 'forward') => {
+  const normalized = new Date(date);
+
+  while (isWeekend(normalized)) {
+    normalized.setDate(normalized.getDate() + (direction === 'forward' ? 1 : -1));
+  }
+
+  return normalized;
 };
 
 const toDateId = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -75,6 +91,7 @@ export function CalendarWidget({
         isToday: isSameDay(date, today),
         isSelected: isSameDay(date, selectedDate),
         isOtherMonth: true,
+        isWeekend: isWeekend(date),
       });
     }
 
@@ -85,6 +102,7 @@ export function CalendarWidget({
         isToday: isSameDay(date, today),
         isSelected: isSameDay(date, selectedDate),
         isOtherMonth: false,
+        isWeekend: isWeekend(date),
       });
     }
 
@@ -96,14 +114,15 @@ export function CalendarWidget({
         isToday: isSameDay(date, today),
         isSelected: isSameDay(date, selectedDate),
         isOtherMonth: true,
+        isWeekend: isWeekend(date),
       });
     }
 
     return dates;
   }, [currentMonth, currentYear, selectedDate, today]);
 
-  const handleDateSelect = (date: Date) => {
-    const normalized = startOfLocalDay(date);
+  const handleDateSelect = (date: Date, direction: 'forward' | 'backward' = 'forward') => {
+    const normalized = normalizeSchoolDay(startOfLocalDay(date), direction);
     onDateSelect(normalized);
     setViewDate(new Date(normalized.getFullYear(), normalized.getMonth(), 1));
   };
@@ -129,19 +148,19 @@ export function CalendarWidget({
 
     if (offset !== 0) {
       event.preventDefault();
-      handleDateSelect(addDays(date, offset));
+      handleDateSelect(addDays(date, offset), offset > 0 ? 'forward' : 'backward');
       return;
     }
 
     if (event.key === 'Home') {
       event.preventDefault();
-      handleDateSelect(new Date(currentYear, currentMonth, 1));
+      handleDateSelect(new Date(currentYear, currentMonth, 1), 'forward');
       return;
     }
 
     if (event.key === 'End') {
       event.preventDefault();
-      handleDateSelect(new Date(currentYear, currentMonth + 1, 0));
+      handleDateSelect(new Date(currentYear, currentMonth + 1, 0), 'backward');
     }
   };
 
@@ -196,12 +215,18 @@ export function CalendarWidget({
                 role="gridcell"
                 aria-selected={calendarDate.isSelected}
                 aria-current={calendarDate.isToday ? 'date' : undefined}
+                aria-disabled={calendarDate.isWeekend}
+                disabled={calendarDate.isWeekend}
                 onClick={() => handleDateSelect(calendarDate.date)}
                 onKeyDown={(event) => handleDayKeyDown(event, calendarDate.date)}
                 className={[
                   'm-0.5 flex items-center justify-center rounded-md p-2 text-sm transition-colors duration-150',
                   calendarDate.isOtherMonth ? 'text-muted-foreground opacity-60' : 'text-foreground',
-                  calendarDate.isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-accent',
+                  calendarDate.isWeekend
+                    ? 'cursor-not-allowed bg-muted/30 text-muted-foreground opacity-45'
+                    : calendarDate.isSelected
+                      ? 'bg-primary text-primary-foreground'
+                      : 'hover:bg-accent',
                   calendarDate.isToday && !calendarDate.isSelected ? 'border border-primary' : '',
                 ].join(' ')}
               >

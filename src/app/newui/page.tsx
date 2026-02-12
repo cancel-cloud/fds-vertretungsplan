@@ -402,23 +402,6 @@ function NewUiPageContent() {
 
             <SearchInput value={filterState.search} onChange={handleSearchChange} />
 
-            <div className="flex flex-wrap gap-2 md:hidden">
-              <Button
-                variant={isSameDay(selectedDate, schoolToday) ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setDateAndTrack(schoolToday, 'newui_today_mobile')}
-              >
-                Heute {formatChipDate(schoolToday)}
-              </Button>
-              <Button
-                variant={isSameDay(selectedDate, schoolTomorrow) ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setDateAndTrack(schoolTomorrow, 'newui_tomorrow_mobile')}
-              >
-                Morgen {formatChipDate(schoolTomorrow)}
-              </Button>
-            </div>
-
             {stats.hasActiveFilters ? (
               <div className="hidden md:block">
                 <Button variant="ghost" size="sm" onClick={handleClearAllFilters}>
