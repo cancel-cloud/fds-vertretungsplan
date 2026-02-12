@@ -89,15 +89,7 @@ export const authOptions: NextAuthOptions = {
         token.notificationLookaheadSchoolDays = authUser.notificationLookaheadSchoolDays ?? 1;
       }
 
-      if (trigger === 'update' && session?.user) {
-        token.role = session.user.role;
-        token.onboardingCompletedAt = session.user.onboardingCompletedAt;
-        token.onboardingSkippedAt = session.user.onboardingSkippedAt;
-        token.notificationsEnabled = session.user.notificationsEnabled;
-        token.notificationLookaheadSchoolDays = session.user.notificationLookaheadSchoolDays;
-      }
-
-      if (token.id) {
+      if (trigger === 'update' && session?.user && token.id) {
         const freshUser = await prisma.user.findUnique({
           where: { id: token.id },
           select: {
