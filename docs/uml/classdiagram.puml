@@ -1,0 +1,49 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class HomePage {
+  +render()
+}
+
+class NewUiPage {
+  +render()
+}
+
+class useSubstitutions {
+  +substitutions
+  +isLoading
+  +error
+  +metaResponse
+  +refetch()
+}
+
+class SubstitutionRoute {
+  +GET(req)
+  -checkRateLimit(ip)
+  -requestSubstitutionData(url,payload)
+}
+
+class DataProcessing {
+  +processApiResponse(rows)
+  +sortSubstitutions(items)
+  +filterSubstitutions(items, filter)
+}
+
+class PostHogProvider {
+  +capture(event, props)
+  +isFeatureEnabled(key)
+}
+
+class AppShell
+class SubstitutionList
+
+HomePage --> PostHogProvider : nutzt Flags
+HomePage --> useSubstitutions : lädt Daten
+NewUiPage --> useSubstitutions : lädt Daten
+useSubstitutions --> SubstitutionRoute : fetch /api/substitutions
+useSubstitutions --> DataProcessing : transformiert Daten
+HomePage --> AppShell : layout
+HomePage --> SubstitutionList : rendert Ergebnis
+NewUiPage --> SubstitutionList : rendert Ergebnis
+
+@enduml

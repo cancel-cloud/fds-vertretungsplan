@@ -1,0 +1,38 @@
+@startuml
+start
+
+:User wählt Datum;
+:Hook berechnet cacheKey;
+
+if (Client-Cache Treffer?) then (ja)
+  :Daten aus Cache laden;
+  :UI zeigt Ergebnisliste;
+  stop
+else (nein)
+  :Request an /api/substitutions;
+endif
+
+:API prüft Rate-Limit;
+if (Limit überschritten?) then (ja)
+  :429 + Retry-After;
+  :UI zeigt Fehlerhinweis;
+  stop
+else (nein)
+  :API ruft WebUntis auf;
+endif
+
+if (Payload mit rows?) then (ja)
+  :Antworttyp substitution;
+  :Server-Cache setzen;
+  :Hook verarbeitet + sortiert;
+  :UI zeigt Vertretungen;
+elseif (nur Meta-Daten)
+  :Antworttyp meta;
+  :UI zeigt Hinweis "kein Plan";
+else (Fehler)
+  :500 Antwort;
+  :UI zeigt Fehlermeldung;
+endif
+
+stop
+@enduml

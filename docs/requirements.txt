@@ -1,0 +1,3 @@
+Sphinx>=8.0,<9.0
+furo>=2024.8.6
+sphinxcontrib-plantuml>=0.30
