@@ -5,7 +5,7 @@
  * @param attempt - The current attempt number (1-indexed)
  * @param baseDelayMs - The base delay in milliseconds (default: 100ms)
  * @param maxDelayMs - The maximum delay in milliseconds (default: 5000ms)
- * @returns The delay in milliseconds with jitter applied (minimum 50ms)
+ * @returns The delay in milliseconds with jitter applied, in the range [50ms, cappedDelay] inclusive
  */
 export function calculateExponentialBackoff(
   attempt: number,
@@ -20,6 +20,7 @@ export function calculateExponentialBackoff(
   // Cap at maxDelay
   const cappedDelay = Math.min(exponentialDelay, maxDelayMs);
 
-  // Apply full jitter: random value between minDelay and cappedDelay
+  // Apply full jitter: random value in range [minDelayMs, cappedDelay] inclusive
+  // Formula produces integer values from minDelayMs to cappedDelay, both inclusive
   return Math.floor(Math.random() * (cappedDelay - minDelayMs + 1)) + minDelayMs;
 }
