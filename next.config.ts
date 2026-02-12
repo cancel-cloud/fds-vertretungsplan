@@ -1,5 +1,11 @@
 import type { NextConfig } from 'next';
 
+const isDev = process.env.NODE_ENV !== 'production';
+const allowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter((value) => value.length > 0);
+
 const securityHeaders = [
   {
     key: 'Referrer-Policy',
@@ -24,6 +30,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins:
+    isDev && allowedDevOrigins.length > 0
+      ? allowedDevOrigins
+      : isDev
+        ? ['localhost', '*.localhost', '127.0.0.1', '*.local']
+        : undefined,
   async headers() {
     return [
       {

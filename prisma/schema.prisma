@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Weekday {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+}
+
+enum WeekMode {
+  ALL
+  EVEN
+  ODD
+}
+
+model User {
+  id                    String                  @id @default(cuid())
+  email                 String                  @unique
+  passwordHash          String
+  role                  UserRole                @default(USER)
+  onboardingCompletedAt DateTime?
+  onboardingSkippedAt   DateTime?
+  notificationsEnabled  Boolean                 @default(false)
+  notificationLookaheadSchoolDays Int          @default(1)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  timetableEntries      TimetableEntry[]
+  timetablePresets      TimetablePreset[]
+  pushSubscriptions     PushSubscription[]
+  notificationMarks     NotificationFingerprint[]
+  notificationStates    NotificationState[]
+}
+
+model TeacherDirectory {
+  id              String          @id @default(cuid())
+  code            String          @unique
+  fullName        String
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  timetableEntries TimetableEntry[]
+}
+
+model TimetableEntry {
+  id          String           @id @default(cuid())
+  userId      String
+  weekday     Weekday
+  startPeriod Int
+  duration    Int
+  subjectCode String
+  teacherCode String
+  room        String?
+  weekMode    WeekMode         @default(ALL)
+  teacherId   String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teacher     TeacherDirectory? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+
+  @@index([userId, weekday, startPeriod])
+  @@index([teacherCode])
+  @@index([subjectCode])
+}
+
+model TimetablePreset {
+  id          String   @id @default(cuid())
+  userId      String
+  subjectCode String
+  teacherCode String
+  room        String   @default("")
+  usageCount  Int      @default(0)
+  lastUsedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subjectCode, teacherCode, room])
+  @@index([userId, usageCount, lastUsedAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  lastSeenAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model NotificationFingerprint {
+  id         String   @id @default(cuid())
+  userId     String
+  targetDate Int
+  fingerprint String
+  sentAt     DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetDate, fingerprint])
+  @@index([targetDate])
+}
+
+model NotificationState {
+  id              String   @id @default(cuid())
+  userId          String
+  targetDate      Int
+  lastFingerprint String
+  lastMatchCount  Int
+  lastChangedAt   DateTime @updatedAt
+  lastSentAt      DateTime
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetDate])
+  @@index([targetDate])
+}
+
+model AppSettings {
+  id                  Int      @id @default(1)
+  allowedEmailDomains String[] @default([])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
