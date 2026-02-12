@@ -6,6 +6,7 @@ import { toAuthUserDto } from '@/lib/user-system-mappers';
 
 const MIN_PASSWORD_LENGTH = 8;
 const DOMAIN_PATTERN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10);
 
 const normalizeDomain = (value: string): string => value.trim().toLowerCase().replace(/^@/, '');
 
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
       select: { allowedEmailDomains: true },
     });
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const adminCount = await prisma.user.count({
       where: {
