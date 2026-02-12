@@ -13,6 +13,7 @@ import {
   resolveBaseUrl,
   resolveSchoolName,
 } from '@/app/api/substitutions/route-utils';
+import { calculateExponentialBackoff } from '@/lib/retry-utils';
 
 const META_RESPONSE_MESSAGE = 'No substitution data found. Only configuration returned.';
 const JSON_CONTENT_TYPE = /application\/json/i;
@@ -312,7 +313,8 @@ async function requestSubstitutionData(
           error.retryable &&
           attempt < UPSTREAM_MAX_ATTEMPTS
         ) {
-          await sleep(attempt * 250);
+          const backoffDelay = calculateExponentialBackoff(attempt);
+          await sleep(backoffDelay);
           continue;
         }
         throw error;
@@ -325,7 +327,8 @@ async function requestSubstitutionData(
       return responseBody.json as WebUntisResponse;
     } catch (error) {
       if (attempt < UPSTREAM_MAX_ATTEMPTS && isRetryableNetworkError(error)) {
-        await sleep(attempt * 250);
+        const backoffDelay = calculateExponentialBackoff(attempt);
+        await sleep(backoffDelay);
         continue;
       }
 
