@@ -138,10 +138,12 @@ describe('api/substitutions route', () => {
       },
     };
 
+    const networkError = Object.assign(new TypeError('Network error'), { code: 'ECONNRESET' });
+
     const fetchMock = vi
       .fn()
       // First call: simulate a network error (e.g. ECONNRESET / TypeError from fetch)
-      .mockRejectedValueOnce(new TypeError('Network error'))
+      .mockRejectedValueOnce(networkError)
       // Second call: successful response
       .mockResolvedValueOnce(
         new Response(JSON.stringify(successPayload), {
@@ -159,12 +161,13 @@ describe('api/substitutions route', () => {
 
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.payload?.date).toBe(20250210);
+    expect(json.date).toBe(20250210);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('returns 503 after exhausting retries on persistent network errors', async () => {
-    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Persistent network error'));
+    const networkError = Object.assign(new TypeError('Persistent network error'), { code: 'ETIMEDOUT' });
+    const fetchMock = vi.fn().mockRejectedValue(networkError);
 
     vi.stubGlobal('fetch', fetchMock);
 
@@ -176,6 +179,6 @@ describe('api/substitutions route', () => {
 
     expect(response.status).toBe(503);
     expect(json.error).toContain('nicht erreichbar');
-    expect(fetchMock).toHaveBeenCalledGreaterThanOrEqual(1);
+    expect(fetchMock).toHaveBeenCalledTimes(3); // Should retry 3 times (UPSTREAM_MAX_ATTEMPTS)
   });
 });

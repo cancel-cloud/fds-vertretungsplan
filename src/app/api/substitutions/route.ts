@@ -92,6 +92,26 @@ async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Calculates exponential backoff delay with jitter to avoid thundering herd.
+ * Uses full jitter strategy: randomizes the delay between 0 and the exponential backoff value.
+ * 
+ * @param attempt - The current attempt number (1-indexed)
+ * @param baseDelayMs - The base delay in milliseconds (default: 100ms)
+ * @param maxDelayMs - The maximum delay in milliseconds (default: 5000ms)
+ * @returns The delay in milliseconds with jitter applied
+ */
+function calculateExponentialBackoff(attempt: number, baseDelayMs = 100, maxDelayMs = 5000): number {
+  // Calculate exponential backoff: baseDelay * 2^(attempt - 1)
+  const exponentialDelay = baseDelayMs * Math.pow(2, attempt - 1);
+  
+  // Cap at maxDelay
+  const cappedDelay = Math.min(exponentialDelay, maxDelayMs);
+  
+  // Apply full jitter: random value between 0 and cappedDelay
+  return Math.floor(Math.random() * cappedDelay);
+}
+
 function getClientIp(req: NextRequest) {
   const forwardedFor = req.headers.get('x-forwarded-for');
   if (forwardedFor) {
@@ -312,7 +332,8 @@ async function requestSubstitutionData(
           error.retryable &&
           attempt < UPSTREAM_MAX_ATTEMPTS
         ) {
-          await sleep(attempt * 250);
+          const backoffDelay = calculateExponentialBackoff(attempt);
+          await sleep(backoffDelay);
           continue;
         }
         throw error;
@@ -325,7 +346,8 @@ async function requestSubstitutionData(
       return responseBody.json as WebUntisResponse;
     } catch (error) {
       if (attempt < UPSTREAM_MAX_ATTEMPTS && isRetryableNetworkError(error)) {
-        await sleep(attempt * 250);
+        const backoffDelay = calculateExponentialBackoff(attempt);
+        await sleep(backoffDelay);
         continue;
       }
 
