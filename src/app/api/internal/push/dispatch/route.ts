@@ -48,10 +48,6 @@ export async function POST(req: NextRequest) {
   return runDispatch(req);
 }
 
-export async function GET(req: NextRequest) {
-  return runDispatch(req);
-}
-
 function hasValidBearerToken(req: NextRequest): boolean {
   const authHeader = req.headers.get('authorization') ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
