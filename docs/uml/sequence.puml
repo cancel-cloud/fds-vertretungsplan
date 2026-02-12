@@ -1,0 +1,37 @@
+@startuml
+actor User
+participant "Home/NewUI" as UI
+participant "useSubstitutions" as Hook
+participant "/api/substitutions" as API
+participant "WebUntis" as Untis
+
+User -> UI: Datum wählen / Suche anpassen
+UI -> Hook: fetchSubstitutions(date)
+
+alt Cache-Hit
+  Hook --> UI: cached data
+else Cache-Miss
+  Hook -> API: GET /api/substitutions?date=YYYYMMDD
+
+  alt Rate-Limit
+    API --> Hook: 429 + Retry-After
+    Hook --> UI: error state
+  else erlaubt
+    API -> Untis: POST substitution/data
+    alt payload rows
+      Untis --> API: rows + lastUpdate
+      API --> Hook: type=substitution
+      Hook --> UI: substitutions
+    else meta
+      Untis --> API: meta
+      API --> Hook: type=meta
+      Hook --> UI: meta state
+    else upstream error
+      Untis --> API: 5xx/error
+      API --> Hook: 500 error
+      Hook --> UI: error state
+    end
+  end
+end
+
+@enduml

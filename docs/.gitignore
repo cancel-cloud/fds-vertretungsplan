@@ -1,0 +1,13 @@
+_build/
+.venv/
+__pycache__/
+*.log
+*.aux
+*.fls
+*.fdb_latexmk
+*.toc
+*.out
+*.idx
+*.ilg
+*.ind
+.DS_Store

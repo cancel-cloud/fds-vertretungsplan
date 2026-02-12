@@ -1,0 +1,30 @@
+@startuml
+left to right direction
+
+actor "Schüler/Lehrkraft" as User
+actor "WebUntis" as Untis
+actor "PostHog" as Posthog
+
+rectangle "FDS Vertretungsplan" {
+  usecase "Datum wählen" as UC_Date
+  usecase "Vertretungen anzeigen" as UC_View
+  usecase "Filtern und Suchen" as UC_Filter
+  usecase "Fehlerstatus anzeigen" as UC_Error
+  usecase "Impressum/Datenschutz öffnen" as UC_Legal
+  usecase "Analytics-Event erfassen" as UC_Analytics
+  usecase "WebUntis-Daten abrufen" as UC_Untis
+}
+
+User --> UC_Date
+User --> UC_View
+User --> UC_Filter
+User --> UC_Error
+User --> UC_Legal
+
+UC_View .> UC_Untis : include
+UC_Filter .> UC_View : extend
+UC_View .> UC_Analytics : include
+UC_Untis --> Untis
+UC_Analytics --> Posthog
+
+@enduml
