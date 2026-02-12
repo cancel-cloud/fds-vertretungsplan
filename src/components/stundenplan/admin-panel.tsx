@@ -79,6 +79,8 @@ export function AdminPanel() {
   const [editingTeacherName, setEditingTeacherName] = useState('');
 
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
+  const [pushTestBusy, setPushTestBusy] = useState(false);
+  const [pushTestMessage, setPushTestMessage] = useState<string | null>(null);
 
   const load = useCallback(async (targetUsersPage: number) => {
     setLoading(true);
@@ -309,8 +311,62 @@ export function AdminPanel() {
     return 'Offen';
   };
 
+  const sendPushTest = async () => {
+    setPushTestBusy(true);
+    setPushTestMessage(null);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/push/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        sent?: number;
+        traceId?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error ?? 'Test-Benachrichtigung konnte nicht gesendet werden.');
+      }
+
+      const sentCount = typeof data.sent === 'number' ? data.sent : 0;
+      const trace = typeof data.traceId === 'string' && data.traceId.length > 0 ? ` Trace: ${data.traceId}` : '';
+      setPushTestMessage(`Test-Benachrichtigung wurde an ${sentCount} Gerät(e) gesendet.${trace}`);
+    } catch (sendError) {
+      setPushTestMessage(
+        sendError instanceof Error ? sendError.message : 'Test-Benachrichtigung konnte nicht gesendet werden.'
+      );
+    } finally {
+      setPushTestBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <section className="rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5">
+        <h2 className="text-xl font-semibold text-[rgb(var(--color-text))]">Push-Tests</h2>
+        <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+          Teste Push-Zustellung für den aktuell angemeldeten Admin-Account.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Button type="button" onClick={() => void sendPushTest()} loading={pushTestBusy}>
+            Test senden
+          </Button>
+        </div>
+        {pushTestMessage ? (
+          <p
+            className="mt-3 rounded-md bg-[rgb(var(--color-background)/0.85)] px-3 py-2 text-sm text-[rgb(var(--color-text-secondary))]"
+            aria-live="polite"
+          >
+            {pushTestMessage}
+          </p>
+        ) : null}
+      </section>
+
       <section className="rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5">
         <h2 className="text-xl font-semibold text-[rgb(var(--color-text))]">Lehrer-Verzeichnis</h2>
         <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">

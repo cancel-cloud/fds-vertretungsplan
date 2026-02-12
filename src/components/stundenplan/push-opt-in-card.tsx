@@ -47,9 +47,6 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
   const [permissionState, setPermissionState] = useState<NotificationPermission | 'unsupported'>('unsupported');
   const [isSecureContextState, setIsSecureContextState] = useState(false);
   const [origin, setOrigin] = useState<string>('');
-  const [lastPushEventAt, setLastPushEventAt] = useState<string | null>(null);
-  const [lastPushTraceId, setLastPushTraceId] = useState<string | null>(null);
-  const [lastPushError, setLastPushError] = useState<string | null>(null);
 
   const loadVapidPublicKey = async (): Promise<string> => {
     const keyResponse = await fetch('/api/push/subscribe');
@@ -152,30 +149,7 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
 
     void syncSubscriptionState();
 
-    const onServiceWorkerMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string; receivedAt?: number; payload?: { traceId?: string }; traceId?: string; message?: string } | undefined;
-      if (data?.type === 'push-received') {
-        const at = typeof data.receivedAt === 'number' ? new Date(data.receivedAt).toLocaleTimeString('de-DE') : '';
-        setLastPushEventAt(at || new Date().toLocaleTimeString('de-DE'));
-        const traceId = data.payload?.traceId;
-        if (typeof traceId === 'string' && traceId.length > 0) {
-          setLastPushTraceId(traceId);
-        }
-        setLastPushError(null);
-      }
-      if (data?.type === 'push-notification-error') {
-        const traceId = typeof data.traceId === 'string' ? data.traceId : null;
-        if (traceId) {
-          setLastPushTraceId(traceId);
-        }
-        setLastPushError(typeof data.message === 'string' ? data.message : 'showNotification fehlgeschlagen');
-      }
-    };
-
-    navigator.serviceWorker.addEventListener('message', onServiceWorkerMessage);
-    return () => {
-      navigator.serviceWorker.removeEventListener('message', onServiceWorkerMessage);
-    };
+    return undefined;
   }, [initialEnabled]);
 
   const ensureNotificationPermission = async (): Promise<boolean> => {
@@ -323,65 +297,6 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
             Aktivieren
           </Button>
         )}
-        <Button
-          type="button"
-          variant="ghost"
-          loading={busy}
-          onClick={async () => {
-            setBusy(true);
-            setMessage(null);
-
-            try {
-              const hasPermission = await ensureNotificationPermission();
-              if (!hasPermission) {
-                return;
-              }
-
-              const subscription = await ensureCurrentSubscription();
-              setEnabled(true);
-
-              // Call API to verify server pipeline + save subscription
-              const response = await fetch('/api/push/test', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  endpoint: subscription.endpoint,
-                  subscription,
-                }),
-              });
-              const data = (await response.json()) as {
-                error?: string;
-                sent?: number;
-                traceId?: string;
-                failures?: Array<{ endpoint?: string; statusCode?: number; reason?: string }>;
-              };
-
-              if (!response.ok) {
-                throw new Error(data.error ?? 'Test-Benachrichtigung konnte nicht gesendet werden.');
-              }
-
-              const traceId = typeof data.traceId === 'string' && data.traceId.length > 0 ? data.traceId : null;
-              if (traceId) {
-                setLastPushTraceId(traceId);
-              }
-
-              // Show notification immediately via browser-native API
-              const tag = `fds-test-${Date.now()}`;
-              new Notification('FDS Vertretungsplan · Test', {
-                body: 'Dies ist eine Test-Benachrichtigung.',
-                tag,
-              });
-              setMessage(`Test-Benachrichtigung angezeigt.${traceId ? ` Trace: ${traceId}` : ''}`);
-            } catch (error) {
-              setMessage(error instanceof Error ? error.message : 'Test-Benachrichtigung konnte nicht gesendet werden.');
-            } finally {
-              setBusy(false);
-            }
-          }}
-          disabled={busy}
-        >
-          Test senden
-        </Button>
       </div>
 
       <p className="mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
@@ -397,19 +312,6 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
       <p className="mt-1 text-xs text-[rgb(var(--color-text-secondary))]">
         Kontext: {isSecureContextState ? 'sicher' : 'unsicher'} ({origin})
       </p>
-      {lastPushEventAt ? (
-        <p className="mt-1 text-xs text-[rgb(var(--color-text-secondary))]">
-          SW-Push empfangen um: {lastPushEventAt}
-          {lastPushTraceId ? ` (Trace: ${lastPushTraceId})` : ''}
-        </p>
-      ) : null}
-      {lastPushError ? (
-        <p className="mt-1 text-xs text-[rgb(var(--color-error))]">
-          SW-Fehler: {lastPushError}
-          {lastPushTraceId ? ` (Trace: ${lastPushTraceId})` : ''}
-        </p>
-      ) : null}
-
       {message ? (
         <p className="mt-3 rounded-md bg-[rgb(var(--color-background)/0.85)] px-3 py-2 text-sm text-[rgb(var(--color-text-secondary))]" aria-live="polite">
           {message}

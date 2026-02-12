@@ -34,6 +34,45 @@ interface TimetableEntryResponse {
   weekMode: WeekMode;
 }
 
+const normalizeToDay = (date: Date): Date => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const isSchoolDay = (date: Date): boolean => {
+  const day = date.getDay();
+  return day >= 1 && day <= 5;
+};
+
+const normalizeToSchoolDay = (date: Date, direction: 1 | -1 = 1): Date => {
+  const normalized = normalizeToDay(date);
+  if (isSchoolDay(normalized)) {
+    return normalized;
+  }
+
+  while (!isSchoolDay(normalized)) {
+    normalized.setDate(normalized.getDate() + direction);
+  }
+
+  return normalized;
+};
+
+const shiftSchoolDays = (date: Date, offset: number): Date => {
+  if (offset === 0) {
+    return normalizeToSchoolDay(date, 1);
+  }
+
+  const cursor = normalizeToDay(date);
+  const direction: 1 | -1 = offset > 0 ? 1 : -1;
+  let remaining = Math.abs(offset);
+
+  while (remaining > 0) {
+    cursor.setDate(cursor.getDate() + direction);
+    if (isSchoolDay(cursor)) {
+      remaining -= 1;
+    }
+  }
+
+  return cursor;
+};
+
 const parseDateParam = (value: string | null): Date | null => {
   if (!value || !/^\d{8}$/.test(value)) {
     return null;
@@ -59,7 +98,9 @@ export function DashboardClient() {
   const fromPush = searchParams.get('fromPush') === '1';
   const queryDate = useMemo(() => parseDateParam(queryDateParam), [queryDateParam]);
 
-  const [selectedDate, setSelectedDate] = useState<Date>(() => queryDate ?? new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() =>
+    normalizeToSchoolDay(queryDate ?? new Date(), 1)
+  );
   const [entries, setEntries] = useState<TimetableMatchEntry[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
   const [loadingTimetable, setLoadingTimetable] = useState(true);
@@ -72,17 +113,15 @@ export function DashboardClient() {
       return;
     }
 
-    const normalizedQueryDate = new Date(queryDate.getFullYear(), queryDate.getMonth(), queryDate.getDate());
-    const normalizedSelectedDate = new Date(
-      selectedDate.getFullYear(),
-      selectedDate.getMonth(),
-      selectedDate.getDate()
-    );
-
-    if (normalizedQueryDate.getTime() !== normalizedSelectedDate.getTime()) {
-      setSelectedDate(normalizedQueryDate);
-    }
-  }, [queryDate, selectedDate]);
+    const normalizedQueryDate = normalizeToSchoolDay(queryDate, 1);
+    setSelectedDate((previous) => {
+      const normalizedPrevious = normalizeToDay(previous);
+      if (normalizedPrevious.getTime() === normalizedQueryDate.getTime()) {
+        return previous;
+      }
+      return normalizedQueryDate;
+    });
+  }, [queryDate]);
 
   useEffect(() => {
     if (!fromPush || queryDate) {
@@ -109,7 +148,7 @@ export function DashboardClient() {
         if (typeof data.targetDate === 'number') {
           const target = parseDateParam(String(data.targetDate));
           if (target) {
-            const normalized = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+            const normalized = normalizeToSchoolDay(target, 1);
             setSelectedDate(normalized);
             params.set('date', formatDateForApi(normalized));
             router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -193,17 +232,17 @@ export function DashboardClient() {
   );
 
   const setDate = (date: Date) => {
-    const normalized = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const normalized = normalizeToSchoolDay(date, 1);
     setSelectedDate(normalized);
 
     const params = new URLSearchParams(searchParams.toString());
+    params.delete('fromPush');
     params.set('date', formatDateForApi(normalized));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const shiftDate = (offset: number) => {
-    const nextDate = new Date(selectedDate);
-    nextDate.setDate(nextDate.getDate() + offset);
+    const nextDate = shiftSchoolDays(selectedDate, offset);
     setDate(nextDate);
   };
 
