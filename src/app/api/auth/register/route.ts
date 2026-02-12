@@ -6,7 +6,16 @@ import { toAuthUserDto } from '@/lib/user-system-mappers';
 
 const MIN_PASSWORD_LENGTH = 8;
 const DOMAIN_PATTERN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
-const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10);
+
+const parseBcryptRounds = (): number => {
+  const value = parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10);
+  if (isNaN(value) || value < 10 || value > 14) {
+    throw new Error('BCRYPT_ROUNDS must be an integer between 10 and 14');
+  }
+  return value;
+};
+
+const BCRYPT_ROUNDS = parseBcryptRounds();
 
 const normalizeDomain = (value: string): string => value.trim().toLowerCase().replace(/^@/, '');
 
