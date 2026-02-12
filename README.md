@@ -59,6 +59,7 @@ UNTIS_BASE_URL=https://friedrich-dessauer-schule-limburg.webuntis.com
 AUTH_SECRET=replace-with-a-long-random-secret
 ADMIN_EMAILS=
 APP_TIMEZONE=Europe/Berlin
+BCRYPT_ROUNDS=12  # Password hashing cost factor (10-14 recommended, higher = more secure but slower)
 
 # Database
 DATABASE_URL=postgresql://fds:fds-password@localhost:5432/fds?schema=public
