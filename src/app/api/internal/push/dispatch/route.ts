@@ -127,7 +127,7 @@ async function runDispatch(req: NextRequest) {
     }
   }
 
-  let substitutionsByDate = new Map<number, ReturnType<typeof processApiResponse>>();
+  let substitutionsByDate: Map<number, ReturnType<typeof processApiResponse>>;
   try {
     const dateEntries = [...fetchDates.entries()];
     const fetched = await Promise.all(
