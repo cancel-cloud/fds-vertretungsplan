@@ -142,7 +142,7 @@ Wenn der automatische Dispatch laufen soll, brauchst du einen **Upstash-Account*
 npm run qstash:schedule
 ```
 
-Das Script erstellt/aktualisiert einen Job, der `GET /api/internal/push/dispatch` im 15-Minuten-Intervall aufruft.
+Das Script erstellt/aktualisiert einen Job, der `POST /api/internal/push/dispatch` im 15-Minuten-Intervall aufruft.
 
 ### Wichtige Hinweise
 

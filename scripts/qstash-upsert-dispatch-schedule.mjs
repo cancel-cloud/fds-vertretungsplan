@@ -36,7 +36,7 @@ const result = await client.schedules.create({
   scheduleId: existing?.scheduleId,
   destination,
   cron,
-  method: 'GET',
+  method: 'POST',
   retries: 2,
   headers: {
     Authorization: `Bearer ${cronSecret}`,
