@@ -128,4 +128,54 @@ describe('api/substitutions route', () => {
     expect(response.status).toBe(503);
     expect(json.error).toContain('nicht erreichbar');
   });
+
+  it('retries on transient network errors and eventually succeeds', async () => {
+    const successPayload = {
+      payload: {
+        date: 20250210,
+        rows: [],
+        lastUpdate: 'now',
+      },
+    };
+
+    const fetchMock = vi
+      .fn()
+      // First call: simulate a network error (e.g. ECONNRESET / TypeError from fetch)
+      .mockRejectedValueOnce(new TypeError('Network error'))
+      // Second call: successful response
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(successPayload), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { GET } = await import('@/app/api/substitutions/route');
+
+    const req = new NextRequest('http://localhost/api/substitutions?date=20250210');
+    const response = await GET(req);
+
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.payload?.date).toBe(20250210);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns 503 after exhausting retries on persistent network errors', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Persistent network error'));
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { GET } = await import('@/app/api/substitutions/route');
+
+    const req = new NextRequest('http://localhost/api/substitutions?date=20250210');
+    const response = await GET(req);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error).toContain('nicht erreichbar');
+    expect(fetchMock).toHaveBeenCalledGreaterThanOrEqual(1);
+  });
 });
