@@ -3,19 +3,26 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { signOut } from 'next-auth/react';
 import { AlertCircle, Calendar, CalendarDays, Loader2 } from 'lucide-react';
 import { formatDateForApi } from '@/lib/utils';
 import { useSubstitutions } from '@/hooks/use-substitutions';
 import { useSubstitutionPolling } from '@/hooks/use-substitution-polling';
 import { findRelevantSubstitutions, TimetableMatchEntry } from '@/lib/schedule-matching';
+import { filterSubstitutions } from '@/lib/data-processing';
 import { SubstitutionCard } from '@/components/substitution-card';
 import { CalendarWidget } from '@/components/calendar-widget';
+import { SearchInput } from '@/components/search-input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PushOptInCard } from '@/components/stundenplan/push-opt-in-card';
+import { DashboardScope, DASHBOARD_SCOPE_PARAM, parseDashboardScope } from '@/lib/dashboard-scope';
 import { WeekMode, Weekday } from '@/types/user-system';
+
+interface DashboardClientProps {
+  initialScope: DashboardScope;
+  isAuthenticated: boolean;
+}
 
 interface UserData {
   id: string;
@@ -109,23 +116,43 @@ const parseDateParam = (value: string | null): Date | null => {
   return date;
 };
 
-export function DashboardClient() {
+export function DashboardClient({ initialScope, isAuthenticated }: DashboardClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const searchParamsString = searchParams.toString();
   const queryDateParam = searchParams.get('date');
+  const queryScopeParam = searchParams.get(DASHBOARD_SCOPE_PARAM);
+  const querySearchParam = searchParams.get('search') ?? '';
   const fromPush = searchParams.get('fromPush') === '1';
-  const queryDate = useMemo(() => parseDateParam(queryDateParam), [queryDateParam]);
 
+  const queryDate = useMemo(() => parseDateParam(queryDateParam), [queryDateParam]);
+  const queryScope = useMemo(() => parseDashboardScope(queryScopeParam), [queryScopeParam]);
+
+  const [scope, setScope] = useState<DashboardScope>(initialScope);
+  const [searchQuery, setSearchQuery] = useState(querySearchParam);
   const [selectedDate, setSelectedDate] = useState<Date>(() => normalizeToSchoolDay(queryDate ?? new Date(), 1));
   const [entries, setEntries] = useState<TimetableMatchEntry[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
-  const [loadingTimetable, setLoadingTimetable] = useState(true);
+  const [loadingTimetable, setLoadingTimetable] = useState(initialScope === 'personal' && isAuthenticated);
   const [timetableError, setTimetableError] = useState<string | null>(null);
   const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
 
   const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
+
+  const isPersonalScope = scope === 'personal';
+
+  useEffect(() => {
+    if (scope !== queryScope) {
+      setScope(queryScope);
+    }
+  }, [queryScope, scope]);
+
+  useEffect(() => {
+    if (searchQuery !== querySearchParam) {
+      setSearchQuery(querySearchParam);
+    }
+  }, [querySearchParam, searchQuery]);
 
   useEffect(() => {
     if (!queryDate) {
@@ -143,7 +170,7 @@ export function DashboardClient() {
   }, [queryDate]);
 
   useEffect(() => {
-    if (!fromPush || queryDate) {
+    if (!isPersonalScope || !isAuthenticated || !fromPush || queryDate) {
       return;
     }
 
@@ -163,6 +190,7 @@ export function DashboardClient() {
 
         const params = new URLSearchParams(searchParamsString);
         params.delete('fromPush');
+        params.set(DASHBOARD_SCOPE_PARAM, 'personal');
 
         if (typeof data.targetDate === 'number') {
           const target = parseDateParam(String(data.targetDate));
@@ -186,18 +214,26 @@ export function DashboardClient() {
     return () => {
       active = false;
     };
-  }, [fromPush, pathname, queryDate, router, searchParamsString]);
+  }, [fromPush, isAuthenticated, isPersonalScope, pathname, queryDate, router, searchParamsString]);
 
   useEffect(() => {
+    if (!isPersonalScope || !isAuthenticated) {
+      setUser(null);
+      setEntries([]);
+      setTimetableError(null);
+      setLoadingTimetable(false);
+      return;
+    }
+
     const load = async () => {
       try {
         setLoadingTimetable(true);
         setTimetableError(null);
 
         const [meResponse, timetableResponse] = await Promise.all([fetch('/api/me'), fetch('/api/timetable')]);
-
         if (meResponse.status === 401 || timetableResponse.status === 401) {
-          router.replace('/stundenplan/login?next=%2Fstundenplan%2Fdashboard');
+          const nextPath = `${pathname}${searchParamsString ? `?${searchParamsString}` : ''}`;
+          router.replace(`/stundenplan/login?next=${encodeURIComponent(nextPath)}`);
           return;
         }
 
@@ -229,9 +265,10 @@ export function DashboardClient() {
     };
 
     void load();
-  }, [router]);
+  }, [isAuthenticated, isPersonalScope, pathname, router, searchParamsString]);
 
   const pollingEnabled =
+    isPersonalScope &&
     process.env.NEXT_PUBLIC_ENABLE_FOREGROUND_POLLING_NOTIFICATIONS === 'true' &&
     Boolean(user?.notificationsEnabled) &&
     entries.length > 0 &&
@@ -246,18 +283,62 @@ export function DashboardClient() {
   });
 
   const relevantMatches = useMemo(
-    () => findRelevantSubstitutions(substitutions, entries, selectedDate),
-    [substitutions, entries, selectedDate]
+    () => (isPersonalScope ? findRelevantSubstitutions(substitutions, entries, selectedDate) : []),
+    [entries, isPersonalScope, selectedDate, substitutions]
   );
 
-  const setDate = (date: Date) => {
+  const visibleSubstitutions = useMemo(
+    () => (isPersonalScope ? relevantMatches.map((match) => match.substitution) : substitutions),
+    [isPersonalScope, relevantMatches, substitutions]
+  );
+  const filteredVisibleSubstitutions = useMemo(
+    () => filterSubstitutions(visibleSubstitutions, { search: searchQuery, categories: [] }),
+    [searchQuery, visibleSubstitutions]
+  );
+  const hasSearchActive = searchQuery.trim().length > 0;
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('fromPush');
+
+    if (value.trim()) {
+      params.set('search', value);
+    } else {
+      params.delete('search');
+    }
+
+    router.replace(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
+  };
+
+  const setDate = (date: Date, targetScope = scope) => {
     const normalized = normalizeToSchoolDay(date, 1);
     setSelectedDate(normalized);
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete('fromPush');
     params.set('date', formatDateForApi(normalized));
+    params.set(DASHBOARD_SCOPE_PARAM, targetScope);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const setScopeAndSync = (nextScope: DashboardScope) => {
+    if (nextScope === scope) {
+      return;
+    }
+
+    if (nextScope === 'personal' && !isAuthenticated) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('fromPush');
+      params.set('date', formatDateForApi(normalizeToSchoolDay(selectedDate, 1)));
+      params.set(DASHBOARD_SCOPE_PARAM, 'personal');
+      const nextPath = `${pathname}?${params.toString()}`;
+      router.push(`/stundenplan/login?next=${encodeURIComponent(nextPath)}`);
+      return;
+    }
+
+    setScope(nextScope);
+    setDate(selectedDate, nextScope);
   };
 
   const schoolToday = useMemo(() => normalizeToSchoolDay(new Date(), 1), []);
@@ -270,7 +351,7 @@ export function DashboardClient() {
   const formattedSelectedDate = formatLongDate(selectedDate);
 
   return (
-    <div className="space-y-6">
+    <div className="grid gap-6">
       <section className="relative overflow-hidden rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] shadow-sm">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1100px_300px_at_0%_0%,rgb(var(--color-primary)/0.14),transparent_70%),radial-gradient(900px_300px_at_100%_10%,rgb(var(--color-secondary)/0.14),transparent_75%)]" />
         <div className="relative space-y-5 p-5 md:p-7">
@@ -283,7 +364,9 @@ export function DashboardClient() {
                 Schnellansicht
               </p>
               <p className="pt-1 text-sm text-[rgb(var(--color-text-secondary))]">
-                Nur Änderungen, die zu deinem hinterlegten Stundenplan passen.
+                {isPersonalScope
+                  ? 'Nur Änderungen, die zu deinem hinterlegten Stundenplan passen.'
+                  : 'Alle Vertretungen des ausgewählten Tages.'}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -298,6 +381,8 @@ export function DashboardClient() {
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">Ausgewähltes Datum</p>
             <p className="text-lg font-medium text-[rgb(var(--color-text))]">{formattedSelectedDate}</p>
           </div>
+
+          <SearchInput value={searchQuery} onChange={handleSearchChange} />
 
           <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
             {quickDateStrip.map((date) => {
@@ -317,54 +402,70 @@ export function DashboardClient() {
             })}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push('/stundenplan/stundenplan')}>
-              Stundenplan bearbeiten
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.push('/stundenplan/settings')}>
-              Einstellungen
-            </Button>
-            {user?.role === 'ADMIN' ? (
-              <Button type="button" variant="outline" onClick={() => router.push('/stundenplan/admin')}>
-                Admin
-              </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                void signOut({ callbackUrl: '/stundenplan/login' });
-              }}
-            >
-              Logout
-            </Button>
-          </div>
         </div>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
         <aside className="hidden lg:block">
           <Card className="sticky top-[88px] space-y-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[rgb(var(--color-text-secondary))]">
-              Datum wählen
-            </h2>
             <CalendarWidget selectedDate={selectedDate} onDateSelect={setDate} />
+            {isPersonalScope && user ? <PushOptInCard initialEnabled={user.notificationsEnabled} /> : null}
           </Card>
         </aside>
 
-        <div className="space-y-6">
-          {user ? <PushOptInCard initialEnabled={user.notificationsEnabled} /> : null}
+        <div className="grid gap-4">
+          <section className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4 md:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-[rgb(var(--color-text))]">Ansicht</h2>
+                <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+                  {isPersonalScope
+                    ? 'Nur Vertretungen passend zu deinem Stundenplan.'
+                    : 'Alle Vertretungen für den ausgewählten Tag.'}
+                </p>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] p-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={scope === 'personal' ? 'default' : 'ghost'}
+                  className="h-8 touch-manipulation"
+                  onClick={() => setScopeAndSync('personal')}
+                  aria-pressed={scope === 'personal'}
+                >
+                  Meine Vertretungen
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={scope === 'all' ? 'default' : 'ghost'}
+                  className="h-8 touch-manipulation"
+                  onClick={() => setScopeAndSync('all')}
+                  aria-pressed={scope === 'all'}
+                >
+                  Alle Vertretungen
+                </Button>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
+              Diese Auswahl bleibt im Link erhalten und kann direkt geteilt werden.
+            </p>
+          </section>
 
-          {loadingTimetable ? (
+          {isPersonalScope && loadingTimetable ? (
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">Lade Stundenplan…</p>
-          ) : timetableError ? (
+          ) : null}
+
+          {isPersonalScope && timetableError ? (
             <p
               className="rounded-md bg-[rgb(var(--color-error)/0.12)] px-3 py-2 text-sm text-[rgb(var(--color-error))]"
               aria-live="polite"
             >
               {timetableError}
             </p>
-          ) : entries.length === 0 ? (
+          ) : null}
+
+          {isPersonalScope && !timetableError && !loadingTimetable && entries.length === 0 ? (
             <div className="rounded-2xl border border-[rgb(var(--color-warning)/0.35)] bg-[rgb(var(--color-warning)/0.08)] p-5">
               <p className="text-sm text-[rgb(var(--color-text))]">
                 Kein Stundenplan hinterlegt. Ohne Stundenplan sind keine personalisierten Treffer und keine
@@ -381,8 +482,25 @@ export function DashboardClient() {
             </div>
           ) : null}
 
-          {!timetableError && entries.length > 0 ? (
+          {(!isPersonalScope || (!loadingTimetable && !timetableError && entries.length > 0)) && (
             <>
+              <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5 md:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-semibold tracking-tight text-[rgb(var(--color-text))]">
+                      Vertretungen für {formattedSelectedDate}
+                    </h2>
+                    <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+                      {hasSearchActive
+                        ? `${filteredVisibleSubstitutions.length} von ${visibleSubstitutions.length} Einträgen sichtbar`
+                        : isPersonalScope
+                        ? `${visibleSubstitutions.length} relevante Einträge`
+                        : `${substitutions.length} Einträge`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {error ? (
                 <Card className="border-[rgb(var(--color-error)/0.25)] bg-[rgb(var(--color-surface))] p-8">
                   <div className="space-y-4 text-center">
@@ -413,16 +531,28 @@ export function DashboardClient() {
                     <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">{metaResponse.message}</p>
                   </div>
                 </Card>
-              ) : relevantMatches.length > 0 ? (
+              ) : filteredVisibleSubstitutions.length > 0 ? (
                 <div className="space-y-4">
-                  {relevantMatches.map((match, index) => (
+                  {filteredVisibleSubstitutions.map((substitution, index) => (
                     <SubstitutionCard
-                      key={`${match.substitution.group}-${match.substitution.hours}-${match.substitution.subject}-${index}`}
-                      substitution={match.substitution}
+                      key={`${substitution.group}-${substitution.hours}-${substitution.subject}-${index}`}
+                      substitution={substitution}
                     />
                   ))}
                 </div>
-              ) : substitutions.length > 0 ? (
+              ) : hasSearchActive && visibleSubstitutions.length > 0 ? (
+                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                  <div className="space-y-3 text-center">
+                    <div className="flex justify-center">
+                      <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Keine passenden Vertretungen</h3>
+                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">
+                      Mit dem aktuellen Suchbegriff wurden keine Vertretungen gefunden.
+                    </p>
+                  </div>
+                </Card>
+              ) : substitutions.length > 0 && isPersonalScope ? (
                 <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
                   <div className="space-y-3 text-center">
                     <div className="flex justify-center">
@@ -448,7 +578,7 @@ export function DashboardClient() {
                 </Card>
               )}
             </>
-          ) : null}
+          )}
         </div>
       </div>
 
@@ -466,6 +596,7 @@ export function DashboardClient() {
             }}
             className="w-full"
           />
+          {isPersonalScope && user ? <PushOptInCard initialEnabled={user.notificationsEnabled} /> : null}
         </DialogContent>
       </Dialog>
     </div>

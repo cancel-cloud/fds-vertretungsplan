@@ -119,7 +119,7 @@ export function UserSettingsPanel() {
           Default: 1 = nächster Schultag. Samstag und Sonntag werden automatisch übersprungen.
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap gap-2">
           <Button type="button" onClick={save} loading={saving}>
             Speichern
           </Button>

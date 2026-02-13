@@ -117,7 +117,7 @@ function ResultsPanel({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
