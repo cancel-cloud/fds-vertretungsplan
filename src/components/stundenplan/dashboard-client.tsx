@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { CalendarDays } from 'lucide-react';
+import { AlertCircle, Calendar, CalendarDays, Loader2 } from 'lucide-react';
 import { formatDateForApi } from '@/lib/utils';
 import { useSubstitutions } from '@/hooks/use-substitutions';
 import { useSubstitutionPolling } from '@/hooks/use-substitution-polling';
@@ -58,24 +58,40 @@ const normalizeToSchoolDay = (date: Date, direction: 1 | -1 = 1): Date => {
   return normalized;
 };
 
-const shiftSchoolDays = (date: Date, offset: number): Date => {
-  if (offset === 0) {
-    return normalizeToSchoolDay(date, 1);
-  }
-
-  const cursor = normalizeToDay(date);
-  const direction: 1 | -1 = offset > 0 ? 1 : -1;
+const addSchoolDays = (date: Date, offset: number): Date => {
+  const result = normalizeToDay(date);
+  const direction = offset >= 0 ? 1 : -1;
   let remaining = Math.abs(offset);
 
   while (remaining > 0) {
-    cursor.setDate(cursor.getDate() + direction);
-    if (isSchoolDay(cursor)) {
+    result.setDate(result.getDate() + direction);
+    if (isSchoolDay(result)) {
       remaining -= 1;
     }
   }
 
-  return cursor;
+  return result;
 };
+
+const isSameDay = (a: Date, b: Date): boolean =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+const formatChipDate = (date: Date): string =>
+  date.toLocaleDateString('de-DE', {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+  });
+
+const formatLongDate = (date: Date): string =>
+  date.toLocaleDateString('de-DE', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
 const parseDateParam = (value: string | null): Date | null => {
   if (!value || !/^\d{8}$/.test(value)) {
@@ -109,7 +125,7 @@ export function DashboardClient() {
   const [timetableError, setTimetableError] = useState<string | null>(null);
   const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
 
-  const { substitutions, isLoading, error, refetch } = useSubstitutions(selectedDate);
+  const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
 
   useEffect(() => {
     if (!queryDate) {
@@ -244,16 +260,14 @@ export function DashboardClient() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const shiftDate = (offset: number) => {
-    const nextDate = shiftSchoolDays(selectedDate, offset);
-    setDate(nextDate);
-  };
-  const formattedSelectedDate = selectedDate.toLocaleDateString('de-DE', {
-    weekday: 'long',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+  const schoolToday = useMemo(() => normalizeToSchoolDay(new Date(), 1), []);
+  const schoolYesterday = useMemo(() => addSchoolDays(schoolToday, -1), [schoolToday]);
+  const schoolTomorrow = useMemo(() => addSchoolDays(schoolToday, 1), [schoolToday]);
+  const quickDateStrip = useMemo(
+    () => [schoolYesterday, schoolToday, schoolTomorrow],
+    [schoolYesterday, schoolToday, schoolTomorrow]
+  );
+  const formattedSelectedDate = formatLongDate(selectedDate);
 
   return (
     <div className="space-y-6">
@@ -285,16 +299,22 @@ export function DashboardClient() {
             <p className="text-lg font-medium text-[rgb(var(--color-text))]">{formattedSelectedDate}</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" onClick={() => shiftDate(-1)}>
-              Zurück
-            </Button>
-            <Button type="button" variant="outline" onClick={() => setDate(new Date())}>
-              Heute
-            </Button>
-            <Button type="button" variant="outline" onClick={() => shiftDate(1)}>
-              Weiter
-            </Button>
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+            {quickDateStrip.map((date) => {
+              const selected = isSameDay(date, selectedDate);
+              return (
+                <Button
+                  key={date.toISOString()}
+                  variant={selected ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-9 shrink-0 px-3 text-xs touch-manipulation"
+                  onClick={() => setDate(date)}
+                  aria-pressed={selected}
+                >
+                  {formatChipDate(date)}
+                </Button>
+              );
+            })}
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -361,32 +381,73 @@ export function DashboardClient() {
             </div>
           ) : null}
 
-          {error ? (
-            <div className="rounded-2xl border border-[rgb(var(--color-error)/0.25)] bg-[rgb(var(--color-error)/0.08)] p-5">
-              <p className="text-sm text-[rgb(var(--color-error))]">{error}</p>
-              <Button type="button" className="mt-3" variant="outline" onClick={refetch}>
-                Erneut laden
-              </Button>
-            </div>
-          ) : null}
-
-          {!error && !isLoading && entries.length > 0 ? (
-            relevantMatches.length > 0 ? (
-              <div className="space-y-4">
-                {relevantMatches.map((match, index) => (
-                  <SubstitutionCard
-                    key={`${match.substitution.group}-${match.substitution.hours}-${match.substitution.subject}-${index}`}
-                    substitution={match.substitution}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-8 text-center">
-                <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                  Für dieses Datum wurden keine relevanten Vertretungen gefunden.
-                </p>
-              </div>
-            )
+          {!timetableError && entries.length > 0 ? (
+            <>
+              {error ? (
+                <Card className="border-[rgb(var(--color-error)/0.25)] bg-[rgb(var(--color-surface))] p-8">
+                  <div className="space-y-4 text-center">
+                    <div className="flex justify-center">
+                      <AlertCircle className="h-10 w-10 text-[rgb(var(--color-error))]" aria-hidden="true" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-[rgb(var(--color-text))]">Fehler beim Laden</h2>
+                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">{error}</p>
+                    <Button type="button" onClick={refetch} variant="outline">
+                      Erneut versuchen
+                    </Button>
+                  </div>
+                </Card>
+              ) : isLoading ? (
+                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                  <div className="flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                    <span>Vertretungen werden geladen…</span>
+                  </div>
+                </Card>
+              ) : metaResponse ? (
+                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                  <div className="space-y-3 text-center">
+                    <div className="flex justify-center">
+                      <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Kein Vertretungsplan verfügbar</h3>
+                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">{metaResponse.message}</p>
+                  </div>
+                </Card>
+              ) : relevantMatches.length > 0 ? (
+                <div className="space-y-4">
+                  {relevantMatches.map((match, index) => (
+                    <SubstitutionCard
+                      key={`${match.substitution.group}-${match.substitution.hours}-${match.substitution.subject}-${index}`}
+                      substitution={match.substitution}
+                    />
+                  ))}
+                </div>
+              ) : substitutions.length > 0 ? (
+                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                  <div className="space-y-3 text-center">
+                    <div className="flex justify-center">
+                      <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Keine passenden Vertretungen</h3>
+                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">
+                      Für deinen Stundenplan wurden keine passenden Vertretungen gefunden.
+                    </p>
+                  </div>
+                </Card>
+              ) : (
+                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                  <div className="space-y-3 text-center">
+                    <div className="flex justify-center">
+                      <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Keine Vertretungen</h3>
+                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">
+                      Für diesen Tag sind keine Vertretungen eingetragen.
+                    </p>
+                  </div>
+                </Card>
+              )}
+            </>
           ) : null}
         </div>
       </div>
