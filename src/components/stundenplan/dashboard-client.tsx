@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle, Calendar, CalendarDays, Loader2 } from 'lucide-react';
 import { formatDateForApi } from '@/lib/utils';
@@ -142,17 +142,19 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
 
   const isPersonalScope = scope === 'personal';
 
+  // Only sync scope FROM URL (browser back/forward, external link).
+  // Exclude local `scope` from deps to avoid reverting during programmatic changes.
   useEffect(() => {
-    if (scope !== queryScope) {
-      setScope(queryScope);
-    }
-  }, [queryScope, scope]);
+    setScope(queryScope);
+  }, [queryScope]);
 
+  // Only sync search FROM URL (browser back/forward, shared link).
   useEffect(() => {
-    if (searchQuery !== querySearchParam) {
-      setSearchQuery(querySearchParam);
-    }
-  }, [querySearchParam, searchQuery]);
+    setSearchQuery(querySearchParam);
+  }, [querySearchParam]);
+
+  const searchUrlTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(searchUrlTimeoutRef.current), []);
 
   useEffect(() => {
     if (!queryDate) {
@@ -299,16 +301,21 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('fromPush');
 
-    if (value.trim()) {
-      params.set('search', value);
-    } else {
-      params.delete('search');
-    }
+    // Debounce URL sync so typing stays responsive — filtering is already client-side.
+    clearTimeout(searchUrlTimeoutRef.current);
+    searchUrlTimeoutRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('fromPush');
 
-    router.replace(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
+      if (value.trim()) {
+        params.set('search', value);
+      } else {
+        params.delete('search');
+      }
+
+      router.replace(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
+    }, 300);
   };
 
   const setDate = (date: Date, targetScope = scope) => {
@@ -342,11 +349,11 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
   };
 
   const schoolToday = useMemo(() => normalizeToSchoolDay(new Date(), 1), []);
-  const schoolYesterday = useMemo(() => addSchoolDays(schoolToday, -1), [schoolToday]);
   const schoolTomorrow = useMemo(() => addSchoolDays(schoolToday, 1), [schoolToday]);
+  const schoolAfterTomorrow = useMemo(() => addSchoolDays(schoolToday, 2), [schoolToday]);
   const quickDateStrip = useMemo(
-    () => [schoolYesterday, schoolToday, schoolTomorrow],
-    [schoolYesterday, schoolToday, schoolTomorrow]
+    () => [schoolToday, schoolTomorrow, schoolAfterTomorrow],
+    [schoolToday, schoolTomorrow, schoolAfterTomorrow]
   );
   const formattedSelectedDate = formatLongDate(selectedDate);
 
