@@ -447,3 +447,56 @@ body {
     outline-offset: 2px;
   }
 }
+
+/* === Dashboard V2 visual enhancements === */
+@keyframes v2-mesh-shift {
+  0% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.08);
+    opacity: 0.22;
+  }
+}
+
+@keyframes v2-float-orb {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.05);
+  }
+  66% {
+    transform: translate(-20px, 15px) scale(0.95);
+  }
+}
+
+@keyframes v2-gradient-border {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes v2-badge-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(var(--color-primary), 0.1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(var(--color-primary), 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="v2-"],
+  .v2-gradient-border,
+  .v2-badge-glow {
+    animation: none !important;
+  }
+}
