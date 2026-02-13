@@ -413,7 +413,7 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
           </Card>
         </aside>
 
-        <div className="grid gap-4">
+        <div className="grid content-start gap-4">
           <section className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4 md:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
@@ -452,133 +452,140 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
             </p>
           </section>
 
-          {isPersonalScope && loadingTimetable ? (
-            <p className="text-sm text-[rgb(var(--color-text-secondary))]">Lade Stundenplan…</p>
-          ) : null}
+          <div className="grid min-h-[180px] content-start gap-4">
+            {isPersonalScope && loadingTimetable ? (
+              <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                <div className="flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  <span>Lade Stundenplan…</span>
+                </div>
+              </Card>
+            ) : null}
 
-          {isPersonalScope && timetableError ? (
-            <p
-              className="rounded-md bg-[rgb(var(--color-error)/0.12)] px-3 py-2 text-sm text-[rgb(var(--color-error))]"
-              aria-live="polite"
-            >
-              {timetableError}
-            </p>
-          ) : null}
-
-          {isPersonalScope && !timetableError && !loadingTimetable && entries.length === 0 ? (
-            <div className="rounded-2xl border border-[rgb(var(--color-warning)/0.35)] bg-[rgb(var(--color-warning)/0.08)] p-5">
-              <p className="text-sm text-[rgb(var(--color-text))]">
-                Kein Stundenplan hinterlegt. Ohne Stundenplan sind keine personalisierten Treffer und keine
-                Push-Benachrichtigungen möglich.
+            {isPersonalScope && timetableError ? (
+              <p
+                className="rounded-md bg-[rgb(var(--color-error)/0.12)] px-3 py-2 text-sm text-[rgb(var(--color-error))]"
+                aria-live="polite"
+              >
+                {timetableError}
               </p>
-              <div className="mt-3">
-                <Link
-                  href="/stundenplan/stundenplan"
-                  className="text-sm font-medium text-[rgb(var(--color-primary))] hover:underline"
-                >
-                  Stundenplan bearbeiten
-                </Link>
-              </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {(!isPersonalScope || (!loadingTimetable && !timetableError && entries.length > 0)) && (
-            <>
-              <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5 md:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-semibold tracking-tight text-[rgb(var(--color-text))]">
-                      Vertretungen für {formattedSelectedDate}
-                    </h2>
-                    <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
-                      {hasSearchActive
-                        ? `${filteredVisibleSubstitutions.length} von ${visibleSubstitutions.length} Einträgen sichtbar`
-                        : isPersonalScope
-                        ? `${visibleSubstitutions.length} relevante Einträge`
-                        : `${substitutions.length} Einträge`}
-                    </p>
-                  </div>
+            {isPersonalScope && !timetableError && !loadingTimetable && entries.length === 0 ? (
+              <div className="rounded-2xl border border-[rgb(var(--color-warning)/0.35)] bg-[rgb(var(--color-warning)/0.08)] p-5">
+                <p className="text-sm text-[rgb(var(--color-text))]">
+                  Kein Stundenplan hinterlegt. Ohne Stundenplan sind keine personalisierten Treffer und keine
+                  Push-Benachrichtigungen möglich.
+                </p>
+                <div className="mt-3">
+                  <Link
+                    href="/stundenplan/stundenplan"
+                    className="text-sm font-medium text-[rgb(var(--color-primary))] hover:underline"
+                  >
+                    Stundenplan bearbeiten
+                  </Link>
                 </div>
               </div>
+            ) : null}
 
-              {error ? (
-                <Card className="border-[rgb(var(--color-error)/0.25)] bg-[rgb(var(--color-surface))] p-8">
-                  <div className="space-y-4 text-center">
-                    <div className="flex justify-center">
-                      <AlertCircle className="h-10 w-10 text-[rgb(var(--color-error))]" aria-hidden="true" />
+            {(!isPersonalScope || (!loadingTimetable && !timetableError && entries.length > 0)) && (
+              <>
+                <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5 md:p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-semibold tracking-tight text-[rgb(var(--color-text))]">
+                        Vertretungen für {formattedSelectedDate}
+                      </h2>
+                      <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+                        {hasSearchActive
+                          ? `${filteredVisibleSubstitutions.length} von ${visibleSubstitutions.length} Einträgen sichtbar`
+                          : isPersonalScope
+                          ? `${visibleSubstitutions.length} relevante Einträge`
+                          : `${substitutions.length} Einträge`}
+                      </p>
                     </div>
-                    <h2 className="text-xl font-semibold text-[rgb(var(--color-text))]">Fehler beim Laden</h2>
-                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">{error}</p>
-                    <Button type="button" onClick={refetch} variant="outline">
-                      Erneut versuchen
-                    </Button>
                   </div>
-                </Card>
-              ) : isLoading ? (
-                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                  <div className="flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
-                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-                    <span>Vertretungen werden geladen…</span>
-                  </div>
-                </Card>
-              ) : metaResponse ? (
-                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                  <div className="space-y-3 text-center">
-                    <div className="flex justify-center">
-                      <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Kein Vertretungsplan verfügbar</h3>
-                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">{metaResponse.message}</p>
-                  </div>
-                </Card>
-              ) : filteredVisibleSubstitutions.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredVisibleSubstitutions.map((substitution, index) => (
-                    <SubstitutionCard
-                      key={`${substitution.group}-${substitution.hours}-${substitution.subject}-${index}`}
-                      substitution={substitution}
-                    />
-                  ))}
                 </div>
-              ) : hasSearchActive && visibleSubstitutions.length > 0 ? (
-                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                  <div className="space-y-3 text-center">
-                    <div className="flex justify-center">
-                      <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+
+                {error ? (
+                  <Card className="border-[rgb(var(--color-error)/0.25)] bg-[rgb(var(--color-surface))] p-8">
+                    <div className="space-y-4 text-center">
+                      <div className="flex justify-center">
+                        <AlertCircle className="h-10 w-10 text-[rgb(var(--color-error))]" aria-hidden="true" />
+                      </div>
+                      <h2 className="text-xl font-semibold text-[rgb(var(--color-text))]">Fehler beim Laden</h2>
+                      <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">{error}</p>
+                      <Button type="button" onClick={refetch} variant="outline">
+                        Erneut versuchen
+                      </Button>
                     </div>
-                    <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Keine passenden Vertretungen</h3>
-                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">
-                      Mit dem aktuellen Suchbegriff wurden keine Vertretungen gefunden.
-                    </p>
-                  </div>
-                </Card>
-              ) : substitutions.length > 0 && isPersonalScope ? (
-                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                  <div className="space-y-3 text-center">
-                    <div className="flex justify-center">
-                      <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                  </Card>
+                ) : isLoading ? (
+                  <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                    <div className="flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
+                      <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                      <span>Vertretungen werden geladen…</span>
                     </div>
-                    <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Keine passenden Vertretungen</h3>
-                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">
-                      Für deinen Stundenplan wurden keine passenden Vertretungen gefunden.
-                    </p>
-                  </div>
-                </Card>
-              ) : (
-                <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                  <div className="space-y-3 text-center">
-                    <div className="flex justify-center">
-                      <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                  </Card>
+                ) : metaResponse ? (
+                  <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                    <div className="space-y-3 text-center">
+                      <div className="flex justify-center">
+                        <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Kein Vertretungsplan verfügbar</h3>
+                      <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">{metaResponse.message}</p>
                     </div>
-                    <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Keine Vertretungen</h3>
-                    <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">
-                      Für diesen Tag sind keine Vertretungen eingetragen.
-                    </p>
+                  </Card>
+                ) : filteredVisibleSubstitutions.length > 0 ? (
+                  <div className="space-y-4">
+                    {filteredVisibleSubstitutions.map((substitution, index) => (
+                      <SubstitutionCard
+                        key={`${substitution.group}-${substitution.hours}-${substitution.subject}-${index}`}
+                        substitution={substitution}
+                      />
+                    ))}
                   </div>
-                </Card>
-              )}
-            </>
-          )}
+                ) : hasSearchActive && visibleSubstitutions.length > 0 ? (
+                  <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                    <div className="space-y-3 text-center">
+                      <div className="flex justify-center">
+                        <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Keine passenden Vertretungen</h3>
+                      <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">
+                        Mit dem aktuellen Suchbegriff wurden keine Vertretungen gefunden.
+                      </p>
+                    </div>
+                  </Card>
+                ) : substitutions.length > 0 && isPersonalScope ? (
+                  <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                    <div className="space-y-3 text-center">
+                      <div className="flex justify-center">
+                        <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Keine passenden Vertretungen</h3>
+                      <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">
+                        Für deinen Stundenplan wurden keine passenden Vertretungen gefunden.
+                      </p>
+                    </div>
+                  </Card>
+                ) : (
+                  <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
+                    <div className="space-y-3 text-center">
+                      <div className="flex justify-center">
+                        <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">Keine Vertretungen</h3>
+                      <p className="mx-auto max-w-lg text-[rgb(var(--color-text-secondary))]">
+                        Für diesen Tag sind keine Vertretungen eingetragen.
+                      </p>
+                    </div>
+                  </Card>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
