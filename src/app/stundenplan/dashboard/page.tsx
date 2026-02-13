@@ -18,7 +18,7 @@ export default async function StundenplanDashboardPage() {
   }
 
   return (
-    <main id="main-content" className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6">
+    <main id="main-content" className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6">
       <DashboardClient />
     </main>
   );

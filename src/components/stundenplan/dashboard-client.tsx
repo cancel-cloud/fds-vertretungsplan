@@ -4,12 +4,16 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
+import { CalendarDays } from 'lucide-react';
 import { formatDateForApi } from '@/lib/utils';
 import { useSubstitutions } from '@/hooks/use-substitutions';
 import { useSubstitutionPolling } from '@/hooks/use-substitution-polling';
 import { findRelevantSubstitutions, TimetableMatchEntry } from '@/lib/schedule-matching';
 import { SubstitutionCard } from '@/components/substitution-card';
+import { CalendarWidget } from '@/components/calendar-widget';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PushOptInCard } from '@/components/stundenplan/push-opt-in-card';
 import { WeekMode, Weekday } from '@/types/user-system';
 
@@ -98,13 +102,12 @@ export function DashboardClient() {
   const fromPush = searchParams.get('fromPush') === '1';
   const queryDate = useMemo(() => parseDateParam(queryDateParam), [queryDateParam]);
 
-  const [selectedDate, setSelectedDate] = useState<Date>(() =>
-    normalizeToSchoolDay(queryDate ?? new Date(), 1)
-  );
+  const [selectedDate, setSelectedDate] = useState<Date>(() => normalizeToSchoolDay(queryDate ?? new Date(), 1));
   const [entries, setEntries] = useState<TimetableMatchEntry[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
   const [loadingTimetable, setLoadingTimetable] = useState(true);
   const [timetableError, setTimetableError] = useState<string | null>(null);
+  const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
 
   const { substitutions, isLoading, error, refetch } = useSubstitutions(selectedDate);
 
@@ -245,18 +248,56 @@ export function DashboardClient() {
     const nextDate = shiftSchoolDays(selectedDate, offset);
     setDate(nextDate);
   };
+  const formattedSelectedDate = selectedDate.toLocaleDateString('de-DE', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5 md:p-7">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-[rgb(var(--color-text))]">Persönliche Vertretungen</h1>
-            <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
-              Nur Änderungen, die zu deinem hinterlegten Stundenplan passen.
-            </p>
+      <section className="relative overflow-hidden rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] shadow-sm">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1100px_300px_at_0%_0%,rgb(var(--color-primary)/0.14),transparent_70%),radial-gradient(900px_300px_at_100%_10%,rgb(var(--color-secondary)/0.14),transparent_75%)]" />
+        <div className="relative space-y-5 p-5 md:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-1">
+              <h1 className="text-balance text-3xl font-semibold tracking-tight text-[rgb(var(--color-text))] md:text-4xl">
+                Vertretungsplan
+              </h1>
+              <p className="text-sm uppercase tracking-[0.14em] text-[rgb(var(--color-text-secondary))]">
+                Schnellansicht
+              </p>
+              <p className="pt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+                Nur Änderungen, die zu deinem hinterlegten Stundenplan passen.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" className="md:hidden" onClick={() => setIsMobileCalendarOpen(true)}>
+                <CalendarDays className="mr-1 h-4 w-4" aria-hidden="true" />
+                Kalender
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
+
+          <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] px-4 py-3">
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">Ausgewähltes Datum</p>
+            <p className="text-lg font-medium text-[rgb(var(--color-text))]">{formattedSelectedDate}</p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" onClick={() => shiftDate(-1)}>
+              Zurück
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setDate(new Date())}>
+              Heute
+            </Button>
+            <Button type="button" variant="outline" onClick={() => shiftDate(1)}>
+              Weiter
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={() => router.push('/stundenplan/stundenplan')}>
               Stundenplan bearbeiten
             </Button>
@@ -279,76 +320,93 @@ export function DashboardClient() {
             </Button>
           </div>
         </div>
-
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" onClick={() => shiftDate(-1)}>
-            Zurück
-          </Button>
-          <Button type="button" variant="outline" onClick={() => setDate(new Date())}>
-            Heute
-          </Button>
-          <Button type="button" variant="outline" onClick={() => shiftDate(1)}>
-            Weiter
-          </Button>
-          <p className="ml-2 text-sm text-[rgb(var(--color-text-secondary))]">
-            {selectedDate.toLocaleDateString('de-DE', {
-              weekday: 'long',
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            })}
-          </p>
-        </div>
       </section>
 
-      {user ? <PushOptInCard initialEnabled={user.notificationsEnabled} /> : null}
+      <div className="grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
+        <aside className="hidden lg:block">
+          <Card className="sticky top-[88px] space-y-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[rgb(var(--color-text-secondary))]">
+              Datum wählen
+            </h2>
+            <CalendarWidget selectedDate={selectedDate} onDateSelect={setDate} />
+          </Card>
+        </aside>
 
-      {loadingTimetable ? (
-        <p className="text-sm text-[rgb(var(--color-text-secondary))]">Lade Stundenplan…</p>
-      ) : timetableError ? (
-        <p className="rounded-md bg-[rgb(var(--color-error)/0.12)] px-3 py-2 text-sm text-[rgb(var(--color-error))]" aria-live="polite">
-          {timetableError}
-        </p>
-      ) : entries.length === 0 ? (
-        <div className="rounded-2xl border border-[rgb(var(--color-warning)/0.35)] bg-[rgb(var(--color-warning)/0.08)] p-5">
-          <p className="text-sm text-[rgb(var(--color-text))]">
-            Kein Stundenplan hinterlegt. Ohne Stundenplan sind keine personalisierten Treffer und keine Push-Benachrichtigungen möglich.
-          </p>
-          <div className="mt-3">
-            <Link href="/stundenplan/stundenplan" className="text-sm font-medium text-[rgb(var(--color-primary))] hover:underline">
-              Stundenplan bearbeiten
-            </Link>
-          </div>
-        </div>
-      ) : null}
+        <div className="space-y-6">
+          {user ? <PushOptInCard initialEnabled={user.notificationsEnabled} /> : null}
 
-      {error ? (
-        <div className="rounded-2xl border border-[rgb(var(--color-error)/0.25)] bg-[rgb(var(--color-error)/0.08)] p-5">
-          <p className="text-sm text-[rgb(var(--color-error))]">{error}</p>
-          <Button type="button" className="mt-3" variant="outline" onClick={refetch}>
-            Erneut laden
-          </Button>
-        </div>
-      ) : null}
-
-      {!error && !isLoading && entries.length > 0 ? (
-        relevantMatches.length > 0 ? (
-          <div className="space-y-4">
-            {relevantMatches.map((match, index) => (
-              <SubstitutionCard
-                key={`${match.substitution.group}-${match.substitution.hours}-${match.substitution.subject}-${index}`}
-                substitution={match.substitution}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-8 text-center">
-            <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              Für dieses Datum wurden keine relevanten Vertretungen gefunden.
+          {loadingTimetable ? (
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">Lade Stundenplan…</p>
+          ) : timetableError ? (
+            <p
+              className="rounded-md bg-[rgb(var(--color-error)/0.12)] px-3 py-2 text-sm text-[rgb(var(--color-error))]"
+              aria-live="polite"
+            >
+              {timetableError}
             </p>
-          </div>
-        )
-      ) : null}
+          ) : entries.length === 0 ? (
+            <div className="rounded-2xl border border-[rgb(var(--color-warning)/0.35)] bg-[rgb(var(--color-warning)/0.08)] p-5">
+              <p className="text-sm text-[rgb(var(--color-text))]">
+                Kein Stundenplan hinterlegt. Ohne Stundenplan sind keine personalisierten Treffer und keine
+                Push-Benachrichtigungen möglich.
+              </p>
+              <div className="mt-3">
+                <Link
+                  href="/stundenplan/stundenplan"
+                  className="text-sm font-medium text-[rgb(var(--color-primary))] hover:underline"
+                >
+                  Stundenplan bearbeiten
+                </Link>
+              </div>
+            </div>
+          ) : null}
+
+          {error ? (
+            <div className="rounded-2xl border border-[rgb(var(--color-error)/0.25)] bg-[rgb(var(--color-error)/0.08)] p-5">
+              <p className="text-sm text-[rgb(var(--color-error))]">{error}</p>
+              <Button type="button" className="mt-3" variant="outline" onClick={refetch}>
+                Erneut laden
+              </Button>
+            </div>
+          ) : null}
+
+          {!error && !isLoading && entries.length > 0 ? (
+            relevantMatches.length > 0 ? (
+              <div className="space-y-4">
+                {relevantMatches.map((match, index) => (
+                  <SubstitutionCard
+                    key={`${match.substitution.group}-${match.substitution.hours}-${match.substitution.subject}-${index}`}
+                    substitution={match.substitution}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-8 text-center">
+                <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                  Für dieses Datum wurden keine relevanten Vertretungen gefunden.
+                </p>
+              </div>
+            )
+          ) : null}
+        </div>
+      </div>
+
+      <Dialog open={isMobileCalendarOpen} onOpenChange={setIsMobileCalendarOpen}>
+        <DialogContent className="max-w-[calc(100%-1.5rem)] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Datum wählen</DialogTitle>
+            <DialogDescription>Schnell zu einem anderen Tag wechseln.</DialogDescription>
+          </DialogHeader>
+          <CalendarWidget
+            selectedDate={selectedDate}
+            onDateSelect={(date) => {
+              setDate(date);
+              setIsMobileCalendarOpen(false);
+            }}
+            className="w-full"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
