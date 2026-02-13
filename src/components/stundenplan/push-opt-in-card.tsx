@@ -298,8 +298,8 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
           </Button>
         )}
       </div>
-
-      <p className="mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
+      {/*Dev Show Browser Permission and Context Info for Debugging*/}
+      {/*<p className="mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
         Browser-Permission:{' '}
         {permissionState === 'granted'
           ? 'erlaubt'
@@ -316,7 +316,7 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
         <p className="mt-3 rounded-md bg-[rgb(var(--color-background)/0.85)] px-3 py-2 text-sm text-[rgb(var(--color-text-secondary))]" aria-live="polite">
           {message}
         </p>
-      ) : null}
+      ) : null}*/}
     </div>
   );
 }

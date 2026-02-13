@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
     isDev && allowedDevOrigins.length > 0
       ? allowedDevOrigins
       : isDev
-        ? ['localhost', '*.localhost', '127.0.0.1', '*.local']
+        ? ['localhost', '*.localhost', '127.0.0.1', '*.local', '*.localcan.dev']
         : undefined,
   async headers() {
     return [
