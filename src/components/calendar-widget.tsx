@@ -165,7 +165,9 @@ export function CalendarWidget({
   };
 
   return (
-    <div className={`calendar-widget ${className}`}>
+    <div
+      className={`calendar-widget rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.7)] p-3 ${className}`}
+    >
       <h3 className="mb-3 text-lg font-medium text-foreground">Datum auswählen</h3>
 
       <div className="overflow-hidden rounded-lg border bg-card">

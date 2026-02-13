@@ -24,7 +24,10 @@ export function SearchInput({
   return (
     <div className={`relative ${className}`}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[rgb(var(--color-text-secondary))]" />
+        <Search
+          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[rgb(var(--color-text-secondary))]"
+          aria-hidden="true"
+        />
         <Input
           type="text"
           placeholder={placeholder}
@@ -42,8 +45,9 @@ export function SearchInput({
             size="icon"
             onClick={handleClear}
             className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text))]"
+            aria-label="Suche zurücksetzen"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         )}
       </div>
