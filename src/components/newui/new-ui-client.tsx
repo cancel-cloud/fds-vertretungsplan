@@ -7,6 +7,7 @@ import { CalendarWidget } from '@/components/calendar-widget';
 import { SearchInput } from '@/components/search-input';
 import { CategoryFilters } from '@/components/category-filters';
 import { SubstitutionCard } from '@/components/substitution-card';
+import { LoginPromoCard } from '@/components/newui/login-promo-card';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -200,9 +201,10 @@ function ResultsPanel({
 
 interface NewUiClientProps {
   analyticsSource: string;
+  showLoginPromo?: boolean;
 }
 
-export function NewUiClient({ analyticsSource }: NewUiClientProps) {
+export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -382,32 +384,42 @@ export function NewUiClient({ analyticsSource }: NewUiClientProps) {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
           <aside className="hidden lg:block">
-            <Card className="sticky top-[88px] space-y-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[rgb(var(--color-text-secondary))]">
-                Datum wählen
-              </h2>
-              <CalendarWidget
-                selectedDate={selectedDate}
-                onDateSelect={(date) => setDateAndTrack(date, 'newui_sidebar_calendar')}
-                enableAdvancedFeatures={advancedCalendarEnabled}
-              />
-            </Card>
+            <div className="sticky top-[88px] space-y-4">
+              <Card className="space-y-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4">
+                <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[rgb(var(--color-text-secondary))]">
+                  Datum wählen
+                </h2>
+                <CalendarWidget
+                  selectedDate={selectedDate}
+                  onDateSelect={(date) => setDateAndTrack(date, 'newui_sidebar_calendar')}
+                  enableAdvancedFeatures={advancedCalendarEnabled}
+                />
+              </Card>
+              {showLoginPromo ? <LoginPromoCard /> : null}
+            </div>
           </aside>
 
-          <ResultsPanel
-            substitutions={substitutions}
-            filteredSubstitutions={filteredSubstitutions}
-            stats={stats}
-            selectedDate={selectedDate}
-            isLoading={isLoading}
-            error={error}
-            onRetry={() => {
-              capture(ANALYTICS_EVENTS.RETRY_CLICKED, { location: 'newui' });
-              refetch();
-            }}
-            metaResponse={metaResponse}
-            onClearAllFilters={handleClearAllFilters}
-          />
+          <div className="space-y-6">
+            {showLoginPromo ? (
+              <div className="lg:hidden">
+                <LoginPromoCard />
+              </div>
+            ) : null}
+            <ResultsPanel
+              substitutions={substitutions}
+              filteredSubstitutions={filteredSubstitutions}
+              stats={stats}
+              selectedDate={selectedDate}
+              isLoading={isLoading}
+              error={error}
+              onRetry={() => {
+                capture(ANALYTICS_EVENTS.RETRY_CLICKED, { location: 'newui' });
+                refetch();
+              }}
+              metaResponse={metaResponse}
+              onClearAllFilters={handleClearAllFilters}
+            />
+          </div>
         </div>
       </main>
 
