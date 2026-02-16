@@ -19,7 +19,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           size="icon"
           onClick={onMenuToggle}
           className="md:hidden text-[rgb(var(--color-text))] hover:bg-[rgb(var(--color-secondary)/0.12)]"
-          aria-label="Open menu"
+          aria-label="Menü öffnen"
         >
           <Menu className="h-6 w-6" />
         </Button>

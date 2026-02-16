@@ -178,35 +178,37 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Keine Änderungen übergeben.' }, { status: 400 });
     }
 
-    if (updates.role === 'USER') {
-      const user = await prisma.user.findUnique({
-        where: { id },
-        select: { role: true },
-      });
+    const updated = await prisma.$transaction(async (tx) => {
+      if (updates.role === 'USER') {
+        const user = await tx.user.findUnique({
+          where: { id },
+          select: { role: true },
+        });
 
-      if (!user) {
-        return NextResponse.json({ error: 'User wurde nicht gefunden.' }, { status: 404 });
-      }
+        if (!user) {
+          throw new Error('NOT_FOUND');
+        }
 
-      if (user.role === 'ADMIN') {
-        const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
-        if (adminCount <= 1) {
-          return NextResponse.json({ error: 'Der letzte Admin kann nicht herabgestuft werden.' }, { status: 400 });
+        if (user.role === 'ADMIN') {
+          const adminCount = await tx.user.count({ where: { role: 'ADMIN' } });
+          if (adminCount <= 1) {
+            throw new Error('LAST_ADMIN');
+          }
         }
       }
-    }
 
-    const updated = await prisma.user.update({
-      where: { id },
-      data: updates,
-      include: {
-        _count: {
-          select: {
-            timetableEntries: true,
-            pushSubscriptions: true,
+      return tx.user.update({
+        where: { id },
+        data: updates,
+        include: {
+          _count: {
+            select: {
+              timetableEntries: true,
+              pushSubscriptions: true,
+            },
           },
         },
-      },
+      });
     });
 
     return NextResponse.json({
@@ -226,6 +228,14 @@ export async function PATCH(req: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'NOT_FOUND') {
+        return NextResponse.json({ error: 'User wurde nicht gefunden.' }, { status: 404 });
+      }
+      if (error.message === 'LAST_ADMIN') {
+        return NextResponse.json({ error: 'Der letzte Admin kann nicht herabgestuft werden.' }, { status: 400 });
+      }
+    }
     console.error('Failed to update user from admin panel', error);
     return NextResponse.json({ error: 'Benutzer konnte nicht aktualisiert werden.' }, { status: 500 });
   }

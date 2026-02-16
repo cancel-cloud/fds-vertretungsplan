@@ -44,7 +44,45 @@ const parseDeviceFilter = (value: string | null): DeviceFilter => {
   return 'all';
 };
 
+const toTimetableMatchEntries = (entries: Array<{
+  id: string;
+  weekday: TimetableMatchEntry['weekday'];
+  startPeriod: number;
+  duration: number;
+  subjectCode: string;
+  teacherCode: string;
+  room: string | null;
+  weekMode: TimetableMatchEntry['weekMode'];
+}>): TimetableMatchEntry[] =>
+  entries.map((entry) => ({
+    id: entry.id,
+    weekday: entry.weekday,
+    startPeriod: entry.startPeriod,
+    duration: entry.duration as 1 | 2,
+    subjectCode: entry.subjectCode,
+    teacherCode: entry.teacherCode,
+    room: entry.room,
+    weekMode: entry.weekMode,
+  }));
+
+const filterEligibleSubscriptions = <T extends { endpoint: string }>(
+  subscriptions: T[],
+  deviceFilter: DeviceFilter
+): T[] =>
+  subscriptions.filter((subscription) => {
+    if (deviceFilter === 'all') {
+      return true;
+    }
+
+    const ios = isIosEndpoint(subscription.endpoint);
+    return deviceFilter === 'ios' ? ios : !ios;
+  });
+
 export async function POST(req: NextRequest) {
+  return runDispatch(req);
+}
+
+export async function GET(req: NextRequest) {
   return runDispatch(req);
 }
 
@@ -60,6 +98,7 @@ async function runDispatch(req: NextRequest) {
   const includePayload = process.env.PUSH_INCLUDE_PAYLOAD === 'true';
   const force = req.nextUrl.searchParams.get('force') === '1';
   const sendUnchanged = req.nextUrl.searchParams.get('sendUnchanged') === '1';
+  const forceSummaryMode = force && sendUnchanged;
   const userEmailFilter = req.nextUrl.searchParams.get('userEmail')?.trim().toLowerCase() ?? '';
   const userIdFilter = req.nextUrl.searchParams.get('userId')?.trim() ?? '';
   const deviceFilter = parseDeviceFilter(req.nextUrl.searchParams.get('device'));
@@ -107,11 +146,19 @@ async function runDispatch(req: NextRequest) {
   if (users.length === 0) {
     return NextResponse.json({
       ok: true,
+      mode: forceSummaryMode ? 'forced-summary' : 'delta',
       forced: force,
+      sendUnchanged,
       includePayload,
       users: 0,
       usersTouched: 0,
       notificationsSent: 0,
+      skippedUnchanged: 0,
+      skippedNoEligibleDevice: 0,
+      summaryUsersAttempted: 0,
+      summaryUsersSent: 0,
+      summaryNoMatchUsers: 0,
+      summaryTotalMatches: 0,
     });
   }
 
@@ -149,22 +196,125 @@ async function runDispatch(req: NextRequest) {
     );
   }
 
+  if (forceSummaryMode) {
+    let notificationsSent = 0;
+    let usersTouched = 0;
+    let skippedNoEligibleDevice = 0;
+    let summaryUsersAttempted = 0;
+    let summaryUsersSent = 0;
+    let summaryNoMatchUsers = 0;
+    let summaryTotalMatches = 0;
+
+    for (const user of users) {
+      const entries = toTimetableMatchEntries(user.timetableEntries);
+      const lookaheadDays = getNextSchoolDays(now, clampNotificationLookaheadSchoolDays(user.notificationLookaheadSchoolDays));
+      const matchCountsByDate = lookaheadDays.map((dayDate) => {
+        const dateNumber = toUntisDateNumber(dayDate);
+        const substitutions = substitutionsByDate.get(dateNumber) ?? [];
+        const matches = findRelevantSubstitutions(substitutions, entries, dayDate);
+        return matches.length;
+      });
+
+      const totalMatches = matchCountsByDate.reduce((sum, count) => sum + count, 0);
+      summaryTotalMatches += totalMatches;
+      if (totalMatches === 0) {
+        summaryNoMatchUsers += 1;
+      }
+
+      const eligibleSubscriptions = filterEligibleSubscriptions(user.pushSubscriptions, deviceFilter);
+      if (eligibleSubscriptions.length === 0) {
+        skippedNoEligibleDevice += 1;
+        continue;
+      }
+
+      summaryUsersAttempted += 1;
+
+      const firstRelevantDayIndex = matchCountsByDate.findIndex((count) => count > 0);
+      const selectedDay =
+        firstRelevantDayIndex >= 0
+          ? lookaheadDays[firstRelevantDayIndex]
+          : (lookaheadDays[0] ?? now);
+      const selectedDateNumber = toUntisDateNumber(selectedDay);
+      const lookaheadCount = lookaheadDays.length;
+      const payload = includePayload
+        ? {
+            title: `${appName} · Übersicht`,
+            body:
+              totalMatches > 0
+                ? `Du hast ${totalMatches} relevante Vertretung(en) in den nächsten ${lookaheadCount} Schultagen.`
+                : `Keine relevanten Vertretungen in den nächsten ${lookaheadCount} Schultagen.`,
+            url: `/stundenplan/dashboard?date=${formatDateForQuery(selectedDateNumber)}`,
+          }
+        : null;
+
+      let sentForUser = 0;
+      const staleEndpoints: string[] = [];
+
+      for (const subscription of eligibleSubscriptions) {
+        const result = await sendPushMessage(
+          {
+            endpoint: subscription.endpoint,
+            p256dh: subscription.p256dh,
+            auth: subscription.auth,
+          },
+          payload
+        );
+
+        if (result.ok) {
+          sentForUser += 1;
+          notificationsSent += 1;
+        } else if (result.remove) {
+          staleEndpoints.push(subscription.endpoint);
+        }
+      }
+
+      if (staleEndpoints.length > 0) {
+        await prisma.pushSubscription.deleteMany({
+          where: {
+            endpoint: {
+              in: staleEndpoints,
+            },
+            userId: user.id,
+          },
+        });
+      }
+
+      if (sentForUser > 0) {
+        usersTouched += 1;
+        summaryUsersSent += 1;
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      mode: 'forced-summary',
+      forced: force,
+      sendUnchanged,
+      filters: {
+        userEmail: userEmailFilter || null,
+        userId: userIdFilter || null,
+        device: deviceFilter,
+      },
+      includePayload,
+      users: users.length,
+      usersTouched,
+      notificationsSent,
+      skippedUnchanged: 0,
+      skippedNoEligibleDevice,
+      summaryUsersAttempted,
+      summaryUsersSent,
+      summaryNoMatchUsers,
+      summaryTotalMatches,
+    });
+  }
+
   let notificationsSent = 0;
   let usersTouched = 0;
   let skippedUnchanged = 0;
   let skippedNoEligibleDevice = 0;
 
   for (const user of users) {
-    const entries: TimetableMatchEntry[] = user.timetableEntries.map((entry) => ({
-      id: entry.id,
-      weekday: entry.weekday,
-      startPeriod: entry.startPeriod,
-      duration: entry.duration as 1 | 2,
-      subjectCode: entry.subjectCode,
-      teacherCode: entry.teacherCode,
-      room: entry.room,
-      weekMode: entry.weekMode,
-    }));
+    const entries = toTimetableMatchEntries(user.timetableEntries);
 
     const lookaheadDays = getNextSchoolDays(now, clampNotificationLookaheadSchoolDays(user.notificationLookaheadSchoolDays));
     const targetDateNumbers = lookaheadDays.map((date) => toUntisDateNumber(date));
@@ -212,14 +362,7 @@ async function runDispatch(req: NextRequest) {
 
       let sentForThisFingerprint = 0;
       const staleEndpoints: string[] = [];
-      const eligibleSubscriptions = user.pushSubscriptions.filter((subscription) => {
-        if (deviceFilter === 'all') {
-          return true;
-        }
-
-        const ios = isIosEndpoint(subscription.endpoint);
-        return deviceFilter === 'ios' ? ios : !ios;
-      });
+      const eligibleSubscriptions = filterEligibleSubscriptions(user.pushSubscriptions, deviceFilter);
 
       if (eligibleSubscriptions.length === 0) {
         skippedNoEligibleDevice += 1;
@@ -313,6 +456,7 @@ async function runDispatch(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    mode: 'delta',
     forced: force,
     sendUnchanged,
     filters: {
@@ -326,5 +470,9 @@ async function runDispatch(req: NextRequest) {
     notificationsSent,
     skippedUnchanged,
     skippedNoEligibleDevice,
+    summaryUsersAttempted: 0,
+    summaryUsersSent: 0,
+    summaryNoMatchUsers: 0,
+    summaryTotalMatches: 0,
   });
 }

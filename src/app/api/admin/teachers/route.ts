@@ -56,6 +56,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ teacher: toTeacherDto(teacher) }, { status: 201 });
   } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+      return NextResponse.json({ error: 'Ein Lehrer mit diesem Kürzel existiert bereits.' }, { status: 409 });
+    }
     console.error('Failed to create teacher', error);
     return NextResponse.json({ error: 'Lehrer konnte nicht erstellt werden.' }, { status: 500 });
   }
@@ -124,6 +127,9 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ teacher: toTeacherDto(teacher) });
   } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+      return NextResponse.json({ error: 'Ein Lehrer mit diesem Kürzel existiert bereits.' }, { status: 409 });
+    }
     console.error('Failed to update teacher', error);
     return NextResponse.json({ error: 'Lehrer konnte nicht aktualisiert werden.' }, { status: 500 });
   }

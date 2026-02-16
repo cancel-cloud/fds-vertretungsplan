@@ -26,7 +26,7 @@ export function ThemeToggle() {
       size="icon"
       onClick={cycleTheme}
       className="text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-      aria-label={`Current theme: ${theme}. Click to cycle through themes.`}
+      aria-label={`Aktuelles Thema: ${theme}. Klicken, um das Thema zu wechseln.`}
     >
       {getIcon()}
     </Button>

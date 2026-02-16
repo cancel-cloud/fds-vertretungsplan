@@ -1,5 +1,12 @@
 import { WeekMode, Weekday } from '@/types/user-system';
 
+export class TimetableValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TimetableValidationError';
+  }
+}
+
 export interface NormalizedTimetableEntryInput {
   weekday: Weekday;
   startPeriod: number;
@@ -31,43 +38,43 @@ export const periodsForEntry = (startPeriod: number, duration: 1 | 2): number[] 
 
 const validateEntry = (entry: unknown, index: number): NormalizedTimetableEntryInput => {
   if (!entry || typeof entry !== 'object') {
-    throw new Error(`Eintrag ${index + 1} ist ungültig.`);
+    throw new TimetableValidationError(`Eintrag ${index + 1} ist ungültig.`);
   }
 
   const candidate = entry as Record<string, unknown>;
 
   const weekday = typeof candidate.weekday === 'string' ? candidate.weekday.toUpperCase() : '';
   if (!WEEKDAYS.includes(weekday as Weekday)) {
-    throw new Error(`Eintrag ${index + 1}: Ungültiger Tag.`);
+    throw new TimetableValidationError(`Eintrag ${index + 1}: Ungültiger Tag.`);
   }
 
   const startPeriod = Number(candidate.startPeriod);
   if (!Number.isInteger(startPeriod) || startPeriod < MIN_PERIOD || startPeriod > MAX_PERIOD) {
-    throw new Error(`Eintrag ${index + 1}: Startstunde muss zwischen 1 und 16 liegen.`);
+    throw new TimetableValidationError(`Eintrag ${index + 1}: Startstunde muss zwischen 1 und 16 liegen.`);
   }
 
   const duration = Number(candidate.duration);
   if (duration !== 1 && duration !== 2) {
-    throw new Error(`Eintrag ${index + 1}: Dauer muss 1 oder 2 sein.`);
+    throw new TimetableValidationError(`Eintrag ${index + 1}: Dauer muss 1 oder 2 sein.`);
   }
 
   if (startPeriod + duration - 1 > MAX_PERIOD) {
-    throw new Error(`Eintrag ${index + 1}: Doppelstunde darf nicht über Stunde 16 hinausgehen.`);
+    throw new TimetableValidationError(`Eintrag ${index + 1}: Doppelstunde darf nicht über Stunde 16 hinausgehen.`);
   }
 
   const subjectCode = normalizeCode(String(candidate.subjectCode ?? ''));
   if (!subjectCode) {
-    throw new Error(`Eintrag ${index + 1}: Fach-Kürzel fehlt.`);
+    throw new TimetableValidationError(`Eintrag ${index + 1}: Fach-Kürzel fehlt.`);
   }
 
   const teacherCode = normalizeCode(String(candidate.teacherCode ?? ''));
   if (!teacherCode) {
-    throw new Error(`Eintrag ${index + 1}: Lehrer-Kürzel fehlt.`);
+    throw new TimetableValidationError(`Eintrag ${index + 1}: Lehrer-Kürzel fehlt.`);
   }
 
   const weekModeRaw = typeof candidate.weekMode === 'string' ? candidate.weekMode.toUpperCase() : 'ALL';
   if (!WEEK_MODES.includes(weekModeRaw as WeekMode)) {
-    throw new Error(`Eintrag ${index + 1}: Ungültiger Wochenmodus.`);
+    throw new TimetableValidationError(`Eintrag ${index + 1}: Ungültiger Wochenmodus.`);
   }
 
   const roomRaw = String(candidate.room ?? '').trim();
@@ -85,7 +92,7 @@ const validateEntry = (entry: unknown, index: number): NormalizedTimetableEntryI
 
 export const validateTimetableEntries = (entries: unknown): NormalizedTimetableEntryInput[] => {
   if (!Array.isArray(entries)) {
-    throw new Error('Der Stundenplan muss ein Array sein.');
+    throw new TimetableValidationError('Der Stundenplan muss ein Array sein.');
   }
 
   const normalized = entries.map((entry, index) => validateEntry(entry, index));
@@ -109,7 +116,7 @@ export const validateTimetableEntries = (entries: unknown): NormalizedTimetableE
       const hasOverlap = leftPeriods.some((period) => rightPeriods.includes(period));
 
       if (hasOverlap) {
-        throw new Error(
+        throw new TimetableValidationError(
           `Konflikt am ${left.weekday}: Stunde ${Math.max(left.startPeriod, right.startPeriod)} ist mehrfach belegt.`
         );
       }

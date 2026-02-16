@@ -26,7 +26,7 @@ const buildCsp = () => {
     "frame-ancestors 'self'",
     "object-src 'none'",
     "img-src 'self' data: https:",
-    "font-src 'self' data:",
+    "font-src 'self' data: https://r2cdn.perplexity.ai",
     "worker-src 'self' blob:",
     `script-src ${scriptSrc.join(' ')}`,
     "style-src 'self' 'unsafe-inline'",
@@ -64,9 +64,7 @@ export async function middleware(req: NextRequest) {
     if (!isAuthenticated && !isPublicStundenplanPath) {
       const url = req.nextUrl.clone();
       url.pathname = '/stundenplan/login';
-      if (!STUNDENPLAN_PUBLIC_PATHS.has(normalizedPathname)) {
-        url.searchParams.set('next', normalizedPathname);
-      }
+      url.searchParams.set('next', normalizedPathname);
       const redirectResponse = NextResponse.redirect(url);
       redirectResponse.headers.set('Content-Security-Policy', csp);
       return redirectResponse;

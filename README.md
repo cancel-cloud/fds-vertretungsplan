@@ -161,14 +161,18 @@ curl -X POST "https://your-domain.example/api/internal/push/dispatch?force=1" \
   -H "Authorization: Bearer <PUSH_CRON_SECRET>"
 ```
 
-### Gezielt testen (ein User, nur iOS, auch ohne Delta)
+### Gezielt testen (ein User, nur iOS, immer mit Push-Summary)
 
 ```bash
 curl -X POST "https://your-domain.example/api/internal/push/dispatch?force=1&userEmail=lukas@devbrew.dev&device=ios&sendUnchanged=1" \
   -H "Authorization: Bearer <PUSH_CRON_SECRET>"
 ```
 
-`sendUnchanged=1` ist nur für Iteration/Debug gedacht.
+`force=1&sendUnchanged=1` sendet immer eine Summary-Push:
+- mit Trefferzahl, wenn relevante Vertretungen gefunden wurden
+- oder mit "keine relevanten Vertretungen", wenn keine Treffer vorliegen
+
+Ohne diese Kombination bleibt die normale Delta-Logik aktiv.
 
 ---
 
