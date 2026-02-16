@@ -18,10 +18,18 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ApplePushPromoCard } from '@/components/stundenplan/apple-push-promo-card';
 import { DashboardScope, DASHBOARD_SCOPE_PARAM, parseDashboardScope } from '@/lib/dashboard-scope';
 import { WeekMode, Weekday } from '@/types/user-system';
+import {
+  DEMO_ANCHOR_DATE,
+  DEMO_RANGE_END_DATE,
+  DEMO_RANGE_START_DATE,
+  clampToDemoDate,
+  isDemoDateAllowed,
+} from '@/lib/demo-config';
 
 interface DashboardClientProps {
   initialScope: DashboardScope;
   isAuthenticated: boolean;
+  isDemoMode?: boolean;
 }
 
 interface UserData {
@@ -116,7 +124,7 @@ const parseDateParam = (value: string | null): Date | null => {
   return date;
 };
 
-export function DashboardClient({ initialScope, isAuthenticated }: DashboardClientProps) {
+export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = false }: DashboardClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -128,10 +136,15 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
 
   const queryDate = useMemo(() => parseDateParam(queryDateParam), [queryDateParam]);
   const queryScope = useMemo(() => parseDashboardScope(queryScopeParam), [queryScopeParam]);
+  const demoAnchorDate = useMemo(() => new Date(DEMO_ANCHOR_DATE), []);
+  const demoMinDate = useMemo(() => new Date(DEMO_RANGE_START_DATE), []);
+  const demoMaxDate = useMemo(() => new Date(DEMO_RANGE_END_DATE), []);
 
   const [scope, setScope] = useState<DashboardScope>(initialScope);
   const [searchQuery, setSearchQuery] = useState(querySearchParam);
-  const [selectedDate, setSelectedDate] = useState<Date>(() => normalizeToSchoolDay(queryDate ?? new Date(), 1));
+  const [selectedDate, setSelectedDate] = useState<Date>(() =>
+    isDemoMode ? demoAnchorDate : normalizeToSchoolDay(queryDate ?? new Date(), 1)
+  );
   const [entries, setEntries] = useState<TimetableMatchEntry[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
   const [loadingTimetable, setLoadingTimetable] = useState(initialScope === 'personal' && isAuthenticated);
@@ -160,21 +173,41 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
   useEffect(() => () => clearTimeout(searchUrlTimeoutRef.current), []);
 
   useEffect(() => {
-    if (!queryDate) {
+    const fallbackDate = isDemoMode ? demoAnchorDate : new Date();
+    const normalizedQueryDate = normalizeToSchoolDay(queryDate ?? fallbackDate, 1);
+    const nextDate = isDemoMode ? clampToDemoDate(normalizedQueryDate) : normalizedQueryDate;
+    setSelectedDate((previous) => {
+      const normalizedPrevious = normalizeToDay(previous);
+      if (normalizedPrevious.getTime() === nextDate.getTime()) {
+        return previous;
+      }
+      return nextDate;
+    });
+  }, [demoAnchorDate, isDemoMode, queryDate]);
+
+  useEffect(() => {
+    if (!isDemoMode) {
       return;
     }
 
-    const normalizedQueryDate = normalizeToSchoolDay(queryDate, 1);
-    setSelectedDate((previous) => {
-      const normalizedPrevious = normalizeToDay(previous);
-      if (normalizedPrevious.getTime() === normalizedQueryDate.getTime()) {
-        return previous;
-      }
-      return normalizedQueryDate;
-    });
-  }, [queryDate]);
+    const desiredDate = formatDateForApi(clampToDemoDate(normalizeToSchoolDay(queryDate ?? demoAnchorDate, 1)));
+    if (queryDateParam === desiredDate) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParamsString);
+    params.delete('fromPush');
+    params.set('date', desiredDate);
+    params.set(DASHBOARD_SCOPE_PARAM, scope);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [demoAnchorDate, isDemoMode, pathname, queryDate, queryDateParam, router, scope, searchParamsString]);
 
   useEffect(() => {
+    if (isDemoMode) {
+      setIsInitialDateResolved(true);
+      return;
+    }
+
     if (!isPersonalScope || !isAuthenticated || !fromPush || queryDate) {
       setIsInitialDateResolved(true);
       return;
@@ -229,7 +262,7 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
     return () => {
       active = false;
     };
-  }, [fromPush, isAuthenticated, isPersonalScope, pathname, queryDate, router, searchParamsString]);
+  }, [fromPush, isAuthenticated, isDemoMode, isPersonalScope, pathname, queryDate, router, searchParamsString]);
 
   useEffect(() => {
     if (!isPersonalScope || !isAuthenticated) {
@@ -332,7 +365,12 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
   };
 
   const setDate = (date: Date, targetScope = scope) => {
-    const normalized = normalizeToSchoolDay(date, 1);
+    const normalizedInput = normalizeToSchoolDay(date, 1);
+    const normalized = isDemoMode ? clampToDemoDate(normalizedInput) : normalizedInput;
+    if (isDemoMode && !isDemoDateAllowed(normalized)) {
+      return;
+    }
+
     setSelectedDate(normalized);
 
     const params = new URLSearchParams(searchParams.toString());
@@ -361,7 +399,10 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
     setDate(selectedDate, nextScope);
   };
 
-  const schoolToday = useMemo(() => normalizeToSchoolDay(new Date(), 1), []);
+  const schoolToday = useMemo(
+    () => (isDemoMode ? demoAnchorDate : normalizeToSchoolDay(new Date(), 1)),
+    [demoAnchorDate, isDemoMode]
+  );
   const schoolTomorrow = useMemo(() => addSchoolDays(schoolToday, 1), [schoolToday]);
   const schoolAfterTomorrow = useMemo(() => addSchoolDays(schoolToday, 2), [schoolToday]);
   const quickDateStrip = useMemo(
@@ -444,7 +485,13 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
             className="sticky top-[88px] space-y-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4"
           >
             {isInitialDateResolved ? (
-              <CalendarWidget selectedDate={selectedDate} onDateSelect={setDate} />
+              <CalendarWidget
+                selectedDate={selectedDate}
+                onDateSelect={setDate}
+                minDate={isDemoMode ? demoMinDate : undefined}
+                maxDate={isDemoMode ? demoMaxDate : undefined}
+                isDateSelectable={isDemoMode ? isDemoDateAllowed : undefined}
+              />
             ) : null}
             {isPersonalScope && user ? <ApplePushPromoCard initialPushEnabled={user.notificationsEnabled} /> : null}
           </Card>
@@ -685,6 +732,9 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
                 setIsMobileCalendarOpen(false);
               }}
               className="w-full"
+              minDate={isDemoMode ? demoMinDate : undefined}
+              maxDate={isDemoMode ? demoMaxDate : undefined}
+              isDateSelectable={isDemoMode ? isDemoDateAllowed : undefined}
             />
           ) : null}
         </DialogContent>

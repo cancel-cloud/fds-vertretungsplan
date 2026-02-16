@@ -4,6 +4,7 @@ import { DashboardClient } from '@/components/stundenplan/dashboard-client';
 import { LandingHeader } from '@/components/layout/landing-header';
 import { prisma } from '@/lib/prisma';
 import { DASHBOARD_SCOPE_PARAM, parseDashboardScope } from '@/lib/dashboard-scope';
+import { isDemoMode } from '@/lib/demo-config';
 
 interface DashboardPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -30,6 +31,7 @@ const toQueryString = (searchParams: Record<string, string | string[] | undefine
 
 export default async function StundenplanDashboardPage({ searchParams }: DashboardPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
+  const demoMode = isDemoMode();
   const scopeCandidate = Array.isArray(resolvedSearchParams[DASHBOARD_SCOPE_PARAM])
     ? resolvedSearchParams[DASHBOARD_SCOPE_PARAM][0]
     : resolvedSearchParams[DASHBOARD_SCOPE_PARAM];
@@ -53,7 +55,7 @@ export default async function StundenplanDashboardPage({ searchParams }: Dashboa
     <div className="min-h-screen bg-[rgb(var(--color-background))]">
       <LandingHeader />
       <main id="main-content" className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6">
-        <DashboardClient initialScope={scope} isAuthenticated={Boolean(user)} />
+        <DashboardClient initialScope={scope} isAuthenticated={Boolean(user)} isDemoMode={demoMode} />
       </main>
     </div>
   );

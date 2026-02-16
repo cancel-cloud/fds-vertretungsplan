@@ -7,11 +7,12 @@ import {
   buildNotificationFingerprint,
   canonicalizeMatchKeys,
   clampNotificationLookaheadSchoolDays,
-  getNextSchoolDays,
+  getNotificationSchoolDays,
   resolveNotificationDeltaAction,
 } from '@/lib/notification-state';
 import { fetchUntisRows, toUntisDateNumber } from '@/lib/substitution-fetcher';
 import { verifyQstashSignature } from '@/lib/qstash';
+import { isDemoMode, resolveDemoAwareEnv } from '@/lib/demo-config';
 
 const TIMEZONE = process.env.APP_TIMEZONE ?? 'Europe/Berlin';
 
@@ -89,12 +90,14 @@ export async function GET(req: NextRequest) {
 function hasValidBearerToken(req: NextRequest): boolean {
   const authHeader = req.headers.get('authorization') ?? '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-  const expectedToken = process.env.PUSH_CRON_SECRET ?? process.env.CRON_SECRET;
+  const expectedToken =
+    resolveDemoAwareEnv('PUSH_CRON_SECRET', 'DEMO_PUSH_CRON_SECRET') ?? resolveDemoAwareEnv('CRON_SECRET', 'DEMO_CRON_SECRET');
   return Boolean(expectedToken && token === expectedToken);
 }
 
 async function runDispatch(req: NextRequest) {
   const appName = getPushAppName();
+  const demoMode = isDemoMode();
   const includePayload = process.env.PUSH_INCLUDE_PAYLOAD === 'true';
   const force = req.nextUrl.searchParams.get('force') === '1';
   const sendUnchanged = req.nextUrl.searchParams.get('sendUnchanged') === '1';
@@ -164,7 +167,11 @@ async function runDispatch(req: NextRequest) {
 
   const fetchDates = new Map<number, Date>();
   for (const user of users) {
-    const targetDates = getNextSchoolDays(now, clampNotificationLookaheadSchoolDays(user.notificationLookaheadSchoolDays));
+    const targetDates = getNotificationSchoolDays(
+      now,
+      clampNotificationLookaheadSchoolDays(user.notificationLookaheadSchoolDays),
+      { includeToday: demoMode }
+    );
     for (const date of targetDates) {
       fetchDates.set(toUntisDateNumber(date), date);
     }
@@ -207,7 +214,11 @@ async function runDispatch(req: NextRequest) {
 
     for (const user of users) {
       const entries = toTimetableMatchEntries(user.timetableEntries);
-      const lookaheadDays = getNextSchoolDays(now, clampNotificationLookaheadSchoolDays(user.notificationLookaheadSchoolDays));
+      const lookaheadDays = getNotificationSchoolDays(
+        now,
+        clampNotificationLookaheadSchoolDays(user.notificationLookaheadSchoolDays),
+        { includeToday: demoMode }
+      );
       const matchCountsByDate = lookaheadDays.map((dayDate) => {
         const dateNumber = toUntisDateNumber(dayDate);
         const substitutions = substitutionsByDate.get(dateNumber) ?? [];
@@ -241,8 +252,8 @@ async function runDispatch(req: NextRequest) {
             title: `${appName} · Übersicht`,
             body:
               totalMatches > 0
-                ? `Du hast ${totalMatches} relevante Vertretung(en) in den nächsten ${lookaheadCount} Schultagen.`
-                : `Keine relevanten Vertretungen in den nächsten ${lookaheadCount} Schultagen.`,
+                ? `Du hast ${totalMatches} relevante Vertretung(en) im Zeitraum von ${lookaheadCount} Schultagen.`
+                : `Keine relevanten Vertretungen im Zeitraum von ${lookaheadCount} Schultagen.`,
             url: `/stundenplan/dashboard?date=${formatDateForQuery(selectedDateNumber)}`,
           }
         : null;
@@ -316,7 +327,11 @@ async function runDispatch(req: NextRequest) {
   for (const user of users) {
     const entries = toTimetableMatchEntries(user.timetableEntries);
 
-    const lookaheadDays = getNextSchoolDays(now, clampNotificationLookaheadSchoolDays(user.notificationLookaheadSchoolDays));
+    const lookaheadDays = getNotificationSchoolDays(
+      now,
+      clampNotificationLookaheadSchoolDays(user.notificationLookaheadSchoolDays),
+      { includeToday: demoMode }
+    );
     const targetDateNumbers = lookaheadDays.map((date) => toUntisDateNumber(date));
     const notificationStates = await prisma.notificationState.findMany({
       where: {

@@ -48,7 +48,10 @@ const createUser = (overrides: TestAdminUser) => ({
 
 const setupFetch = (
   initialUsers: Array<ReturnType<typeof createUser>>,
-  patchHandler: (body: Record<string, unknown>) => { status?: number; body: unknown }
+  patchHandler: (body: Record<string, unknown>) => { status?: number; body: unknown },
+  demoDataHandler: (body: Record<string, unknown>) => { status?: number; body: unknown } = () => ({
+    body: { ok: true },
+  })
 ) => {
   let users = [...initialUsers];
 
@@ -75,6 +78,12 @@ const setupFetch = (
     if (url.includes('/api/admin/users') && method === 'PATCH') {
       const body = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
       const result = patchHandler(body);
+      return createJsonResponse(result.body, result.status ?? 200);
+    }
+
+    if (url.includes('/api/admin/demo-data') && method === 'POST') {
+      const body = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
+      const result = demoDataHandler(body);
       return createJsonResponse(result.body, result.status ?? 200);
     }
 
@@ -214,5 +223,39 @@ describe('AdminPanel role demotion confirmation', () => {
     await user.click(screen.getByRole('button', { name: 'Herabstufen' }));
 
     expect(await screen.findByText('Bestätigungs-E-Mail stimmt nicht mit dem Zielkonto überein.')).toBeInTheDocument();
+  });
+
+  it('renders and triggers demo-data generation button in demo mode', async () => {
+    const targetUser = {
+      ...createUser({ id: 'user-1', email: 'user1@example.com', role: 'USER' }),
+      timetableCount: 3,
+    };
+    const demoBodies: Array<Record<string, unknown>> = [];
+
+    setupFetch(
+      [targetUser],
+      () => ({ body: { user: targetUser, selfDemoted: false } }),
+      (body) => {
+        demoBodies.push(body);
+        return {
+          body: {
+            ok: true,
+            selectedDates: { past: 20260213, today: 20260216, future: 20260217 },
+            guarantees: { pastMatches: 1, todayMatches: 1, futureMatches: 1 },
+          },
+        };
+      }
+    );
+
+    const user = userEvent.setup();
+    render(<AdminPanel currentUserId="admin-1" isDemoMode />);
+
+    const row = await screen.findByText('user1@example.com');
+    await user.click(within(row.closest('tr') as HTMLElement).getByRole('button', { name: 'Demo-Daten generieren' }));
+
+    await waitFor(() => {
+      expect(demoBodies).toHaveLength(1);
+    });
+    expect(demoBodies[0]).toMatchObject({ userId: 'user-1' });
   });
 });

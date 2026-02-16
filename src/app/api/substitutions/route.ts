@@ -14,6 +14,13 @@ import {
   resolveSchoolName,
 } from '@/app/api/substitutions/route-utils';
 import { calculateExponentialBackoff } from '@/lib/retry-utils';
+import {
+  DEMO_RANGE_END_NUMBER,
+  DEMO_RANGE_START_NUMBER,
+  isDemoDateAllowed,
+  isDemoMode,
+} from '@/lib/demo-config';
+import { buildDemoDatasetMissingMessage, getDemoRowsForDate, getStoredDemoDataset } from '@/lib/demo-substitutions';
 
 const META_RESPONSE_MESSAGE = 'No substitution data found. Only configuration returned.';
 const JSON_CONTENT_TYPE = /application\/json/i;
@@ -379,14 +386,75 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const schoolName = resolveSchoolName();
-    const baseUrl = resolveBaseUrl(schoolName);
-    const substitutionUrl = buildSubstitutionUrl(baseUrl, schoolName);
-
     const { numeric } = normalizeDateParam(
       req.nextUrl.searchParams.get('date'),
       req.nextUrl.searchParams.get('dateOffset')
     );
+
+    if (isDemoMode()) {
+      if (!isDemoDateAllowed(numeric)) {
+        return NextResponse.json(
+          {
+            error: `Demo-Modus erlaubt nur Daten zwischen ${DEMO_RANGE_START_NUMBER} und ${DEMO_RANGE_END_NUMBER}.`,
+          },
+          {
+            status: 400,
+            headers: {
+              'Cache-Control': 'no-store',
+            },
+          }
+        );
+      }
+
+      const cacheKey = `demo:${numeric}`;
+      const cached = responseCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < RESPONSE_CACHE_TTL_MS) {
+        return NextResponse.json(cached.data, {
+          headers: {
+            'Cache-Control': cacheControlHeader,
+          },
+        });
+      }
+
+      const dataset = await getStoredDemoDataset();
+      if (!dataset) {
+        const metaPayload: SubstitutionApiResponse = {
+          type: 'meta',
+          date: numeric,
+          schoolName: 'demo-mode',
+          message: buildDemoDatasetMissingMessage(),
+        };
+
+        responseCache.set(cacheKey, { timestamp: Date.now(), data: metaPayload });
+        pruneResponseCache(Date.now());
+
+        return NextResponse.json(metaPayload, {
+          headers: {
+            'Cache-Control': cacheControlHeader,
+          },
+        });
+      }
+
+      const responsePayload: SubstitutionApiResponse = {
+        type: 'substitution',
+        date: numeric,
+        rows: getDemoRowsForDate(dataset, numeric),
+        lastUpdate: dataset.generatedAt,
+      };
+
+      responseCache.set(cacheKey, { timestamp: Date.now(), data: responsePayload });
+      pruneResponseCache(Date.now());
+
+      return NextResponse.json(responsePayload, {
+        headers: {
+          'Cache-Control': cacheControlHeader,
+        },
+      });
+    }
+
+    const schoolName = resolveSchoolName();
+    const baseUrl = resolveBaseUrl(schoolName);
+    const substitutionUrl = buildSubstitutionUrl(baseUrl, schoolName);
 
     const cacheKey = `${schoolName}:${numeric}`;
     const cached = responseCache.get(cacheKey);

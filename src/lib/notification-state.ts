@@ -15,9 +15,26 @@ export function clampNotificationLookaheadSchoolDays(value: number): number {
 }
 
 export function getNextSchoolDays(startDate: Date, count: number): Date[] {
+  return getNotificationSchoolDays(startDate, count, { includeToday: false });
+}
+
+export function getNotificationSchoolDays(
+  startDate: Date,
+  count: number,
+  options?: {
+    includeToday?: boolean;
+  }
+): Date[] {
   const targetCount = clampNotificationLookaheadSchoolDays(count);
   const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   const result: Date[] = [];
+
+  if (options?.includeToday) {
+    const day = cursor.getDay();
+    if (day !== 0 && day !== 6) {
+      result.push(new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate()));
+    }
+  }
 
   while (result.length < targetCount) {
     cursor.setDate(cursor.getDate() + 1);

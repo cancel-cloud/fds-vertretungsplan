@@ -5,6 +5,15 @@ vi.mock('@/lib/analytics/posthog-server', () => ({
   captureServerEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
+const getStoredDemoDatasetMock = vi.fn();
+
+vi.mock('@/lib/demo-substitutions', () => ({
+  getStoredDemoDataset: getStoredDemoDatasetMock,
+  getDemoRowsForDate: (dataset: { days?: Record<string, unknown[]> }, dateNumber: number) =>
+    dataset.days?.[String(dateNumber)] ?? [],
+  buildDemoDatasetMissingMessage: () => 'Demo-Daten sind noch nicht erzeugt.',
+}));
+
 const originalEnv = { ...process.env };
 
 describe('api/substitutions route', () => {
@@ -14,6 +23,8 @@ describe('api/substitutions route', () => {
     process.env = { ...originalEnv };
     delete process.env.UNTIS_BASE_URL;
     delete process.env.UNTIS_SCHOOL;
+    delete process.env.APP_MODE;
+    getStoredDemoDatasetMock.mockResolvedValue(null);
   });
 
   it('validates UNTIS_BASE_URL domain and protocol', async () => {
@@ -180,5 +191,57 @@ describe('api/substitutions route', () => {
     expect(response.status).toBe(503);
     expect(json.error).toContain('nicht erreichbar');
     expect(fetchMock).toHaveBeenCalledTimes(3); // Should retry 3 times (UPSTREAM_MAX_ATTEMPTS)
+  });
+
+  it('serves demo dataset rows in demo mode without upstream fetch', async () => {
+    process.env.APP_MODE = 'demo';
+    getStoredDemoDatasetMock.mockResolvedValue({
+      generatedAt: '2026-02-16T12:00:00.000Z',
+      days: {
+        '20260216': [
+          {
+            data: ['1', '07:45-08:30', 'DEMO', 'MAT', 'R1', 'ABCD', 'Vertretung', 'Demo'],
+            cssClasses: [],
+            cellClasses: {},
+            group: 'DEMO',
+          },
+        ],
+      },
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { GET } = await import('@/app/api/substitutions/route');
+    const response = await GET(new NextRequest('http://localhost/api/substitutions?date=20260216'));
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.type).toBe('substitution');
+    expect(json.rows).toHaveLength(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for out-of-range demo dates', async () => {
+    process.env.APP_MODE = 'demo';
+
+    const { GET } = await import('@/app/api/substitutions/route');
+    const response = await GET(new NextRequest('http://localhost/api/substitutions?date=20260301'));
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error).toContain('Demo-Modus');
+  });
+
+  it('returns meta response in demo mode when dataset is missing', async () => {
+    process.env.APP_MODE = 'demo';
+    getStoredDemoDatasetMock.mockResolvedValue(null);
+
+    const { GET } = await import('@/app/api/substitutions/route');
+    const response = await GET(new NextRequest('http://localhost/api/substitutions?date=20260216'));
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.type).toBe('meta');
+    expect(json.message).toContain('Demo-Daten');
   });
 });

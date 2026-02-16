@@ -69,6 +69,7 @@ const formatTargetDate = (value: number | null): string => {
 
 interface AdminPanelProps {
   currentUserId: string;
+  isDemoMode?: boolean;
 }
 
 interface UserUpdateResult {
@@ -81,7 +82,7 @@ interface UserUpdateOptions {
   suppressGlobalError?: boolean;
 }
 
-export function AdminPanel({ currentUserId }: AdminPanelProps) {
+export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProps) {
   const [teachers, setTeachers] = useState<TeacherItem[]>([]);
   const [users, setUsers] = useState<AdminUserItem[]>([]);
   const [subjectCodes, setSubjectCodes] = useState<string[]>([]);
@@ -104,6 +105,8 @@ export function AdminPanel({ currentUserId }: AdminPanelProps) {
   const [editingTeacherName, setEditingTeacherName] = useState('');
 
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
+  const [demoDataBusyUserId, setDemoDataBusyUserId] = useState<string | null>(null);
+  const [demoDataMessage, setDemoDataMessage] = useState<string | null>(null);
   const [pushTestBusy, setPushTestBusy] = useState(false);
   const [pushTestMessage, setPushTestMessage] = useState<string | null>(null);
   const [roleConfirmOpen, setRoleConfirmOpen] = useState(false);
@@ -449,6 +452,46 @@ export function AdminPanel({ currentUserId }: AdminPanelProps) {
     }
   };
 
+  const generateDemoDataForUser = async (user: AdminUserItem) => {
+    setDemoDataBusyUserId(user.id);
+    setDemoDataMessage(null);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/admin/demo-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = (await response.json()) as {
+        error?: string;
+        selectedDates?: { past: number; today: number; future: number };
+        guarantees?: { pastMatches: number; todayMatches: number; futureMatches: number };
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error ?? 'Demo-Daten konnten nicht erzeugt werden.');
+      }
+
+      const dates = data.selectedDates;
+      const guarantees = data.guarantees;
+      const summary = dates && guarantees
+        ? `Demo-Daten für ${user.email} erzeugt. Past ${dates.past} (${guarantees.pastMatches}), Today ${dates.today} (${guarantees.todayMatches}), Future ${dates.future} (${guarantees.futureMatches}).`
+        : `Demo-Daten für ${user.email} wurden erzeugt.`;
+      setDemoDataMessage(summary);
+
+      await load(usersPage);
+    } catch (generateError) {
+      const message = generateError instanceof Error ? generateError.message : 'Demo-Daten konnten nicht erzeugt werden.';
+      setDemoDataMessage(message);
+    } finally {
+      setDemoDataBusyUserId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5">
@@ -593,7 +636,7 @@ export function AdminPanel({ currentUserId }: AdminPanelProps) {
         {loading ? <p className="mt-4 text-sm text-[rgb(var(--color-text-secondary))]">Lade Benutzer…</p> : null}
 
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[980px] border-collapse text-sm">
+          <table className="w-full min-w-[1140px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-[rgb(var(--color-border)/0.2)] text-left">
                 <th className="px-2 py-2">E-Mail</th>
@@ -648,6 +691,18 @@ export function AdminPanel({ currentUserId }: AdminPanelProps) {
                       >
                         Notifications {user.notificationsEnabled ? 'aus' : 'an'}
                       </Button>
+                      {isDemoMode ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void generateDemoDataForUser(user)}
+                          loading={demoDataBusyUserId === user.id}
+                          disabled={user.timetableCount === 0}
+                        >
+                          Demo-Daten generieren
+                        </Button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -685,6 +740,15 @@ export function AdminPanel({ currentUserId }: AdminPanelProps) {
             </Button>
           </div>
         </div>
+
+        {isDemoMode && demoDataMessage ? (
+          <p
+            className="mt-3 rounded-md bg-[rgb(var(--color-background)/0.85)] px-3 py-2 text-sm text-[rgb(var(--color-text-secondary))]"
+            aria-live="polite"
+          >
+            {demoDataMessage}
+          </p>
+        ) : null}
       </section>
 
       <section className="rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5">

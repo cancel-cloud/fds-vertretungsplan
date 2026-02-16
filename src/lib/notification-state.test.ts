@@ -3,6 +3,7 @@ import { ProcessedSubstitution } from '@/types';
 import {
   buildNotificationFingerprint,
   canonicalizeMatchKeys,
+  getNotificationSchoolDays,
   getNextSchoolDays,
   resolveNotificationDeltaAction,
 } from '@/lib/notification-state';
@@ -59,6 +60,15 @@ describe('getNextSchoolDays', () => {
     expect(result).toHaveLength(3);
     expect(result.map((date) => date.getDay())).toEqual([5, 1, 2]);
     expect(result.map((date) => date.getDate())).toEqual([13, 16, 17]);
+  });
+
+  it('can include today when requested', () => {
+    const monday = new Date(2026, 1, 16);
+    const result = getNotificationSchoolDays(monday, 2, { includeToday: true });
+
+    expect(result).toHaveLength(2);
+    expect(result.map((date) => date.getDay())).toEqual([1, 2]);
+    expect(result.map((date) => date.getDate())).toEqual([16, 17]);
   });
 });
 

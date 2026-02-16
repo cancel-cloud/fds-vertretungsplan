@@ -16,6 +16,13 @@ import { FilterState, ProcessedSubstitution, SubstitutionApiMetaResponse, Substi
 import { filterSubstitutions, getUniqueSubstitutionTypes, sortSubstitutions } from '@/lib/data-processing';
 import { ANALYTICS_EVENTS, redactSearch } from '@/lib/analytics/events';
 import { usePostHogContext } from '@/providers/posthog-provider';
+import {
+  DEMO_ANCHOR_DATE,
+  DEMO_RANGE_END_DATE,
+  DEMO_RANGE_START_DATE,
+  clampToDemoDate,
+  isDemoDateAllowed,
+} from '@/lib/demo-config';
 
 const startOfLocalDay = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -222,16 +229,22 @@ function ResultsPanel({
 interface NewUiClientProps {
   analyticsSource: string;
   showLoginPromo?: boolean;
+  isDemoMode?: boolean;
 }
 
-export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiClientProps) {
+export function NewUiClient({ analyticsSource, showLoginPromo = false, isDemoMode = false }: NewUiClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { capture, isFeatureEnabled } = usePostHogContext();
+  const demoAnchorDate = useMemo(() => new Date(DEMO_ANCHOR_DATE), []);
+  const demoMinDate = useMemo(() => new Date(DEMO_RANGE_START_DATE), []);
+  const demoMaxDate = useMemo(() => new Date(DEMO_RANGE_END_DATE), []);
 
   const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(() => adjustWeekendToMonday(new Date()));
+  const [selectedDate, setSelectedDate] = useState<Date>(() =>
+    isDemoMode ? demoAnchorDate : adjustWeekendToMonday(new Date())
+  );
   const [filterState, setFilterState] = useState<FilterState>({
     search: searchParams.get('search') || '',
     categories: [],
@@ -246,6 +259,20 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
       source: analyticsSource,
     });
   }, [analyticsSource, capture]);
+
+  useEffect(() => {
+    if (!isDemoMode) {
+      return;
+    }
+
+    setSelectedDate((previous) => {
+      const normalized = clampToDemoDate(adjustWeekendToMonday(previous));
+      if (isSameDay(normalized, previous)) {
+        return previous;
+      }
+      return normalized;
+    });
+  }, [isDemoMode]);
 
   const { filteredSubstitutions, availableCategories, stats } = useMemo(() => {
     const sorted = sortSubstitutions(substitutions);
@@ -312,7 +339,10 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
     capture(ANALYTICS_EVENTS.FILTERS_CLEARED, { scope: 'all', location: 'newui' });
   };
 
-  const schoolToday = useMemo(() => adjustWeekendToMonday(new Date()), []);
+  const schoolToday = useMemo(
+    () => (isDemoMode ? demoAnchorDate : adjustWeekendToMonday(new Date())),
+    [demoAnchorDate, isDemoMode]
+  );
   const schoolYesterday = useMemo(() => addSchoolDays(schoolToday, -1), [schoolToday]);
   const schoolTomorrow = useMemo(() => addSchoolDays(schoolToday, 1), [schoolToday]);
   const quickDateStrip = useMemo(
@@ -321,11 +351,16 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
   );
 
   const setDateAndTrack = (date: Date, source: string) => {
-    setSelectedDate(date);
+    const normalized = isDemoMode ? clampToDemoDate(adjustWeekendToMonday(date)) : adjustWeekendToMonday(date);
+    if (isDemoMode && !isDemoDateAllowed(normalized)) {
+      return;
+    }
+
+    setSelectedDate(normalized);
     capture(ANALYTICS_EVENTS.DATE_SELECTED, {
       source,
-      day_of_week: date.getDay(),
-      timestamp: date.getTime(),
+      day_of_week: normalized.getDay(),
+      timestamp: normalized.getTime(),
     });
   };
 
@@ -419,6 +454,9 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
                   selectedDate={selectedDate}
                   onDateSelect={(date) => setDateAndTrack(date, 'newui_sidebar_calendar')}
                   enableAdvancedFeatures={advancedCalendarEnabled}
+                  minDate={isDemoMode ? demoMinDate : undefined}
+                  maxDate={isDemoMode ? demoMaxDate : undefined}
+                  isDateSelectable={isDemoMode ? isDemoDateAllowed : undefined}
                 />
               </Card>
               {showLoginPromo ? <LoginPromoCard /> : null}
@@ -463,6 +501,9 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
             }}
             className="w-full"
             enableAdvancedFeatures={advancedCalendarEnabled}
+            minDate={isDemoMode ? demoMinDate : undefined}
+            maxDate={isDemoMode ? demoMaxDate : undefined}
+            isDateSelectable={isDemoMode ? isDemoDateAllowed : undefined}
           />
         </DialogContent>
       </Dialog>

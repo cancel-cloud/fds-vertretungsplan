@@ -107,6 +107,32 @@ const createUser = (options?: { includeDesktop?: boolean }) => ({
   ],
 });
 
+const createMondayOnlyUser = () => ({
+  id: 'user-mon',
+  email: 'demo@example.com',
+  notificationsEnabled: true,
+  notificationLookaheadSchoolDays: 1,
+  timetableEntries: [
+    {
+      id: 'entry-mon',
+      weekday: 'MON',
+      startPeriod: 1,
+      duration: 1,
+      subjectCode: 'MAT',
+      teacherCode: 'ABC',
+      room: null,
+      weekMode: 'ALL',
+    },
+  ],
+  pushSubscriptions: [
+    {
+      endpoint: 'https://web.push.apple.com/ios-endpoint-1',
+      p256dh: 'ios-p256dh',
+      auth: 'ios-auth',
+    },
+  ],
+});
+
 const createRequest = (query: string) =>
   new NextRequest(`http://localhost/api/internal/push/dispatch${query}`, {
     method: 'POST',
@@ -127,7 +153,7 @@ describe('api/internal/push/dispatch route', () => {
     process.env.PUSH_CRON_SECRET = 'test-secret';
     process.env.PUSH_INCLUDE_PAYLOAD = 'true';
     process.env.APP_TIMEZONE = 'Europe/Berlin';
-    process.env.NODE_ENV = 'test';
+    Object.assign(process.env, { NODE_ENV: 'test' });
 
     verifyQstashSignatureMock.mockResolvedValue(true);
     sendPushMessageMock.mockResolvedValue({ ok: true });
@@ -189,6 +215,29 @@ describe('api/internal/push/dispatch route', () => {
     expect(body.summaryTotalMatches).toBe(2);
     expect(sendPushMessageMock).toHaveBeenCalledTimes(1);
     expect(sendPushMessageMock.mock.calls[0][1]?.body).toContain('Du hast 2 relevante Vertretung');
+  });
+
+  it('force summary in demo mode includes today in lookahead window', async () => {
+    process.env.APP_MODE = 'demo';
+    userFindManyMock.mockResolvedValue([createMondayOnlyUser()]);
+    fetchUntisRowsMock.mockImplementation(async (date: Date) => ({
+      date:
+        date.getFullYear() * 10000 +
+        (date.getMonth() + 1) * 100 +
+        date.getDate(),
+      rows: [createRow('MAT', 'ABC')],
+    }));
+
+    const { POST } = await import('@/app/api/internal/push/dispatch/route');
+    const response = await POST(createRequest('?force=1&sendUnchanged=1&device=ios'));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.mode).toBe('forced-summary');
+    expect(body.summaryTotalMatches).toBe(1);
+    expect(body.summaryNoMatchUsers).toBe(0);
+    expect(sendPushMessageMock).toHaveBeenCalledTimes(1);
+    expect(sendPushMessageMock.mock.calls[0][1]?.url).toContain('date=20260216');
   });
 
   it('force summary with device=ios only targets apple endpoints', async () => {

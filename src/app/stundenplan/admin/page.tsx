@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/guards';
 import { AdminPanel } from '@/components/stundenplan/admin-panel';
+import { isDemoMode } from '@/lib/demo-config';
 
 export default async function StundenplanAdminPage() {
   const user = await getCurrentUser();
+  const demoMode = isDemoMode();
 
   if (!user) {
     redirect('/stundenplan/login');
@@ -21,7 +23,7 @@ export default async function StundenplanAdminPage() {
           Zurück zum Dashboard
         </Link>
       </div>
-      <AdminPanel currentUserId={user.id} />
+      <AdminPanel currentUserId={user.id} isDemoMode={demoMode} />
     </main>
   );
 }
