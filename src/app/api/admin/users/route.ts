@@ -13,6 +13,8 @@ const normalizePositiveInt = (value: string | null, fallback: number): number =>
   return parsed;
 };
 
+const normalizeEmail = (value: string): string => value.trim().toLowerCase();
+
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin();
   if (auth.response || !auth.user) {
@@ -141,6 +143,7 @@ export async function PATCH(req: NextRequest) {
       role?: 'USER' | 'ADMIN';
       notificationsEnabled?: boolean;
       notificationLookaheadSchoolDays?: number;
+      confirmationEmail?: string;
     };
 
     const id = String(body.id ?? '').trim();
@@ -178,11 +181,13 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Keine Änderungen übergeben.' }, { status: 400 });
     }
 
+    const confirmationEmail = typeof body.confirmationEmail === 'string' ? normalizeEmail(body.confirmationEmail) : '';
+
     const updated = await prisma.$transaction(async (tx) => {
       if (updates.role === 'USER') {
         const user = await tx.user.findUnique({
           where: { id },
-          select: { role: true },
+          select: { role: true, email: true },
         });
 
         if (!user) {
@@ -190,6 +195,9 @@ export async function PATCH(req: NextRequest) {
         }
 
         if (user.role === 'ADMIN') {
+          if (!confirmationEmail || confirmationEmail !== normalizeEmail(user.email)) {
+            throw new Error('CONFIRMATION_MISMATCH');
+          }
           const adminCount = await tx.user.count({ where: { role: 'ADMIN' } });
           if (adminCount <= 1) {
             throw new Error('LAST_ADMIN');
@@ -212,6 +220,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json({
+      selfDemoted: updates.role === 'USER' && auth.user.id === updated.id && updated.role === 'USER',
       user: {
         notificationStats: null,
         subscriptionStats: null,
@@ -234,6 +243,9 @@ export async function PATCH(req: NextRequest) {
       }
       if (error.message === 'LAST_ADMIN') {
         return NextResponse.json({ error: 'Der letzte Admin kann nicht herabgestuft werden.' }, { status: 400 });
+      }
+      if (error.message === 'CONFIRMATION_MISMATCH') {
+        return NextResponse.json({ error: 'Bestätigungs-E-Mail stimmt nicht mit dem Zielkonto überein.' }, { status: 400 });
       }
     }
     console.error('Failed to update user from admin panel', error);

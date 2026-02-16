@@ -3,6 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  ensureCurrentSubscription,
+  ensureNotificationPermission,
+  getExistingPushEndpoint,
+  isPushSupported,
+  persistPushSubscription,
+} from '@/lib/push-client';
 
 interface MeResponseUser {
   notificationsEnabled: boolean;
@@ -91,6 +98,12 @@ export function UserSettingsPanel() {
   const [loading, setLoading] = useState(true);
   const [devicesLoading, setDevicesLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [currentDeviceChecking, setCurrentDeviceChecking] = useState(true);
+  const [currentDeviceActivating, setCurrentDeviceActivating] = useState(false);
+  const [currentDeviceSupported, setCurrentDeviceSupported] = useState(true);
+  const [currentDeviceEndpoint, setCurrentDeviceEndpoint] = useState<string | null>(null);
+  const [currentDeviceIsRegistered, setCurrentDeviceIsRegistered] = useState(false);
+  const [currentDeviceMessage, setCurrentDeviceMessage] = useState<string | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [lookaheadDays, setLookaheadDays] = useState(1);
   const [devices, setDevices] = useState<PushDevice[]>([]);
@@ -137,6 +150,98 @@ export function UserSettingsPanel() {
     void load();
   }, []);
 
+  useEffect(() => {
+    if (loading || devicesLoading) {
+      return;
+    }
+
+    let active = true;
+
+    const checkCurrentDevice = async () => {
+      setCurrentDeviceChecking(true);
+
+      const supported = isPushSupported();
+      if (!supported) {
+        if (!active) {
+          return;
+        }
+
+        setCurrentDeviceSupported(false);
+        setCurrentDeviceEndpoint(null);
+        setCurrentDeviceIsRegistered(false);
+        setCurrentDeviceChecking(false);
+        return;
+      }
+
+      const endpoint = await getExistingPushEndpoint();
+      if (!active) {
+        return;
+      }
+
+      setCurrentDeviceSupported(true);
+      setCurrentDeviceEndpoint(endpoint);
+      setCurrentDeviceIsRegistered(endpoint ? devices.some((device) => device.endpoint === endpoint) : false);
+      setCurrentDeviceChecking(false);
+    };
+
+    void checkCurrentDevice();
+
+    return () => {
+      active = false;
+    };
+  }, [devices, devicesLoading, loading]);
+
+  const activateCurrentDevice = async () => {
+    try {
+      setCurrentDeviceActivating(true);
+      setCurrentDeviceMessage(null);
+      setDevicesError(null);
+
+      const permission = await ensureNotificationPermission();
+      if (!permission.ok) {
+        if (permission.reason === 'insecure_context') {
+          throw new Error('Push benötigt HTTPS oder localhost. Die aktuelle Seite ist kein sicherer Kontext.');
+        }
+        if (permission.reason === 'notification_api_unavailable') {
+          throw new Error('Dieser Browser unterstützt keine Benachrichtigungs-Permissions.');
+        }
+        if (permission.reason === 'permission_prompt_not_confirmed') {
+          throw new Error('Benachrichtigungsabfrage wurde nicht bestätigt.');
+        }
+        throw new Error('Benachrichtigungen sind im Browser blockiert.');
+      }
+
+      const subscription = await ensureCurrentSubscription();
+      await persistPushSubscription(subscription);
+
+      await fetch('/api/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationsEnabled: true }),
+      });
+      setNotificationsEnabled(true);
+
+      const devicesResponse = await fetch('/api/push/subscriptions');
+      const devicesData = (await devicesResponse.json()) as { subscriptions?: PushDevice[]; error?: string };
+
+      if (!devicesResponse.ok) {
+        throw new Error(devicesData.error ?? 'Push-Geräte konnten nicht geladen werden.');
+      }
+
+      const nextDevices = Array.isArray(devicesData.subscriptions) ? devicesData.subscriptions : [];
+      setDevices(nextDevices);
+      setCurrentDeviceEndpoint(subscription.endpoint);
+      setCurrentDeviceIsRegistered(nextDevices.some((device) => device.endpoint === subscription.endpoint));
+      setCurrentDeviceMessage('Dieses Gerät wurde für Push registriert.');
+    } catch (activationError) {
+      setCurrentDeviceMessage(
+        activationError instanceof Error ? activationError.message : 'Dieses Gerät konnte nicht aktiviert werden.'
+      );
+    } finally {
+      setCurrentDeviceActivating(false);
+    }
+  };
+
   const removeDevice = async (device: PushDevice) => {
     try {
       setRemovingDeviceId(device.id);
@@ -163,6 +268,9 @@ export function UserSettingsPanel() {
         }
         return next;
       });
+      if (currentDeviceEndpoint && currentDeviceEndpoint === device.endpoint) {
+        setCurrentDeviceIsRegistered(false);
+      }
       setDevicesMessage('Gerät wurde von Push-Benachrichtigungen abgemeldet.');
     } catch (removeError) {
       setDevicesError(removeError instanceof Error ? removeError.message : 'Gerät konnte nicht abgemeldet werden.');
@@ -242,8 +350,33 @@ export function UserSettingsPanel() {
           </label>
         </div>
 
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {currentDeviceChecking ? (
+            <Button type="button" variant="outline" size="sm" disabled>
+              Prüfe aktuelles Gerät…
+            </Button>
+          ) : !currentDeviceSupported ? (
+            <Button type="button" variant="outline" size="sm" disabled>
+              Auf diesem Gerät nicht verfügbar
+            </Button>
+          ) : currentDeviceIsRegistered ? (
+            <Button type="button" variant="outline" size="sm" disabled>
+              Aktiv (dieses Gerät)
+            </Button>
+          ) : (
+            <Button type="button" size="sm" onClick={() => void activateCurrentDevice()} loading={currentDeviceActivating}>
+              Aktivieren (dieses Gerät)
+            </Button>
+          )}
+        </div>
+        {currentDeviceMessage ? (
+          <p className="mt-2 text-xs text-[rgb(var(--color-text-secondary))]" aria-live="polite">
+            {currentDeviceMessage}
+          </p>
+        ) : null}
+
         <p className="mt-4 text-xs text-[rgb(var(--color-text-secondary))]">
-          Default: 1 = nächster Schultag. Samstag und Sonntag werden automatisch übersprungen.
+          Standart: 1 = nächster Schultag. Samstag und Sonntag werden automatisch übersprungen.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
