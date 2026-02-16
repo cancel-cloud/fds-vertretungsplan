@@ -13,6 +13,16 @@ export const ANALYTICS_EVENTS = {
   SUBSTITUTIONS_FETCH_SUCCESS: 'substitutions_fetch_success',
   SUBSTITUTIONS_FETCH_ERROR: 'substitutions_fetch_error',
   SUBSTITUTIONS_FETCH_META: 'substitutions_fetch_meta',
+  APPLE_PROMO_IMPRESSION: 'apple_promo_impression',
+  APPLE_PROMO_EXPANDED: 'apple_promo_expanded',
+  APPLE_PROMO_DISMISSED: 'apple_promo_dismissed',
+  APPLE_PROMO_SHARE_CLICKED: 'apple_promo_share_clicked',
+  APPLE_PROMO_SHARE_NATIVE_SUCCESS: 'apple_promo_share_native_success',
+  APPLE_PROMO_SHARE_COPY_FALLBACK: 'apple_promo_share_copy_fallback',
+  APPLE_PROMO_MOBILE_POST_SHARE_SHOWN: 'apple_promo_mobile_post_share_shown',
+  APPLE_PROMO_PUSH_ENABLE_CLICKED: 'apple_promo_push_enable_clicked',
+  APPLE_PROMO_PUSH_ENABLE_SUCCESS: 'apple_promo_push_enable_success',
+  APPLE_PROMO_PUSH_ENABLE_FAILED: 'apple_promo_push_enable_failed',
   API_SUBSTITUTIONS_RATE_LIMITED: 'api_substitutions_rate_limited',
   API_SUBSTITUTIONS_CACHE_HIT: 'api_substitutions_cache_hit',
   API_SUBSTITUTIONS_SUCCESS: 'api_substitutions_success',
@@ -35,7 +45,17 @@ export type ClientAnalyticsEvent =
       | 'SUBSTITUTIONS_FETCH_STARTED'
       | 'SUBSTITUTIONS_FETCH_SUCCESS'
       | 'SUBSTITUTIONS_FETCH_ERROR'
-      | 'SUBSTITUTIONS_FETCH_META'];
+      | 'SUBSTITUTIONS_FETCH_META'
+      | 'APPLE_PROMO_IMPRESSION'
+      | 'APPLE_PROMO_EXPANDED'
+      | 'APPLE_PROMO_DISMISSED'
+      | 'APPLE_PROMO_SHARE_CLICKED'
+      | 'APPLE_PROMO_SHARE_NATIVE_SUCCESS'
+      | 'APPLE_PROMO_SHARE_COPY_FALLBACK'
+      | 'APPLE_PROMO_MOBILE_POST_SHARE_SHOWN'
+      | 'APPLE_PROMO_PUSH_ENABLE_CLICKED'
+      | 'APPLE_PROMO_PUSH_ENABLE_SUCCESS'
+      | 'APPLE_PROMO_PUSH_ENABLE_FAILED'];
 
 export type ServerAnalyticsEvent =
   | (typeof ANALYTICS_EVENTS)[

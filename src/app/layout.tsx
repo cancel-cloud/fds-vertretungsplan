@@ -9,6 +9,19 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 export const metadata: Metadata = {
   title: 'Vertretungsplan - Dessauer Schule Limburg',
   description: 'Hier finden Sie alle aktuellen Vertretungen und Änderungen für Ihre Klasse.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'FDS Vertretungsplan',
+  },
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
 };
 
 export default function RootLayout({
