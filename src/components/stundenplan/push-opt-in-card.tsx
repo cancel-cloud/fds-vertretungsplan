@@ -240,6 +240,12 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
         await subscription.unsubscribe();
       }
 
+      await fetch('/api/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationsEnabled: false }),
+      });
+
       setEnabled(false);
       setMessage('Push-Benachrichtigungen wurden deaktiviert.');
     } catch (error) {

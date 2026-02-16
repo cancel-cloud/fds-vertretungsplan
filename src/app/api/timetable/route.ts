@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/guards';
 import { prisma } from '@/lib/prisma';
-import { validateTimetableEntries } from '@/lib/timetable';
+import { TimetableValidationError, validateTimetableEntries } from '@/lib/timetable';
 import { toTimetableEntryDto, toTimetablePresetDto } from '@/lib/user-system-mappers';
 
 const buildPresetKey = (subjectCode: string, teacherCode: string, room: string): string =>
@@ -176,7 +176,7 @@ export async function PUT(req: NextRequest) {
       presets: presets.map(toTimetablePresetDto),
     });
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof TimetableValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 

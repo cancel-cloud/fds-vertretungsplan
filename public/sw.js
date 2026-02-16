@@ -28,6 +28,7 @@ self.addEventListener('push', (event) => {
       title: 'FDS Stundenplan',
       body: event.data ? event.data.text() : 'Neue Benachrichtigung erhalten.',
       url: '/stundenplan/dashboard',
+      traceId: null,
     };
     console.log('[SW] failed to parse JSON, using text fallback');
   }
