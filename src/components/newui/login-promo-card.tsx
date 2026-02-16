@@ -10,6 +10,7 @@ interface LoginPromoCardProps {
 export function LoginPromoCard({ className }: LoginPromoCardProps) {
   return (
     <Card
+      interactive
       className={cn(
         'gap-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-5 shadow-sm',
         className

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { AlertCircle, Calendar, CalendarDays, Loader2, RotateCcw } from 'lucide-react';
+import { AlertCircle, Calendar, CalendarDays, Loader2 } from 'lucide-react';
 import { CalendarWidget } from '@/components/calendar-widget';
 import { SearchInput } from '@/components/search-input';
 import { CategoryFilters } from '@/components/category-filters';
@@ -100,6 +100,9 @@ function ResultsPanel({
   metaResponse,
   onClearAllFilters,
 }: ResultsPanelProps) {
+  const resultsMotionKey = `${selectedDate.toISOString()}-${stats.filtered}-${stats.total}`;
+  const loadingSkeleton = Array.from({ length: 3 });
+
   if (error) {
     return (
       <Card className="border-[rgb(var(--color-error)/0.25)] bg-[rgb(var(--color-surface))] p-8">
@@ -140,15 +143,29 @@ function ResultsPanel({
       </div>
 
       {isLoading ? (
-        <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-          <div className="flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
+        <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-6 md:p-8">
+          <div className="mb-4 flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
             <span>Vertretungen werden geladen…</span>
+          </div>
+          <div className="space-y-4">
+            {loadingSkeleton.map((_, index) => (
+              <div
+                key={`newui-loading-${index}`}
+                className="skeleton-shimmer relative overflow-hidden rounded-xl border border-[rgb(var(--color-border)/0.22)] bg-[rgb(var(--color-background)/0.7)] p-4"
+              >
+                <div className="space-y-3">
+                  <div className="h-5 w-44 rounded bg-[rgb(var(--color-border)/0.18)]" />
+                  <div className="h-4 w-64 rounded bg-[rgb(var(--color-border)/0.12)]" />
+                  <div className="h-4 w-52 rounded bg-[rgb(var(--color-border)/0.12)]" />
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       ) : metaResponse ? (
         <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-          <div className="space-y-3 text-center">
+          <div className="motion-empty-soft-pulse space-y-3 text-center">
             <div className="flex justify-center">
               <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
             </div>
@@ -157,17 +174,20 @@ function ResultsPanel({
           </div>
         </Card>
       ) : filteredSubstitutions.length > 0 ? (
-        <div className="grid gap-4">
+        <div key={resultsMotionKey} className="grid gap-4">
           {filteredSubstitutions.map((substitution, index) => (
-            <SubstitutionCard
+            <div
               key={`${substitution.group}-${substitution.hours}-${substitution.subject}-${index}`}
-              substitution={substitution}
-            />
+              className="motion-enter"
+              style={{ animationDelay: `${Math.min(index * 35, 210)}ms` }}
+            >
+              <SubstitutionCard substitution={substitution} />
+            </div>
           ))}
         </div>
       ) : substitutions.length > 0 ? (
         <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-          <div className="space-y-3 text-center">
+          <div className="motion-empty-soft-pulse space-y-3 text-center">
             <div className="flex justify-center">
               <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
             </div>
@@ -184,7 +204,7 @@ function ResultsPanel({
         </Card>
       ) : (
         <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-          <div className="space-y-3 text-center">
+          <div className="motion-empty-soft-pulse space-y-3 text-center">
             <div className="flex justify-center">
               <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
             </div>
@@ -312,11 +332,11 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
   return (
     <>
       <main id="main-content" className="mx-auto w-full max-w-7xl px-4 pb-10 pt-6 md:px-6">
-        <section className="relative overflow-hidden rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] shadow-sm">
+        <section className="motion-enter relative overflow-hidden rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] shadow-sm">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1100px_300px_at_0%_0%,rgb(var(--color-primary)/0.14),transparent_70%),radial-gradient(900px_300px_at_100%_10%,rgb(var(--color-secondary)/0.14),transparent_75%)]" />
           <div className="relative space-y-5 p-5 md:p-7">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-1">
+            <div className="motion-enter flex flex-wrap items-start justify-between gap-4" style={{ animationDelay: '40ms' }}>
+              <div className="space-y-1 motion-fade">
                 <h1 className="text-balance text-3xl font-semibold tracking-tight text-[rgb(var(--color-text))] md:text-4xl">
                   Vertretungsplan
                 </h1>
@@ -337,23 +357,22 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
               </div>
             </div>
 
-            <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] px-4 py-3">
+            <div
+              className="motion-enter rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] px-4 py-3"
+              style={{ animationDelay: '85ms' }}
+            >
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">Ausgewähltes Datum</p>
               <p className="text-lg font-medium text-[rgb(var(--color-text))]">{formatLongDate(selectedDate)}</p>
             </div>
 
-            <SearchInput value={filterState.search} onChange={handleSearchChange} />
+            <div className="motion-enter" style={{ animationDelay: '115ms' }}>
+              <SearchInput value={filterState.search} onChange={handleSearchChange} />
+            </div>
 
-            {stats.hasActiveFilters ? (
-              <div className="hidden md:block">
-                <Button variant="ghost" size="sm" onClick={handleClearAllFilters}>
-                  <RotateCcw className="mr-1 h-4 w-4" aria-hidden="true" />
-                  Alles zurücksetzen
-                </Button>
-              </div>
-            ) : null}
-
-            <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+            <div
+              className="motion-enter flex gap-2 overflow-x-auto pt-1 pb-1 [scrollbar-width:thin]"
+              style={{ animationDelay: '165ms' }}
+            >
               {quickDateStrip.map((date) => {
                 const selected = isSameDay(date, selectedDate);
                 return (
@@ -361,7 +380,7 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
                     key={date.toISOString()}
                     variant={selected ? 'default' : 'outline'}
                     size="sm"
-                    className="h-9 shrink-0 px-3 text-xs touch-manipulation"
+                    className="motion-chip h-9 shrink-0 px-3 text-xs touch-manipulation"
                     onClick={() => setDateAndTrack(date, 'newui_quick_strip')}
                     aria-pressed={selected}
                   >
@@ -372,20 +391,27 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
             </div>
 
             {availableCategories.length > 0 ? (
-              <CategoryFilters
-                categories={availableCategories}
-                selectedCategories={filterState.categories}
-                onCategoryToggle={(category) => handleCategoryToggle(category as SubstitutionType)}
-                onClearAll={handleClearCategories}
-              />
+              <div className="motion-enter" style={{ animationDelay: '190ms' }}>
+                <CategoryFilters
+                  categories={availableCategories}
+                  selectedCategories={filterState.categories}
+                  onCategoryToggle={(category) => handleCategoryToggle(category as SubstitutionType)}
+                  onClearAll={handleClearCategories}
+                  showResetAll={stats.hasActiveFilters}
+                  onResetAllFilters={handleClearAllFilters}
+                />
+              </div>
             ) : null}
           </div>
         </section>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
-          <aside className="hidden lg:block">
-            <div className="sticky top-[88px] space-y-4">
-              <Card className="space-y-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4">
+          <aside className="motion-enter hidden lg:block" style={{ animationDelay: '220ms' }}>
+            <div className="sticky top-[88px] space-y-6">
+              <Card
+                interactive
+                className="space-y-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4"
+              >
                 <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[rgb(var(--color-text-secondary))]">
                   Datum wählen
                 </h2>
@@ -399,7 +425,7 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false }: NewUiCl
             </div>
           </aside>
 
-          <div className="space-y-6">
+          <div className="motion-enter space-y-6" style={{ animationDelay: '250ms' }}>
             {showLoginPromo ? (
               <div className="lg:hidden">
                 <LoginPromoCard />
