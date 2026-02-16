@@ -5,28 +5,53 @@ const fail = (message) => {
   process.exit(1);
 };
 
-const qstashToken = process.env.QSTASH_TOKEN;
+const isDemoMode = String(process.env.APP_MODE ?? '').trim().toLowerCase() === 'demo';
+
+const resolveValue = (baseKey, demoKey, fallback) => {
+  if (isDemoMode) {
+    const demoValue = process.env[demoKey]?.trim();
+    if (demoValue) {
+      return demoValue;
+    }
+  }
+
+  const baseValue = process.env[baseKey]?.trim();
+  if (baseValue) {
+    return baseValue;
+  }
+
+  return fallback;
+};
+
+const qstashToken = resolveValue('QSTASH_TOKEN', 'DEMO_QSTASH_TOKEN');
 if (!qstashToken) {
-  fail('QSTASH_TOKEN is missing.');
+  fail('QSTASH_TOKEN (or DEMO_QSTASH_TOKEN in demo mode) is missing.');
 }
 
-const appBaseUrl = process.env.APP_BASE_URL;
+const appBaseUrl = resolveValue('APP_BASE_URL', 'DEMO_APP_BASE_URL');
 if (!appBaseUrl) {
-  fail('APP_BASE_URL is missing (example: https://your-domain.tld).');
+  fail('APP_BASE_URL (or DEMO_APP_BASE_URL in demo mode) is missing.');
 }
 
-const cronSecret = process.env.PUSH_CRON_SECRET ?? process.env.CRON_SECRET;
+const cronSecret =
+  resolveValue('PUSH_CRON_SECRET', 'DEMO_PUSH_CRON_SECRET') ?? resolveValue('CRON_SECRET', 'DEMO_CRON_SECRET');
 if (!cronSecret) {
-  fail('Set PUSH_CRON_SECRET or CRON_SECRET to secure the dispatch endpoint.');
+  fail('Set PUSH_CRON_SECRET/CRON_SECRET (or DEMO_* variants in demo mode).');
 }
 
-const destination = `${appBaseUrl.replace(/\/$/, '')}/api/internal/push/dispatch`;
-const cron = process.env.QSTASH_CRON ?? '*/15 * * * *';
-const label = process.env.QSTASH_SCHEDULE_LABEL ?? 'fds-dispatch-v1';
+const cron = resolveValue('QSTASH_CRON', 'DEMO_QSTASH_CRON', isDemoMode ? '* * * * *' : '*/15 * * * *');
+const label = resolveValue(
+  'QSTASH_SCHEDULE_LABEL',
+  'DEMO_QSTASH_SCHEDULE_LABEL',
+  isDemoMode ? 'fds-dispatch-demo-v1' : 'fds-dispatch-v1'
+);
+const qstashUrl = resolveValue('QSTASH_URL', 'DEMO_QSTASH_URL');
+const dispatchPath = resolveValue('QSTASH_DISPATCH_PATH', 'DEMO_QSTASH_DISPATCH_PATH', '/api/internal/push/dispatch');
+const destination = `${appBaseUrl.replace(/\/$/, '')}${dispatchPath.startsWith('/') ? dispatchPath : `/${dispatchPath}`}`;
 
 const client = new Client({
   token: qstashToken,
-  baseUrl: process.env.QSTASH_URL,
+  ...(qstashUrl ? { baseUrl: qstashUrl } : {}),
 });
 
 const schedules = await client.schedules.list();
@@ -53,6 +78,7 @@ console.log(
       destination,
       cron,
       label,
+      mode: isDemoMode ? 'demo' : 'default',
     },
     null,
     2

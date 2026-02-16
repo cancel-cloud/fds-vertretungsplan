@@ -245,3 +245,11 @@ npm run start
 ## 📄 Lizenz
 
 [MIT](./LICENSE)
+
+---
+
+## 🧪 Demo Mode V2
+
+- Quickstart: [Demo-Info](./Demo-Info.md)
+- Full setup + rollout runbook: [docs/DEMO_RUNBOOK.md](./docs/DEMO_RUNBOOK.md)
+- Recommended start point: read `Demo-Info.md` first, then follow `docs/DEMO_RUNBOOK.md` for full setup, testing, scheduler usage, and merge workflow.

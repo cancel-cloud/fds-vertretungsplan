@@ -1,5 +1,7 @@
 import { WebUntisRequest, WebUntisResponse, WebUntisSubstitutionRow } from '@/types';
 import { buildSubstitutionUrl, resolveBaseUrl, resolveSchoolName } from '@/app/api/substitutions/route-utils';
+import { isDemoDateAllowed, isDemoMode } from '@/lib/demo-config';
+import { getDemoRowsForDate, getStoredDemoDataset } from '@/lib/demo-substitutions';
 
 const JSON_CONTENT_TYPE = /application\/json/i;
 
@@ -55,10 +57,27 @@ export const toUntisDateNumber = (date: Date): number => {
 };
 
 export async function fetchUntisRows(date: Date): Promise<{ date: number; rows: WebUntisSubstitutionRow[] }> {
+  const numericDate = toUntisDateNumber(date);
+
+  if (isDemoMode()) {
+    if (!isDemoDateAllowed(numericDate)) {
+      return { date: numericDate, rows: [] };
+    }
+
+    const dataset = await getStoredDemoDataset();
+    if (!dataset) {
+      return { date: numericDate, rows: [] };
+    }
+
+    return {
+      date: numericDate,
+      rows: getDemoRowsForDate(dataset, numericDate),
+    };
+  }
+
   const schoolName = resolveSchoolName();
   const baseUrl = resolveBaseUrl(schoolName);
   const url = buildSubstitutionUrl(baseUrl, schoolName);
-  const numericDate = toUntisDateNumber(date);
 
   const response = await fetch(url, {
     method: 'POST',

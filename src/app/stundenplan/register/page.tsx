@@ -12,7 +12,6 @@ export default function StundenplanRegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [allowedDomainsText, setAllowedDomainsText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,17 +26,12 @@ export default function StundenplanRegisterPage() {
 
     setIsSubmitting(true);
 
-    const allowedDomains = allowedDomainsText
-      .split(/[\s,;]+/)
-      .map((entry) => entry.trim().toLowerCase().replace(/^@/, ''))
-      .filter((entry) => entry.length > 0);
-
     const registerResponse = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password, allowedDomains }),
+      body: JSON.stringify({ email, password }),
     });
 
     const registerData = (await registerResponse.json()) as {
@@ -111,24 +105,6 @@ export default function StundenplanRegisterPage() {
               onChange={(event) => setConfirmPassword(event.target.value)}
               required
             />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium" htmlFor="allowed-domains">
-              Erlaubte E-Mail-Domains
-            </label>
-            <Input
-              id="allowed-domains"
-              name="allowed-domains"
-              autoComplete="off"
-              spellCheck={false}
-              placeholder="schule.de, fds-limburg.de"
-              value={allowedDomainsText}
-              onChange={(event) => setAllowedDomainsText(event.target.value)}
-            />
-            <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-              Nur bei der ersten Admin-Registrierung erforderlich. Domains mit Komma oder Leerzeichen trennen.
-            </p>
           </div>
 
           {error ? (

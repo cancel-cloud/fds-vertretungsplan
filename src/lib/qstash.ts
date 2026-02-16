@@ -1,9 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { Receiver } from '@upstash/qstash';
+import { resolveDemoAwareEnv } from '@/lib/demo-config';
 
 const getReceiver = (): Receiver | null => {
-  const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
-  const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY;
+  const currentSigningKey = resolveDemoAwareEnv('QSTASH_CURRENT_SIGNING_KEY', 'DEMO_QSTASH_CURRENT_SIGNING_KEY');
+  const nextSigningKey = resolveDemoAwareEnv('QSTASH_NEXT_SIGNING_KEY', 'DEMO_QSTASH_NEXT_SIGNING_KEY');
 
   if (!currentSigningKey || !nextSigningKey) {
     return null;
@@ -13,7 +14,10 @@ const getReceiver = (): Receiver | null => {
 };
 
 export const hasQstashSigningKeys = (): boolean =>
-  Boolean(process.env.QSTASH_CURRENT_SIGNING_KEY && process.env.QSTASH_NEXT_SIGNING_KEY);
+  Boolean(
+    resolveDemoAwareEnv('QSTASH_CURRENT_SIGNING_KEY', 'DEMO_QSTASH_CURRENT_SIGNING_KEY') &&
+      resolveDemoAwareEnv('QSTASH_NEXT_SIGNING_KEY', 'DEMO_QSTASH_NEXT_SIGNING_KEY')
+  );
 
 const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, '');
 
@@ -25,12 +29,12 @@ const buildCandidateUrls = (req: NextRequest): string[] => {
     candidates.add(req.url);
   }
 
-  const appBaseUrl = process.env.APP_BASE_URL?.trim();
+  const appBaseUrl = resolveDemoAwareEnv('APP_BASE_URL', 'DEMO_APP_BASE_URL');
   if (appBaseUrl) {
     candidates.add(`${normalizeBaseUrl(appBaseUrl)}${pathAndQuery}`);
   }
 
-  const explicitExpectedUrl = process.env.QSTASH_EXPECTED_URL?.trim();
+  const explicitExpectedUrl = resolveDemoAwareEnv('QSTASH_EXPECTED_URL', 'DEMO_QSTASH_EXPECTED_URL');
   if (explicitExpectedUrl) {
     candidates.add(explicitExpectedUrl);
   }

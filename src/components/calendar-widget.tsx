@@ -1,6 +1,6 @@
 'use client';
 
-import { type KeyboardEvent, useEffect, useMemo, useState } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { startOfLocalDay, isSameDay } from '@/lib/date-utils';
@@ -11,6 +11,7 @@ interface CalendarDate {
   isSelected: boolean;
   isOtherMonth: boolean;
   isWeekend: boolean;
+  isSelectable: boolean;
 }
 
 interface CalendarWidgetProps {
@@ -18,6 +19,9 @@ interface CalendarWidgetProps {
   onDateSelect: (date: Date) => void;
   className?: string;
   enableAdvancedFeatures?: boolean;
+  minDate?: Date;
+  maxDate?: Date;
+  isDateSelectable?: (date: Date) => boolean;
 }
 
 const MONTH_NAMES = [
@@ -65,11 +69,16 @@ export function CalendarWidget({
   onDateSelect,
   className = '',
   enableAdvancedFeatures = true,
+  minDate,
+  maxDate,
+  isDateSelectable,
 }: CalendarWidgetProps) {
   const [viewDate, setViewDate] = useState(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
   const [monthMotionDirection, setMonthMotionDirection] = useState<'prev' | 'next'>('next');
   const [shouldAnimateMonth, setShouldAnimateMonth] = useState(false);
   const today = useMemo(() => startOfLocalDay(new Date()), []);
+  const normalizedMinDate = useMemo(() => (minDate ? startOfLocalDay(minDate) : null), [minDate]);
+  const normalizedMaxDate = useMemo(() => (maxDate ? startOfLocalDay(maxDate) : null), [maxDate]);
 
   const currentMonth = viewDate.getMonth();
   const currentYear = viewDate.getFullYear();
@@ -85,6 +94,30 @@ export function CalendarWidget({
     });
     setShouldAnimateMonth(false);
   }, [selectedDate]);
+
+  const canSelectDate = useCallback(
+    (date: Date): boolean => {
+      if (isWeekend(date)) {
+        return false;
+      }
+
+      const normalized = startOfLocalDay(date);
+      if (normalizedMinDate && normalized < normalizedMinDate) {
+        return false;
+      }
+
+      if (normalizedMaxDate && normalized > normalizedMaxDate) {
+        return false;
+      }
+
+      if (isDateSelectable && !isDateSelectable(normalized)) {
+        return false;
+      }
+
+      return true;
+    },
+    [isDateSelectable, normalizedMaxDate, normalizedMinDate]
+  );
 
   const calendarDates = useMemo<CalendarDate[]>(() => {
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
@@ -106,6 +139,7 @@ export function CalendarWidget({
         isSelected: isSameDay(date, selectedDate),
         isOtherMonth: true,
         isWeekend: isWeekend(date),
+        isSelectable: canSelectDate(date),
       });
     }
 
@@ -117,6 +151,7 @@ export function CalendarWidget({
         isSelected: isSameDay(date, selectedDate),
         isOtherMonth: false,
         isWeekend: isWeekend(date),
+        isSelectable: canSelectDate(date),
       });
     }
 
@@ -129,13 +164,18 @@ export function CalendarWidget({
         isSelected: isSameDay(date, selectedDate),
         isOtherMonth: true,
         isWeekend: isWeekend(date),
+        isSelectable: canSelectDate(date),
       });
     }
 
     return dates;
-  }, [currentMonth, currentYear, selectedDate, today]);
+  }, [canSelectDate, currentMonth, currentYear, selectedDate, today]);
 
   const handleDateSelect = (date: Date, direction: 'forward' | 'backward' = 'forward') => {
+    if (!canSelectDate(date)) {
+      return;
+    }
+
     const normalized = normalizeSchoolDay(startOfLocalDay(date), direction);
     const nextMonthStart = new Date(normalized.getFullYear(), normalized.getMonth(), 1);
     const currentMonthStart = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
@@ -253,15 +293,15 @@ export function CalendarWidget({
                   role="gridcell"
                   aria-selected={calendarDate.isSelected}
                   aria-current={calendarDate.isToday ? 'date' : undefined}
-                  aria-disabled={calendarDate.isWeekend}
-                  disabled={calendarDate.isWeekend}
+                  aria-disabled={!calendarDate.isSelectable}
+                  disabled={!calendarDate.isSelectable}
                   onClick={() => handleDateSelect(calendarDate.date)}
                   onKeyDown={(event) => handleDayKeyDown(event, calendarDate.date)}
                   className={[
                     'motion-safe-base m-0.5 flex items-center justify-center rounded-md p-2 text-sm',
                     'focus-visible:ring-ring/60 focus-visible:ring-2 focus-visible:outline-none',
                     calendarDate.isOtherMonth ? 'text-muted-foreground opacity-60' : 'text-foreground',
-                    calendarDate.isWeekend
+                    !calendarDate.isSelectable
                       ? 'cursor-not-allowed bg-muted/30 text-muted-foreground opacity-45'
                       : calendarDate.isSelected
                         ? 'bg-primary text-primary-foreground shadow-[0_0_0_2px_rgb(var(--color-primary)/0.25)]'

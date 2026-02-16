@@ -4,12 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "prebuild": "prisma generate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src instrumentation-client.ts next.config.ts vitest.config.ts",
-    "prisma:generate": "prisma generate",
-    "prisma:push": "prisma db push",
+    "prisma:generate": "node --env-file=.env.local scripts/prisma-with-env.mjs generate",
+    "prisma:push": "node --env-file=.env.local scripts/prisma-with-env.mjs db push",
     "qstash:schedule": "node --env-file=.env.local scripts/qstash-upsert-dispatch-schedule.mjs",
+    "demo:scheduler:start": "node --env-file=.env.local scripts/demo-scheduler.mjs start",
+    "demo:scheduler:stop": "node --env-file=.env.local scripts/demo-scheduler.mjs stop",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
