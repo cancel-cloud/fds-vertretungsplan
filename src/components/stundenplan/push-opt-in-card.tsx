@@ -266,7 +266,7 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
             Erhalte automatische Hinweise, wenn relevante Vertretungen deinen Stundenplan betreffen.
           </p>
         </div>
-        {enabled ? <Bell className="h-6 w-8" aria-hidden="true" /> : <BellOff className="h-6 w-8" aria-hidden="true" />}
+        {enabled ? <Bell className="h-6 w-6" aria-hidden="true" /> : <BellOff className="h-6 w-6" aria-hidden="true" />}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
