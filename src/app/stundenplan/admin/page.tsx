@@ -21,7 +21,7 @@ export default async function StundenplanAdminPage() {
           Zurück zum Dashboard
         </Link>
       </div>
-      <AdminPanel />
+      <AdminPanel currentUserId={user.id} />
     </main>
   );
 }

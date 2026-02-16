@@ -1,7 +1,16 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
 interface TeacherItem {
@@ -43,6 +52,8 @@ interface UsersPagination {
 
 const USERS_PAGE_SIZE = 20;
 
+const normalizeEmail = (value: string): string => value.trim().toLowerCase();
+
 const formatTargetDate = (value: number | null): string => {
   if (!value) {
     return '—';
@@ -56,7 +67,21 @@ const formatTargetDate = (value: number | null): string => {
   return `${date.slice(6, 8)}.${date.slice(4, 6)}.${date.slice(0, 4)}`;
 };
 
-export function AdminPanel() {
+interface AdminPanelProps {
+  currentUserId: string;
+}
+
+interface UserUpdateResult {
+  ok: boolean;
+  selfDemoted: boolean;
+  error: string | null;
+}
+
+interface UserUpdateOptions {
+  suppressGlobalError?: boolean;
+}
+
+export function AdminPanel({ currentUserId }: AdminPanelProps) {
   const [teachers, setTeachers] = useState<TeacherItem[]>([]);
   const [users, setUsers] = useState<AdminUserItem[]>([]);
   const [subjectCodes, setSubjectCodes] = useState<string[]>([]);
@@ -81,6 +106,13 @@ export function AdminPanel() {
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
   const [pushTestBusy, setPushTestBusy] = useState(false);
   const [pushTestMessage, setPushTestMessage] = useState<string | null>(null);
+  const [roleConfirmOpen, setRoleConfirmOpen] = useState(false);
+  const [roleConfirmTarget, setRoleConfirmTarget] = useState<{ id: string; email: string; currentRole: 'USER' | 'ADMIN' } | null>(
+    null
+  );
+  const [roleConfirmEmailInput, setRoleConfirmEmailInput] = useState('');
+  const [roleConfirmBusy, setRoleConfirmBusy] = useState(false);
+  const [roleConfirmError, setRoleConfirmError] = useState<string | null>(null);
 
   const load = useCallback(async (targetUsersPage: number) => {
     setLoading(true);
@@ -272,8 +304,9 @@ export function AdminPanel() {
 
   const updateUser = async (
     userId: string,
-    changes: { role?: 'USER' | 'ADMIN'; notificationsEnabled?: boolean }
-  ) => {
+    changes: { role?: 'USER' | 'ADMIN'; notificationsEnabled?: boolean; confirmationEmail?: string },
+    options?: UserUpdateOptions
+  ): Promise<UserUpdateResult> => {
     setBusyUserId(userId);
     setError(null);
 
@@ -286,17 +319,88 @@ export function AdminPanel() {
         body: JSON.stringify({ id: userId, ...changes }),
       });
 
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json()) as { error?: string; selfDemoted?: boolean };
       if (!response.ok) {
         throw new Error(data.error ?? 'Benutzer konnte nicht aktualisiert werden.');
       }
 
+      const selfDemoted = data.selfDemoted === true;
+      if (selfDemoted) {
+        await signOut({ callbackUrl: '/stundenplan/login' });
+        return { ok: true, selfDemoted: true, error: null };
+      }
+
       await load(usersPage);
+      return { ok: true, selfDemoted: false, error: null };
     } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : 'Benutzer konnte nicht aktualisiert werden.');
+      const message = updateError instanceof Error ? updateError.message : 'Benutzer konnte nicht aktualisiert werden.';
+      if (!options?.suppressGlobalError) {
+        setError(message);
+      }
+      return { ok: false, selfDemoted: false, error: message };
     } finally {
       setBusyUserId(null);
     }
+  };
+
+  const resetRoleConfirm = () => {
+    setRoleConfirmOpen(false);
+    setRoleConfirmTarget(null);
+    setRoleConfirmEmailInput('');
+    setRoleConfirmError(null);
+    setRoleConfirmBusy(false);
+  };
+
+  const openRoleConfirm = (user: AdminUserItem) => {
+    setRoleConfirmTarget({ id: user.id, email: user.email, currentRole: user.role });
+    setRoleConfirmEmailInput('');
+    setRoleConfirmError(null);
+    setRoleConfirmBusy(false);
+    setRoleConfirmOpen(true);
+  };
+
+  const handleRoleAction = (user: AdminUserItem) => {
+    if (user.role === 'ADMIN') {
+      openRoleConfirm(user);
+      return;
+    }
+
+    void updateUser(user.id, { role: 'ADMIN' });
+  };
+
+  const submitRoleConfirm = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!roleConfirmTarget) {
+      return;
+    }
+
+    const expectedEmail = normalizeEmail(roleConfirmTarget.email);
+    const enteredEmail = normalizeEmail(roleConfirmEmailInput);
+    if (enteredEmail !== expectedEmail) {
+      setRoleConfirmError('Bestätigungs-E-Mail stimmt nicht mit dem Zielkonto überein.');
+      return;
+    }
+
+    setRoleConfirmBusy(true);
+    setRoleConfirmError(null);
+
+    const result = await updateUser(
+      roleConfirmTarget.id,
+      {
+        role: 'USER',
+        confirmationEmail: roleConfirmEmailInput,
+      },
+      { suppressGlobalError: true }
+    );
+
+    if (!result.ok) {
+      setRoleConfirmError(result.error ?? 'Benutzer konnte nicht aktualisiert werden.');
+      setRoleConfirmBusy(false);
+      return;
+    }
+
+    resetRoleConfirm();
   };
 
   const onboardingState = (user: AdminUserItem): string => {
@@ -526,7 +630,7 @@ export function AdminPanel() {
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => updateUser(user.id, { role: user.role === 'ADMIN' ? 'USER' : 'ADMIN' })}
+                        onClick={() => handleRoleAction(user)}
                         loading={busyUserId === user.id}
                       >
                         {user.role === 'ADMIN' ? 'Zu USER' : 'Zu ADMIN'}
@@ -536,7 +640,7 @@ export function AdminPanel() {
                         size="sm"
                         variant="outline"
                         onClick={() =>
-                          updateUser(user.id, {
+                          void updateUser(user.id, {
                             notificationsEnabled: !user.notificationsEnabled,
                           })
                         }
@@ -612,6 +716,69 @@ export function AdminPanel() {
           {error}
         </p>
       ) : null}
+
+      <Dialog
+        open={roleConfirmOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            if (roleConfirmBusy) {
+              return;
+            }
+            resetRoleConfirm();
+            return;
+          }
+          setRoleConfirmOpen(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Admin-Rechte entfernen</DialogTitle>
+            <DialogDescription>
+              Bitte geben Sie zur Bestätigung die E-Mail-Adresse <strong>{roleConfirmTarget?.email ?? '—'}</strong> ein.
+            </DialogDescription>
+          </DialogHeader>
+          {roleConfirmTarget?.id === currentUserId ? (
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+              Dieses Konto wird nach Bestätigung sofort abgemeldet.
+            </p>
+          ) : null}
+          <form className="space-y-4" onSubmit={submitRoleConfirm}>
+            <div className="space-y-2 pb-1">
+              <label htmlFor="role-confirm-email" className="text-sm font-medium text-[rgb(var(--color-text))]">
+                E-Mail zur Bestätigung
+              </label>
+              <Input
+                id="role-confirm-email"
+                type="email"
+                value={roleConfirmEmailInput}
+                onChange={(event) => setRoleConfirmEmailInput(event.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                disabled={roleConfirmBusy}
+              />
+            </div>
+            {roleConfirmError ? (
+              <p className="rounded-md bg-[rgb(var(--color-error)/0.12)] px-3 py-2 text-sm text-[rgb(var(--color-error))]">
+                {roleConfirmError}
+              </p>
+            ) : null}
+            <DialogFooter className="border-t border-[rgb(var(--color-border)/0.2)] pt-4">
+              <Button type="button" variant="outline" onClick={resetRoleConfirm} disabled={roleConfirmBusy}>
+                Abbrechen
+              </Button>
+              <Button
+                type="submit"
+                loading={roleConfirmBusy}
+                disabled={
+                  normalizeEmail(roleConfirmEmailInput) !== normalizeEmail(roleConfirmTarget?.email ?? '')
+                }
+              >
+                Herabstufen
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
