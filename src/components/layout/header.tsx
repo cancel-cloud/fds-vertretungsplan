@@ -27,7 +27,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         {/* App title */}
         <Link 
           href="/"
-          className="text-xl font-semibold text-[rgb(var(--color-text))] hover:text-[rgb(var(--color-primary))] transition-colors duration-150 rounded-sm px-2 py-1 -mx-2 -my-1 hover:bg-[rgb(var(--color-secondary)/0.12)] focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="motion-link-underline motion-safe-base text-xl font-semibold text-[rgb(var(--color-text))] hover:text-[rgb(var(--color-primary))] rounded-sm px-2 py-1 -mx-2 -my-1 hover:bg-[rgb(var(--color-secondary)/0.12)] focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           Vertretungsplan
         </Link>
@@ -37,13 +37,13 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <nav className="hidden md:flex items-center gap-4">
             <Link
               href="/impressum"
-              className="text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] transition-colors duration-150 rounded-sm px-2 py-1 -mx-2 -my-1 hover:bg-[rgb(var(--color-secondary)/0.12)] focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="motion-link-underline motion-safe-base text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] rounded-sm px-2 py-1 -mx-2 -my-1 hover:bg-[rgb(var(--color-secondary)/0.12)] focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               Impressum
             </Link>
             <Link
               href="/datenschutz"
-              className="text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] transition-colors duration-150 rounded-sm px-2 py-1 -mx-2 -my-1 hover:bg-[rgb(var(--color-secondary)/0.12)] focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="motion-link-underline motion-safe-base text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] rounded-sm px-2 py-1 -mx-2 -my-1 hover:bg-[rgb(var(--color-secondary)/0.12)] focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               Datenschutz
             </Link>

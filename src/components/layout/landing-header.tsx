@@ -14,7 +14,7 @@ export async function LandingHeader() {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3">
         <Link
           href="/"
-          className="rounded-sm px-2 py-1 text-xl font-semibold text-[rgb(var(--color-text))] transition-colors duration-150 hover:bg-[rgb(var(--color-secondary)/0.12)] hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2 -mx-2 -my-1"
+          className="motion-link-underline motion-safe-base rounded-sm px-2 py-1 text-xl font-semibold text-[rgb(var(--color-text))] hover:bg-[rgb(var(--color-secondary)/0.12)] hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2 -mx-2 -my-1"
         >
           FDS Vertretungsplan
         </Link>

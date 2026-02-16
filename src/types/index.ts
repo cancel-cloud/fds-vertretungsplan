@@ -144,3 +144,6 @@ export interface SubstitutionApiSuccessResponse {
 export type SubstitutionApiResponse =
   | SubstitutionApiMetaResponse
   | SubstitutionApiSuccessResponse;
+
+export type { MotionLevel, MotionTimings } from './motion';
+export { MOTION_TIMINGS_MS } from './motion';

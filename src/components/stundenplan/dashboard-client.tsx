@@ -137,8 +137,11 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
   const [loadingTimetable, setLoadingTimetable] = useState(initialScope === 'personal' && isAuthenticated);
   const [timetableError, setTimetableError] = useState<string | null>(null);
   const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
+  const [isInitialDateResolved, setIsInitialDateResolved] = useState(
+    () => !(initialScope === 'personal' && isAuthenticated && fromPush && !queryDate)
+  );
 
-  const { substitutions, isLoading, error, metaResponse, refetch } = useSubstitutions(selectedDate);
+  const { substitutions, isLoading, error, metaResponse, resolvedDateKey, refetch } = useSubstitutions(selectedDate);
 
   const isPersonalScope = scope === 'personal';
 
@@ -173,15 +176,20 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
 
   useEffect(() => {
     if (!isPersonalScope || !isAuthenticated || !fromPush || queryDate) {
+      setIsInitialDateResolved(true);
       return;
     }
 
+    setIsInitialDateResolved(false);
     let active = true;
 
     const resolveTargetDate = async () => {
       try {
         const response = await fetch('/api/push/last-target');
         if (!response.ok) {
+          if (active) {
+            setIsInitialDateResolved(true);
+          }
           return;
         }
 
@@ -200,14 +208,19 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
             const normalized = normalizeToSchoolDay(target, 1);
             setSelectedDate(normalized);
             params.set('date', formatDateForApi(normalized));
+            setIsInitialDateResolved(true);
             router.replace(`${pathname}?${params.toString()}`, { scroll: false });
             return;
           }
         }
 
+        setIsInitialDateResolved(true);
         router.replace(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
       } catch {
         // Keep current view if lookup fails.
+        if (active) {
+          setIsInitialDateResolved(true);
+        }
       }
     };
 
@@ -356,14 +369,18 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
     [schoolToday, schoolTomorrow, schoolAfterTomorrow]
   );
   const formattedSelectedDate = formatLongDate(selectedDate);
+  const selectedDateKey = formatDateForApi(selectedDate);
+  const isCountLoading = isLoading || !resolvedDateKey || resolvedDateKey !== selectedDateKey;
+  const resultsMotionKey = `${selectedDate.toISOString()}-${scope}-${searchQuery}-${filteredVisibleSubstitutions.length}`;
+  const loadingSkeleton = Array.from({ length: 3 });
 
   return (
     <div className="grid gap-6">
-      <section className="relative overflow-hidden rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] shadow-sm">
+      <section className="motion-enter relative overflow-hidden rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] shadow-sm">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1100px_300px_at_0%_0%,rgb(var(--color-primary)/0.14),transparent_70%),radial-gradient(900px_300px_at_100%_10%,rgb(var(--color-secondary)/0.14),transparent_75%)]" />
         <div className="relative space-y-5 p-5 md:p-7">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1">
+          <div className="motion-enter flex flex-wrap items-start justify-between gap-3" style={{ animationDelay: '40ms' }}>
+            <div className="space-y-1 motion-fade">
               <h1 className="text-balance text-3xl font-semibold tracking-tight text-[rgb(var(--color-text))] md:text-4xl">
                 Vertretungsplan
               </h1>
@@ -384,14 +401,22 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] px-4 py-3">
+          <div
+            className="motion-enter rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] px-4 py-3"
+            style={{ animationDelay: '85ms' }}
+          >
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">Ausgewähltes Datum</p>
             <p className="text-lg font-medium text-[rgb(var(--color-text))]">{formattedSelectedDate}</p>
           </div>
 
-          <SearchInput value={searchQuery} onChange={handleSearchChange} />
+          <div className="motion-enter" style={{ animationDelay: '115ms' }}>
+            <SearchInput value={searchQuery} onChange={handleSearchChange} />
+          </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+          <div
+            className="motion-enter flex gap-2 overflow-x-auto pt-1 pb-1 [scrollbar-width:thin]"
+            style={{ animationDelay: '165ms' }}
+          >
             {quickDateStrip.map((date) => {
               const selected = isSameDay(date, selectedDate);
               return (
@@ -399,7 +424,7 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
                   key={date.toISOString()}
                   variant={selected ? 'default' : 'outline'}
                   size="sm"
-                  className="h-9 shrink-0 px-3 text-xs touch-manipulation"
+                  className="motion-chip h-9 shrink-0 px-3 text-xs touch-manipulation"
                   onClick={() => setDate(date)}
                   aria-pressed={selected}
                 >
@@ -413,15 +438,20 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
-        <aside className="hidden lg:block">
-          <Card className="sticky top-[88px] space-y-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4">
-            <CalendarWidget selectedDate={selectedDate} onDateSelect={setDate} />
+        <aside className="motion-enter hidden lg:block" style={{ animationDelay: '220ms' }}>
+          <Card
+            interactive
+            className="sticky top-[88px] space-y-4 border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4"
+          >
+            {isInitialDateResolved ? (
+              <CalendarWidget selectedDate={selectedDate} onDateSelect={setDate} />
+            ) : null}
             {isPersonalScope && user ? <PushOptInCard initialEnabled={user.notificationsEnabled} /> : null}
           </Card>
         </aside>
 
-        <div className="grid content-start gap-4">
-          <section className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4 md:p-5">
+        <div className="motion-enter grid content-start gap-4" style={{ animationDelay: '250ms' }}>
+          <section className="motion-fade rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4 md:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="text-base font-semibold text-[rgb(var(--color-text))]">Ansicht</h2>
@@ -461,10 +491,24 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
 
           <div className="grid min-h-[180px] content-start gap-4">
             {isPersonalScope && loadingTimetable ? (
-              <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                <div className="flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
+              <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-6 md:p-8">
+                <div className="mb-4 flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
                   <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
                   <span>Lade Stundenplan…</span>
+                </div>
+                <div className="space-y-4">
+                  {loadingSkeleton.map((_, index) => (
+                    <div
+                      key={`dashboard-timetable-loading-${index}`}
+                      className="skeleton-shimmer relative overflow-hidden rounded-xl border border-[rgb(var(--color-border)/0.22)] bg-[rgb(var(--color-background)/0.7)] p-4"
+                    >
+                      <div className="space-y-3">
+                        <div className="h-5 w-44 rounded bg-[rgb(var(--color-border)/0.18)]" />
+                        <div className="h-4 w-64 rounded bg-[rgb(var(--color-border)/0.12)]" />
+                        <div className="h-4 w-52 rounded bg-[rgb(var(--color-border)/0.12)]" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </Card>
             ) : null}
@@ -504,11 +548,21 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
                         Vertretungen für {formattedSelectedDate}
                       </h2>
                       <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
-                        {hasSearchActive
-                          ? `${filteredVisibleSubstitutions.length} von ${visibleSubstitutions.length} Einträgen sichtbar`
-                          : isPersonalScope
-                          ? `${visibleSubstitutions.length} relevante Einträge`
-                          : `${substitutions.length} Einträge`}
+                        {isCountLoading ? (
+                          <>
+                            <span
+                              aria-hidden="true"
+                              className="skeleton-shimmer relative inline-block h-4 w-44 overflow-hidden rounded bg-[rgb(var(--color-border)/0.18)] align-middle"
+                            />
+                            <span className="sr-only">Anzahl wird geladen</span>
+                          </>
+                        ) : hasSearchActive ? (
+                          `${filteredVisibleSubstitutions.length} von ${visibleSubstitutions.length} Einträgen sichtbar`
+                        ) : isPersonalScope ? (
+                          `${visibleSubstitutions.length} relevante Einträge`
+                        ) : (
+                          `${substitutions.length} Einträge`
+                        )}
                       </p>
                     </div>
                   </div>
@@ -528,15 +582,29 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
                     </div>
                   </Card>
                 ) : isLoading ? (
-                  <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                    <div className="flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
+                  <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-6 md:p-8">
+                    <div className="mb-4 flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
                       <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
                       <span>Vertretungen werden geladen…</span>
+                    </div>
+                    <div className="space-y-4">
+                      {loadingSkeleton.map((_, index) => (
+                        <div
+                          key={`dashboard-substitutions-loading-${index}`}
+                          className="skeleton-shimmer relative overflow-hidden rounded-xl border border-[rgb(var(--color-border)/0.22)] bg-[rgb(var(--color-background)/0.7)] p-4"
+                        >
+                          <div className="space-y-3">
+                            <div className="h-5 w-44 rounded bg-[rgb(var(--color-border)/0.18)]" />
+                            <div className="h-4 w-64 rounded bg-[rgb(var(--color-border)/0.12)]" />
+                            <div className="h-4 w-52 rounded bg-[rgb(var(--color-border)/0.12)]" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </Card>
                 ) : metaResponse ? (
                   <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                    <div className="space-y-3 text-center">
+                    <div className="motion-empty-soft-pulse space-y-3 text-center">
                       <div className="flex justify-center">
                         <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
                       </div>
@@ -545,17 +613,18 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
                     </div>
                   </Card>
                 ) : filteredVisibleSubstitutions.length > 0 ? (
-                  <div className="space-y-4">
+                  <div key={resultsMotionKey} className="space-y-4">
                     {filteredVisibleSubstitutions.map((substitution, index) => (
                       <SubstitutionCard
                         key={`${substitution.group}-${substitution.hours}-${substitution.subject}-${index}`}
                         substitution={substitution}
+                        className="motion-enter"
                       />
                     ))}
                   </div>
                 ) : hasSearchActive && visibleSubstitutions.length > 0 ? (
                   <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                    <div className="space-y-3 text-center">
+                    <div className="motion-empty-soft-pulse space-y-3 text-center">
                       <div className="flex justify-center">
                         <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
                       </div>
@@ -567,7 +636,7 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
                   </Card>
                 ) : substitutions.length > 0 && isPersonalScope ? (
                   <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                    <div className="space-y-3 text-center">
+                    <div className="motion-empty-soft-pulse space-y-3 text-center">
                       <div className="flex justify-center">
                         <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
                       </div>
@@ -579,7 +648,7 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
                   </Card>
                 ) : (
                   <Card className="border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-12">
-                    <div className="space-y-3 text-center">
+                    <div className="motion-empty-soft-pulse space-y-3 text-center">
                       <div className="flex justify-center">
                         <Calendar className="h-10 w-10 text-[rgb(var(--color-text-secondary))]" aria-hidden="true" />
                       </div>
@@ -602,14 +671,16 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
             <DialogTitle>Datum wählen</DialogTitle>
             <DialogDescription>Schnell zu einem anderen Tag wechseln.</DialogDescription>
           </DialogHeader>
-          <CalendarWidget
-            selectedDate={selectedDate}
-            onDateSelect={(date) => {
-              setDate(date);
-              setIsMobileCalendarOpen(false);
-            }}
-            className="w-full"
-          />
+          {isInitialDateResolved ? (
+            <CalendarWidget
+              selectedDate={selectedDate}
+              onDateSelect={(date) => {
+                setDate(date);
+                setIsMobileCalendarOpen(false);
+              }}
+              className="w-full"
+            />
+          ) : null}
           {isPersonalScope && user ? <PushOptInCard initialEnabled={user.notificationsEnabled} /> : null}
         </DialogContent>
       </Dialog>

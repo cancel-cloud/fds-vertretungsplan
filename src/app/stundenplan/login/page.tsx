@@ -84,9 +84,11 @@ export default function StundenplanLoginPage() {
             </p>
           ) : null}
 
-          <Button type="submit" className="w-full" loading={isSubmitting}>
-            Anmelden
-          </Button>
+          <div className="pt-2">
+            <Button type="submit" className="w-full" loading={isSubmitting}>
+              Anmelden
+            </Button>
+          </div>
         </form>
 
         <p className="mt-4 text-sm text-[rgb(var(--color-text-secondary))]">

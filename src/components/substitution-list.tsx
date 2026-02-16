@@ -46,6 +46,8 @@ export function SubstitutionList({
   metaResponse = null,
   className = ""
 }: SubstitutionListProps) {
+  const listMotionKey = `${selectedDate.toISOString()}-${filterState.search}-${filterState.categories.join(',')}-${filteredSubstitutions.length}`;
+  const loadingSkeleton = Array.from({ length: 3 });
 
   // Error state
   if (error) {
@@ -127,15 +129,27 @@ export function SubstitutionList({
 
       {/* Loading or Content */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex items-center gap-3 text-[rgb(var(--color-text-secondary))]">
+        <div className="space-y-4 py-4">
+          <div className="flex items-center justify-center gap-3 text-[rgb(var(--color-text-secondary))]">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span>Vertretungen werden geladen...</span>
           </div>
+          {loadingSkeleton.map((_, index) => (
+            <div
+              key={`skeleton-${index}`}
+              className="skeleton-shimmer relative overflow-hidden rounded-xl border border-[rgb(var(--color-border)/0.25)] bg-[rgb(var(--color-surface))] p-4"
+            >
+              <div className="space-y-3">
+                <div className="h-5 w-40 rounded bg-[rgb(var(--color-border)/0.18)]" />
+                <div className="h-4 w-64 rounded bg-[rgb(var(--color-border)/0.12)]" />
+                <div className="h-4 w-52 rounded bg-[rgb(var(--color-border)/0.12)]" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : metaResponse ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-center space-y-4 max-w-lg">
+          <div className="motion-empty-soft-pulse text-center space-y-4 max-w-lg">
             <div className="flex justify-center">
               <Calendar className="h-12 w-12 text-[rgb(var(--color-text-secondary))]" />
             </div>
@@ -150,18 +164,21 @@ export function SubstitutionList({
           </div>
         </div>
       ) : filteredSubstitutions.length > 0 ? (
-        <div className="grid gap-4">
+        <div key={listMotionKey} className="grid gap-4">
           {filteredSubstitutions.map((substitution, index) => (
-            <SubstitutionCard
+            <div
               key={`${substitution.group}-${substitution.hours}-${substitution.subject}-${index}`}
-              substitution={substitution}
-            />
+              className="motion-enter"
+              style={{ animationDelay: `${Math.min(index * 35, 210)}ms` }}
+            >
+              <SubstitutionCard substitution={substitution} />
+            </div>
           ))}
         </div>
       ) : substitutions.length > 0 ? (
         // No results after filtering
         <div className="flex items-center justify-center py-12">
-          <div className="text-center space-y-4">
+          <div className="motion-empty-soft-pulse text-center space-y-4">
             <div className="flex justify-center">
               <Calendar className="h-12 w-12 text-[rgb(var(--color-text-secondary))]" />
             </div>
@@ -182,7 +199,7 @@ export function SubstitutionList({
       ) : (
         // No substitutions at all for the selected date
         <div className="flex items-center justify-center py-12">
-          <div className="text-center space-y-4">
+          <div className="motion-empty-soft-pulse text-center space-y-4">
             <div className="flex justify-center">
               <Calendar className="h-12 w-12 text-[rgb(var(--color-text-secondary))]" />
             </div>

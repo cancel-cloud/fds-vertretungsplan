@@ -27,7 +27,7 @@ export function HeaderAuthActions({ role }: HeaderAuthActionsProps) {
         size="sm"
         variant="ghost"
         onClick={() => {
-          void signOut({ callbackUrl: '/stundenplan/login' });
+          void signOut({ callbackUrl: '/' });
         }}
       >
         Logout

@@ -270,6 +270,176 @@ body {
   animation: spin 1s linear infinite;
 }
 
+@keyframes motion-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-calendar-next {
+  from {
+    opacity: 0;
+    transform: translate3d(12px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motion-calendar-prev {
+  from {
+    opacity: 0;
+    transform: translate3d(-12px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motion-soft-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--color-primary), 0);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(var(--color-primary), 0.08);
+  }
+}
+
+.motion-safe-base {
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+  transition-duration: var(--motion-duration-base);
+  transition-timing-function: var(--motion-ease-standard);
+}
+
+.motion-focus-ring {
+  transition-property: box-shadow, border-color;
+  transition-duration: var(--motion-duration-fast);
+  transition-timing-function: var(--motion-ease-standard);
+}
+
+.motion-button-subtle {
+  will-change: transform;
+}
+
+.motion-button-subtle:hover {
+  transform: translateY(var(--motion-lift-y));
+}
+
+.motion-button-subtle:active {
+  transform: translateY(0) scale(var(--motion-press-scale));
+}
+
+.motion-button-subtle:disabled,
+.motion-button-subtle[data-disabled="true"],
+.motion-button-subtle[aria-disabled="true"] {
+  transform: none;
+}
+
+.motion-button-expressive:hover {
+  transform: translateY(-2px);
+}
+
+.motion-button-expressive:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.motion-card-interactive {
+  transition-property: transform, box-shadow, border-color, background-color;
+  transition-duration: var(--motion-duration-base);
+  transition-timing-function: var(--motion-ease-standard);
+  will-change: transform;
+}
+
+.motion-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -20px rgba(0, 0, 0, 0.45);
+}
+
+.motion-card-interactive:active {
+  transform: translateY(0) scale(0.995);
+}
+
+.motion-link-underline {
+  position: relative;
+}
+
+.motion-link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0.35rem;
+  right: 0.35rem;
+  bottom: 0.2rem;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+.motion-link-underline:hover::after,
+.motion-link-underline:focus-visible::after,
+.motion-link-underline[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+.motion-enter {
+  animation: motion-fade-up var(--motion-duration-slow) var(--motion-ease-emphasized) both;
+}
+
+.motion-fade {
+  animation: motion-fade-in var(--motion-duration-base) var(--motion-ease-standard) both;
+}
+
+.motion-calendar-next {
+  animation: motion-calendar-next var(--motion-duration-slow) var(--motion-ease-emphasized) both;
+}
+
+.motion-calendar-prev {
+  animation: motion-calendar-prev var(--motion-duration-slow) var(--motion-ease-emphasized) both;
+}
+
+.motion-empty-soft-pulse {
+  animation: motion-soft-pulse 1.15s var(--motion-ease-standard) 1;
+}
+
+.motion-chip {
+  transition-property: transform, background-color, color, border-color, box-shadow;
+  transition-duration: var(--motion-duration-fast);
+  transition-timing-function: var(--motion-ease-standard);
+  will-change: transform;
+}
+
+.motion-chip:hover {
+  transform: scale(1.02);
+}
+
+.motion-chip:active {
+  transform: scale(0.98);
+}
+
+.motion-chip-pill {
+  transition-property: inset, width, transform, background-color;
+  transition-duration: var(--motion-duration-base);
+  transition-timing-function: var(--motion-ease-emphasized);
+}
+
 /* Substitution card type styles */
 .substitution-card-entfall {
   border-left: 4px solid rgb(var(--color-entfall));
@@ -395,6 +565,13 @@ body {
     --color-verlegung: 250 235 215;
     --duration-fast: 150ms;
     --duration-normal: 250ms;
+    --motion-duration-fast: 150ms;
+    --motion-duration-base: 220ms;
+    --motion-duration-slow: 320ms;
+    --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+    --motion-lift-y: -1px;
+    --motion-press-scale: 0.98;
   }
 
   .dark {
@@ -494,9 +671,36 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .motion-safe-base,
+  .motion-focus-ring,
+  .motion-button-subtle,
+  .motion-button-expressive,
+  .motion-card-interactive,
+  .motion-link-underline::after,
+  .motion-chip,
+  .motion-chip-pill {
+    transition-duration: 1ms !important;
+  }
+
+  .motion-enter,
+  .motion-fade,
+  .motion-calendar-next,
+  .motion-calendar-prev,
+  .motion-empty-soft-pulse,
   [class*="v2-"],
   .v2-gradient-border,
   .v2-badge-glow {
     animation: none !important;
+  }
+
+  .motion-button-subtle:hover,
+  .motion-button-subtle:active,
+  .motion-button-expressive:hover,
+  .motion-button-expressive:active,
+  .motion-card-interactive:hover,
+  .motion-card-interactive:active,
+  .motion-chip:hover,
+  .motion-chip:active {
+    transform: none !important;
   }
 }

@@ -15,6 +15,7 @@ interface UseSubstitutionsResult {
   isLoading: boolean;
   error: string | null;
   metaResponse: SubstitutionApiMetaResponse | null;
+  resolvedDateKey: string | null;
   refetch: () => void;
 }
 
@@ -42,6 +43,7 @@ export function useSubstitutions(selectedDate: Date): UseSubstitutionsResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metaResponse, setMetaResponse] = useState<SubstitutionApiMetaResponse | null>(null);
+  const [resolvedDateKey, setResolvedDateKey] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const buildErrorMessage = useCallback(async (response: Response) => {
@@ -84,6 +86,7 @@ export function useSubstitutions(selectedDate: Date): UseSubstitutionsResult {
       setIsLoading(false);
       setError(null);
       setMetaResponse(null);
+      setResolvedDateKey(cacheKey);
       captureClientEvent(ANALYTICS_EVENTS.SUBSTITUTIONS_FETCH_SUCCESS, {
         source: 'cache',
         result_count: cached.data.length,
@@ -124,6 +127,7 @@ export function useSubstitutions(selectedDate: Date): UseSubstitutionsResult {
       if (data.type === 'meta') {
         setSubstitutions([]);
         setMetaResponse(data);
+        setResolvedDateKey(dateString);
         captureClientEvent(ANALYTICS_EVENTS.SUBSTITUTIONS_FETCH_META, {
           date: data.date,
           duration_ms: Date.now() - start,
@@ -137,6 +141,7 @@ export function useSubstitutions(selectedDate: Date): UseSubstitutionsResult {
 
       setSubstitutions(processed);
       setMetaResponse(null);
+      setResolvedDateKey(dateString);
 
       captureClientEvent(ANALYTICS_EVENTS.SUBSTITUTIONS_FETCH_SUCCESS, {
         source: 'network',
@@ -159,6 +164,7 @@ export function useSubstitutions(selectedDate: Date): UseSubstitutionsResult {
       setError(message);
       setSubstitutions([]);
       setMetaResponse(null);
+      setResolvedDateKey(dateString);
 
       captureClientEvent(ANALYTICS_EVENTS.SUBSTITUTIONS_FETCH_ERROR, {
         date: dateString,
@@ -191,6 +197,7 @@ export function useSubstitutions(selectedDate: Date): UseSubstitutionsResult {
     isLoading,
     error,
     metaResponse,
+    resolvedDateKey,
     refetch,
   };
 }
