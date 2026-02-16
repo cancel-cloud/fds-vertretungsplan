@@ -6,10 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="228ae0a9-7468-4548-9b79-c7d65acbd30e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/stundenplan/dashboard-client.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/stundenplan/dashboard-client.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/stundenplan/push-opt-in-card.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/stundenplan/push-opt-in-card.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/analytics/events.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/analytics/events.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/stundenplan/user-settings-panel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/stundenplan/user-settings-panel.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

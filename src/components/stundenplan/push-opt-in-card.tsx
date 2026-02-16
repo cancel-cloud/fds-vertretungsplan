@@ -3,29 +3,13 @@
 import { useEffect, useState } from 'react';
 import { Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let index = 0; index < rawData.length; index += 1) {
-    outputArray[index] = rawData.charCodeAt(index);
-  }
-
-  return outputArray;
-};
-
-const uint8ArrayToBase64Url = (value: Uint8Array): string => {
-  let binary = '';
-  for (let index = 0; index < value.length; index += 1) {
-    binary += String.fromCharCode(value[index]);
-  }
-  return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-};
-
-const normalizeBase64Url = (value: string): string => value.replace(/=+$/g, '').trim();
+import {
+  ensureCurrentSubscription,
+  ensureNotificationPermission,
+  getExistingPushSubscription,
+  isPushSupported,
+  persistPushSubscription,
+} from '@/lib/push-client';
 
 interface PushOptInCardProps {
   initialEnabled: boolean;
@@ -33,14 +17,6 @@ interface PushOptInCardProps {
   onEnableStart?: () => void;
   onEnableSuccess?: () => void;
   onEnableError?: (message: string) => void;
-}
-
-async function parseJsonSafe(response: Response): Promise<Record<string, unknown>> {
-  try {
-    return (await response.json()) as Record<string, unknown>;
-  } catch {
-    return {};
-  }
 }
 
 export function PushOptInCard({
@@ -56,65 +32,12 @@ export function PushOptInCard({
   const [message, setMessage] = useState<string | null>(null);
   const embedded = variant === 'embedded';
 
-  const loadVapidPublicKey = async (): Promise<string> => {
-    const keyResponse = await fetch('/api/push/subscribe');
-    const keyData = await parseJsonSafe(keyResponse);
-    const vapidPublicKey = typeof keyData.vapidPublicKey === 'string' ? keyData.vapidPublicKey : null;
-    if (!keyResponse.ok || !vapidPublicKey) {
-      const errorMessage =
-        typeof keyData.error === 'string' && keyData.error.length > 0
-          ? keyData.error
-          : `Push ist aktuell nicht verfügbar (HTTP ${keyResponse.status}).`;
-      throw new Error(errorMessage);
-    }
-
-    return vapidPublicKey;
-  };
-
-  const hasMatchingApplicationServerKey = (subscription: PushSubscription, vapidPublicKey: string): boolean => {
-    const serverKeyBuffer = subscription.options?.applicationServerKey;
-    if (!serverKeyBuffer) {
-      return true;
-    }
-
-    const currentKey = uint8ArrayToBase64Url(new Uint8Array(serverKeyBuffer));
-    return normalizeBase64Url(currentKey) === normalizeBase64Url(vapidPublicKey);
-  };
-
-  const ensureCurrentSubscription = async (): Promise<PushSubscription> => {
-    await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-    const registration = await navigator.serviceWorker.ready;
-    const vapidPublicKey = await loadVapidPublicKey();
-    const vapidServerKey = urlBase64ToUint8Array(vapidPublicKey) as unknown as BufferSource;
-
-    let subscription = await registration.pushManager.getSubscription();
-    if (subscription && !hasMatchingApplicationServerKey(subscription, vapidPublicKey)) {
-      await fetch('/api/push/unsubscribe', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint: subscription.endpoint }),
-      });
-      await subscription.unsubscribe();
-      subscription = null;
-    }
-
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: vapidServerKey,
-      });
-    }
-
-    return subscription;
-  };
-
   useEffect(() => {
-    const isSecure = window.isSecureContext;
-    const isSupported = isSecure && 'serviceWorker' in navigator && 'PushManager' in window;
+    const isSupported = isPushSupported();
     setSupported(isSupported);
 
     if (!isSupported) {
-      if (!isSecure) {
+      if (!window.isSecureContext) {
         setMessage('Push benötigt HTTPS oder localhost. Öffne die App über https://... oder http://localhost.');
       }
       return;
@@ -122,8 +45,7 @@ export function PushOptInCard({
 
     const syncSubscriptionState = async () => {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        const subscription = await registration.pushManager.getSubscription();
+        const subscription = await getExistingPushSubscription();
 
         if (!subscription) {
           setEnabled(false);
@@ -138,11 +60,7 @@ export function PushOptInCard({
         }
 
         setEnabled(true);
-        await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(subscription),
-        });
+        await persistPushSubscription(subscription);
       } catch {
         setEnabled(false);
       }
@@ -153,40 +71,6 @@ export function PushOptInCard({
     return undefined;
   }, [initialEnabled]);
 
-  const ensureNotificationPermission = async (): Promise<boolean> => {
-    if (!window.isSecureContext) {
-      setMessage('Push benötigt HTTPS oder localhost. Die aktuelle Seite ist kein sicherer Kontext.');
-      return false;
-    }
-
-    if (!('Notification' in window)) {
-      setMessage('Dieser Browser unterstützt keine Benachrichtigungs-Permissions.');
-      return false;
-    }
-
-    if (Notification.permission === 'granted') {
-      return true;
-    }
-
-    if (Notification.permission === 'default') {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        return true;
-      }
-      if (permission === 'default') {
-        setMessage(
-          'Chrome/Arc hat den Prompt nicht angezeigt (Quiet UI oder geschlossen). Bitte Website-Benachrichtigungen manuell auf "Zulassen" setzen.'
-        );
-        return false;
-      }
-    }
-
-    setMessage(
-      'Benachrichtigungen sind im Browser blockiert. In Chrome: Schloss-Symbol -> Website-Einstellungen -> Benachrichtigungen -> Zulassen.'
-    );
-    return false;
-  };
-
   const enablePush = async () => {
     setBusy(true);
     setMessage(null);
@@ -194,8 +78,21 @@ export function PushOptInCard({
 
     try {
       setMessage('Prüfe Browser-Permission …');
-      const hasPermission = await ensureNotificationPermission();
-      if (!hasPermission) {
+      const permission = await ensureNotificationPermission();
+      if (!permission.ok) {
+        if (permission.reason === 'insecure_context') {
+          setMessage('Push benötigt HTTPS oder localhost. Die aktuelle Seite ist kein sicherer Kontext.');
+        } else if (permission.reason === 'notification_api_unavailable') {
+          setMessage('Dieser Browser unterstützt keine Benachrichtigungs-Permissions.');
+        } else if (permission.reason === 'permission_prompt_not_confirmed') {
+          setMessage(
+            'Chrome/Arc hat den Prompt nicht angezeigt (Quiet UI oder geschlossen). Bitte Website-Benachrichtigungen manuell auf "Zulassen" setzen.'
+          );
+        } else {
+          setMessage(
+            'Benachrichtigungen sind im Browser blockiert. In Chrome: Schloss-Symbol -> Website-Einstellungen -> Benachrichtigungen -> Zulassen.'
+          );
+        }
         onEnableError?.('Benachrichtigungsberechtigung wurde nicht erteilt.');
         return;
       }
@@ -204,20 +101,7 @@ export function PushOptInCard({
       const subscription = await ensureCurrentSubscription();
 
       setMessage('Speichere Subscription …');
-      const subscribeResponse = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(subscription),
-      });
-
-      const subscribeData = await parseJsonSafe(subscribeResponse);
-      if (!subscribeResponse.ok) {
-        const errorMessage =
-          typeof subscribeData.error === 'string' && subscribeData.error.length > 0
-            ? subscribeData.error
-            : `Push konnte nicht aktiviert werden (HTTP ${subscribeResponse.status}).`;
-        throw new Error(errorMessage);
-      }
+      await persistPushSubscription(subscription);
 
       await fetch('/api/me', {
         method: 'PUT',
@@ -243,8 +127,7 @@ export function PushOptInCard({
     setMessage(null);
 
     try {
-      const registration = await navigator.serviceWorker.getRegistration();
-      const subscription = await registration?.pushManager.getSubscription();
+      const subscription = await getExistingPushSubscription();
 
       if (subscription) {
         await fetch('/api/push/unsubscribe', {
