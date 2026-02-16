@@ -15,7 +15,7 @@ import { SearchInput } from '@/components/search-input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PushOptInCard } from '@/components/stundenplan/push-opt-in-card';
+import { ApplePushPromoCard } from '@/components/stundenplan/apple-push-promo-card';
 import { DashboardScope, DASHBOARD_SCOPE_PARAM, parseDashboardScope } from '@/lib/dashboard-scope';
 import { WeekMode, Weekday } from '@/types/user-system';
 
@@ -446,7 +446,7 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
             {isInitialDateResolved ? (
               <CalendarWidget selectedDate={selectedDate} onDateSelect={setDate} />
             ) : null}
-            {isPersonalScope && user ? <PushOptInCard initialEnabled={user.notificationsEnabled} /> : null}
+            {isPersonalScope && user ? <ApplePushPromoCard initialPushEnabled={user.notificationsEnabled} /> : null}
           </Card>
         </aside>
 
@@ -488,6 +488,12 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
               Diese Auswahl bleibt im Link erhalten und kann direkt geteilt werden.
             </p>
           </section>
+
+          {isPersonalScope && user ? (
+            <div className="motion-fade lg:hidden">
+              <ApplePushPromoCard initialPushEnabled={user.notificationsEnabled} />
+            </div>
+          ) : null}
 
           <div className="grid min-h-[180px] content-start gap-4">
             {isPersonalScope && loadingTimetable ? (
@@ -681,7 +687,6 @@ export function DashboardClient({ initialScope, isAuthenticated }: DashboardClie
               className="w-full"
             />
           ) : null}
-          {isPersonalScope && user ? <PushOptInCard initialEnabled={user.notificationsEnabled} /> : null}
         </DialogContent>
       </Dialog>
     </div>

@@ -29,6 +29,10 @@ const normalizeBase64Url = (value: string): string => value.replace(/=+$/g, '').
 
 interface PushOptInCardProps {
   initialEnabled: boolean;
+  variant?: 'default' | 'embedded';
+  onEnableStart?: () => void;
+  onEnableSuccess?: () => void;
+  onEnableError?: (message: string) => void;
 }
 
 async function parseJsonSafe(response: Response): Promise<Record<string, unknown>> {
@@ -39,11 +43,18 @@ async function parseJsonSafe(response: Response): Promise<Record<string, unknown
   }
 }
 
-export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
+export function PushOptInCard({
+  initialEnabled,
+  variant = 'default',
+  onEnableStart,
+  onEnableSuccess,
+  onEnableError,
+}: PushOptInCardProps) {
   const [supported, setSupported] = useState(false);
   const [enabled, setEnabled] = useState(initialEnabled);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const embedded = variant === 'embedded';
 
   const loadVapidPublicKey = async (): Promise<string> => {
     const keyResponse = await fetch('/api/push/subscribe');
@@ -179,11 +190,13 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
   const enablePush = async () => {
     setBusy(true);
     setMessage(null);
+    onEnableStart?.();
 
     try {
       setMessage('Prüfe Browser-Permission …');
       const hasPermission = await ensureNotificationPermission();
       if (!hasPermission) {
+        onEnableError?.('Benachrichtigungsberechtigung wurde nicht erteilt.');
         return;
       }
 
@@ -214,10 +227,12 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
 
       setEnabled(true);
       setMessage('Push-Benachrichtigungen sind aktiv.');
+      onEnableSuccess?.();
     } catch (error) {
       const fallback = 'Push konnte nicht aktiviert werden.';
       const detail = error instanceof Error ? error.message : fallback;
       setMessage(detail || fallback);
+      onEnableError?.(detail || fallback);
     } finally {
       setBusy(false);
     }
@@ -257,38 +272,42 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
 
   if (!supported) {
     return (
-      <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4 text-sm text-[rgb(var(--color-text-secondary))]">
+      <div className={embedded ? 'text-xs text-[rgb(var(--color-text-secondary))]' : 'rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4 text-sm text-[rgb(var(--color-text-secondary))]'}>
         Push-Benachrichtigungen sind hier nicht verfügbar. Ursache: unsicherer Kontext (kein HTTPS/localhost) oder fehlende Browser-Unterstützung.
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-[rgb(var(--color-text))]">Push-Benachrichtigungen</h2>
-          <p className="mt-2 text-sm text-[rgb(var(--color-text-secondary))]">
-            Erhalte automatische Hinweise, wenn relevante Vertretungen deinen Stundenplan betreffen.
-          </p>
+    <div className={embedded ? '' : 'rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4'}>
+      {!embedded ? (
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-[rgb(var(--color-text))]">Push-Benachrichtigungen</h2>
+            <p className="mt-2 text-sm text-[rgb(var(--color-text-secondary))]">
+              Erhalte automatische Hinweise, wenn relevante Vertretungen deinen Stundenplan betreffen.
+            </p>
+          </div>
+          {enabled ? <Bell className="h-6 w-6" aria-hidden="true" /> : <BellOff className="h-6 w-6" aria-hidden="true" />}
         </div>
-        {enabled ? <Bell className="h-6 w-6" aria-hidden="true" /> : <BellOff className="h-6 w-6" aria-hidden="true" />}
-      </div>
+      ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className={`${embedded ? 'flex flex-wrap gap-2' : 'mt-4 flex flex-wrap gap-2'}`}>
         {enabled ? (
-          <Button type="button" variant="outline" onClick={disablePush} loading={busy}>
+          <Button type="button" size={embedded ? 'sm' : 'default'} variant="outline" onClick={disablePush} loading={busy}>
             Deaktivieren
           </Button>
         ) : (
-          <Button type="button" onClick={enablePush} loading={busy}>
+          <Button type="button" size={embedded ? 'sm' : 'default'} onClick={enablePush} loading={busy}>
             Aktivieren
           </Button>
         )}
       </div>
       {message ? (
         <p
-          className="mt-3 rounded-md bg-[rgb(var(--color-background)/0.85)] px-3 py-2 text-sm text-[rgb(var(--color-text-secondary))]"
+          className={`rounded-md bg-[rgb(var(--color-background)/0.85)] px-3 py-2 text-[rgb(var(--color-text-secondary))] ${
+            embedded ? 'mt-2 text-xs' : 'mt-3 text-sm'
+          }`}
           aria-live="polite"
         >
           {message}
