@@ -386,7 +386,7 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {isOnboardingMode ? (
         <div className="rounded-2xl border border-[rgb(var(--color-warning)/0.35)] bg-[rgb(var(--color-warning)/0.08)] p-4 text-sm text-[rgb(var(--color-text))]">
           Du kannst das Onboarding überspringen. Ohne Stundenplan sind persönliche Benachrichtigungen deaktiviert.

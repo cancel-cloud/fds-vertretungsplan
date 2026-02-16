@@ -78,14 +78,17 @@ export function SubstitutionCard({ substitution, className = '' }: SubstitutionC
   const timeDisplay = formatTimeDisplay(substitution.time, substitution.hours);
 
   return (
-    <Card className={`p-4 border-l-4 hover:shadow-md transition-shadow duration-200 ${categoryColorClass} ${className}`}>
+    <Card
+      interactive
+      className={`group p-4 border-l-4 ${categoryColorClass} ${className}`}
+    >
       <div className="space-y-3">
         {/* Header with Class and Type */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-[rgb(var(--color-text))]">
             {substitution.group}
           </h3>
-          <Badge className={`text-sm ${badgeColorClass}`}>
+          <Badge className={`text-sm motion-safe-base ${badgeColorClass}`}>
             {substitution.type}
           </Badge>
         </div>
@@ -94,7 +97,7 @@ export function SubstitutionCard({ substitution, className = '' }: SubstitutionC
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {timeDisplay && (
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[rgb(var(--color-text-secondary))]" />
+              <Clock className="h-4 w-4 text-[rgb(var(--color-text-secondary))] transition-colors duration-200 group-hover:text-[rgb(var(--color-primary))]" />
               <span className="text-sm text-[rgb(var(--color-text))]">
                 {timeDisplay}
               </span>
@@ -103,7 +106,7 @@ export function SubstitutionCard({ substitution, className = '' }: SubstitutionC
           
           {substitution.subject && (
             <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-[rgb(var(--color-text-secondary))]" />
+              <BookOpen className="h-4 w-4 text-[rgb(var(--color-text-secondary))] transition-colors duration-200 group-hover:text-[rgb(var(--color-primary))]" />
               <span className="text-sm text-[rgb(var(--color-text))]">
                 {substitution.subject}
               </span>
@@ -115,7 +118,7 @@ export function SubstitutionCard({ substitution, className = '' }: SubstitutionC
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {substitution.room && (
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-[rgb(var(--color-text-secondary))]" />
+              <MapPin className="h-4 w-4 text-[rgb(var(--color-text-secondary))] transition-colors duration-200 group-hover:text-[rgb(var(--color-primary))]" />
               <span className="text-sm text-[rgb(var(--color-text))]">
                 {substitution.room}
               </span>
@@ -124,7 +127,7 @@ export function SubstitutionCard({ substitution, className = '' }: SubstitutionC
           
           {substitution.teacher && (
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-[rgb(var(--color-text-secondary))]" />
+              <User className="h-4 w-4 text-[rgb(var(--color-text-secondary))] transition-colors duration-200 group-hover:text-[rgb(var(--color-primary))]" />
               <span className="text-sm text-[rgb(var(--color-text))]">
                 {substitution.teacher}
               </span>

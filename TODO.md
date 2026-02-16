@@ -220,3 +220,6 @@
 
 # Smart Search for search
 - [ ] Make seach item smart searchable so that i can search for exaple 10AKF and get all the information shown for the class 10A KF so simularity search
+
+# Docs
+- [ ] 

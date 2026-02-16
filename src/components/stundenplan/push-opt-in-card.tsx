@@ -44,9 +44,6 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
   const [enabled, setEnabled] = useState(initialEnabled);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [permissionState, setPermissionState] = useState<NotificationPermission | 'unsupported'>('unsupported');
-  const [isSecureContextState, setIsSecureContextState] = useState(false);
-  const [origin, setOrigin] = useState<string>('');
 
   const loadVapidPublicKey = async (): Promise<string> => {
     const keyResponse = await fetch('/api/push/subscribe');
@@ -104,13 +101,6 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
     const isSecure = window.isSecureContext;
     const isSupported = isSecure && 'serviceWorker' in navigator && 'PushManager' in window;
     setSupported(isSupported);
-    setIsSecureContextState(isSecure);
-    setOrigin(window.location.origin);
-    if ('Notification' in window) {
-      setPermissionState(Notification.permission);
-    } else {
-      setPermissionState('unsupported');
-    }
 
     if (!isSupported) {
       if (!isSecure) {
@@ -159,12 +149,9 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
     }
 
     if (!('Notification' in window)) {
-      setPermissionState('unsupported');
       setMessage('Dieser Browser unterstützt keine Benachrichtigungs-Permissions.');
       return false;
     }
-
-    setPermissionState(Notification.permission);
 
     if (Notification.permission === 'granted') {
       return true;
@@ -172,7 +159,6 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
 
     if (Notification.permission === 'default') {
       const permission = await Notification.requestPermission();
-      setPermissionState(permission);
       if (permission === 'granted') {
         return true;
       }
@@ -184,7 +170,6 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
       }
     }
 
-    setPermissionState(Notification.permission);
     setMessage(
       'Benachrichtigungen sind im Browser blockiert. In Chrome: Schloss-Symbol -> Website-Einstellungen -> Benachrichtigungen -> Zulassen.'
     );
@@ -234,9 +219,6 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
       const detail = error instanceof Error ? error.message : fallback;
       setMessage(detail || fallback);
     } finally {
-      if ('Notification' in window) {
-        setPermissionState(Notification.permission);
-      }
       setBusy(false);
     }
   };
@@ -280,11 +262,11 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-[rgb(var(--color-text))]">Push-Benachrichtigungen</h2>
-          <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+          <p className="mt-2 text-sm text-[rgb(var(--color-text-secondary))]">
             Erhalte automatische Hinweise, wenn relevante Vertretungen deinen Stundenplan betreffen.
           </p>
         </div>
-        {enabled ? <Bell className="h-5 w-5" aria-hidden="true" /> : <BellOff className="h-5 w-5" aria-hidden="true" />}
+        {enabled ? <Bell className="h-6 w-6" aria-hidden="true" /> : <BellOff className="h-6 w-6" aria-hidden="true" />}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -298,22 +280,11 @@ export function PushOptInCard({ initialEnabled }: PushOptInCardProps) {
           </Button>
         )}
       </div>
-
-      <p className="mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
-        Browser-Permission:{' '}
-        {permissionState === 'granted'
-          ? 'erlaubt'
-          : permissionState === 'denied'
-            ? 'blockiert'
-            : permissionState === 'default'
-              ? 'noch nicht entschieden'
-              : 'nicht unterstützt'}
-      </p>
-      <p className="mt-1 text-xs text-[rgb(var(--color-text-secondary))]">
-        Kontext: {isSecureContextState ? 'sicher' : 'unsicher'} ({origin})
-      </p>
       {message ? (
-        <p className="mt-3 rounded-md bg-[rgb(var(--color-background)/0.85)] px-3 py-2 text-sm text-[rgb(var(--color-text-secondary))]" aria-live="polite">
+        <p
+          className="mt-3 rounded-md bg-[rgb(var(--color-background)/0.85)] px-3 py-2 text-sm text-[rgb(var(--color-text-secondary))]"
+          aria-live="polite"
+        >
           {message}
         </p>
       ) : null}
