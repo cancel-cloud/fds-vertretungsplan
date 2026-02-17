@@ -230,6 +230,11 @@ body {
   outline-offset: 2px;
 }
 
+[cmdk-input]:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
 /* Skeleton animation */
 @keyframes skeleton-loading {
   0% {

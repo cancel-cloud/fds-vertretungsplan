@@ -3,6 +3,7 @@ export type AuthRole = 'USER' | 'ADMIN';
 export type Weekday = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI';
 
 export type WeekMode = 'ALL' | 'EVEN' | 'ODD';
+export type LessonDuration = 1 | 2 | 3 | 4;
 
 export interface AuthUser {
   id: string;
@@ -33,7 +34,7 @@ export interface TimetableEntryDto {
   userId: string;
   weekday: Weekday;
   startPeriod: number;
-  duration: 1 | 2;
+  duration: LessonDuration;
   subjectCode: string;
   teacherCode: string;
   room: string | null;
@@ -59,7 +60,7 @@ export interface TimetablePresetDto {
 export interface TimetableEntryInput {
   weekday: Weekday;
   startPeriod: number;
-  duration: 1 | 2;
+  duration: LessonDuration;
   subjectCode: string;
   teacherCode: string;
   room?: string | null;

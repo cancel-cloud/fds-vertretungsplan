@@ -42,8 +42,9 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const body = (await req.json()) as { entries?: unknown; skipped?: boolean };
+    const body = (await req.json()) as { entries?: unknown; skipped?: boolean; allowOverlaps?: boolean };
     const skipped = Boolean(body.skipped);
+    const allowOverlaps = body.allowOverlaps === true;
 
     if (skipped) {
       await prisma.user.update({
@@ -65,7 +66,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ entries: [], presets: presets.map(toTimetablePresetDto) });
     }
 
-    const normalizedEntries = validateTimetableEntries(body.entries ?? []);
+    const normalizedEntries = validateTimetableEntries(body.entries ?? [], { allowOverlaps });
 
     const teacherCodes = [...new Set(normalizedEntries.map((entry) => entry.teacherCode))];
     const teachers = await prisma.teacherDirectory.findMany({

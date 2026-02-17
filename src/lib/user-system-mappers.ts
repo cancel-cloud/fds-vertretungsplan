@@ -1,5 +1,5 @@
 import { TeacherDirectory, TimetableEntry, TimetablePreset, User } from '@prisma/client';
-import { AuthUser, TeacherDto, TimetableEntryDto, TimetablePresetDto } from '@/types/user-system';
+import { AuthUser, LessonDuration, TeacherDto, TimetableEntryDto, TimetablePresetDto } from '@/types/user-system';
 
 export const toAuthUserDto = (user: User): AuthUser => ({
   id: user.id,
@@ -27,7 +27,7 @@ export const toTimetableEntryDto = (
   userId: entry.userId,
   weekday: entry.weekday,
   startPeriod: entry.startPeriod,
-  duration: entry.duration as 1 | 2,
+  duration: entry.duration as LessonDuration,
   subjectCode: entry.subjectCode,
   teacherCode: entry.teacherCode,
   room: entry.room,

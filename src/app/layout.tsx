@@ -3,6 +3,8 @@ import './globals.css';
 import { AppErrorBoundary } from '@/components/error-boundary';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { PostHogProvider } from '@/providers/posthog-provider';
+import { GlobalCommandMenu } from '@/components/command/global-command-menu';
+import { isDemoMode } from '@/lib/demo-config';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -29,6 +31,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const demoMode = isDemoMode();
+
   return (
     <html lang="de" suppressHydrationWarning>
       <body className="antialiased">
@@ -42,6 +46,7 @@ export default function RootLayout({
           <ThemeProvider>
             <PostHogProvider>
               {children}
+              <GlobalCommandMenu isDemoMode={demoMode} />
               <Analytics />
               <SpeedInsights />
             </PostHogProvider>
