@@ -1,12 +1,12 @@
 import { ProcessedSubstitution } from '@/types';
-import { WeekMode, Weekday } from '@/types/user-system';
+import { LessonDuration, WeekMode, Weekday } from '@/types/user-system';
 import { appliesToWeekMode, periodsForEntry, weekdayFromDate } from '@/lib/timetable';
 
 export interface TimetableMatchEntry {
   id?: string;
   weekday: Weekday;
   startPeriod: number;
-  duration: 1 | 2;
+  duration: LessonDuration;
   subjectCode: string;
   teacherCode: string;
   room: string | null;

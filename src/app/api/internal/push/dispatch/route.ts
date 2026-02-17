@@ -13,6 +13,7 @@ import {
 import { fetchUntisRows, toUntisDateNumber } from '@/lib/substitution-fetcher';
 import { verifyQstashSignature } from '@/lib/qstash';
 import { isDemoMode, resolveDemoAwareEnv } from '@/lib/demo-config';
+import { LessonDuration } from '@/types/user-system';
 
 const TIMEZONE = process.env.APP_TIMEZONE ?? 'Europe/Berlin';
 
@@ -59,7 +60,7 @@ const toTimetableMatchEntries = (entries: Array<{
     id: entry.id,
     weekday: entry.weekday,
     startPeriod: entry.startPeriod,
-    duration: entry.duration as 1 | 2,
+    duration: entry.duration as LessonDuration,
     subjectCode: entry.subjectCode,
     teacherCode: entry.teacherCode,
     room: entry.room,

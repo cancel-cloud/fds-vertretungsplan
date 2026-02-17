@@ -236,6 +236,7 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false, isDemoMod
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
   const { capture, isFeatureEnabled } = usePostHogContext();
   const demoAnchorDate = useMemo(() => new Date(DEMO_ANCHOR_DATE), []);
   const demoMinDate = useMemo(() => new Date(DEMO_RANGE_START_DATE), []);
@@ -273,6 +274,11 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false, isDemoMod
       return normalized;
     });
   }, [isDemoMode]);
+
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || '';
+    setFilterState((prev) => (prev.search === urlSearch ? prev : { ...prev, search: urlSearch }));
+  }, [searchParams, searchParamsString]);
 
   const { filteredSubstitutions, availableCategories, stats } = useMemo(() => {
     const sorted = sortSubstitutions(substitutions);

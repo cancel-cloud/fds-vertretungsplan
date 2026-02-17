@@ -94,6 +94,7 @@ NEXT_PUBLIC_POSTHOG_KEY=
 NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
 POSTHOG_API_KEY=
 POSTHOG_HOST=https://eu.i.posthog.com
+
 ```
 
 ### 3) VAPID Keys generieren
@@ -199,6 +200,16 @@ Ohne diese Kombination bleibt die normale Delta-Logik aktiv.
 - `/stundenplan/stundenplan`
 - `/stundenplan/settings`
 - `/stundenplan/admin`
+
+---
+
+## ⌨️ Command Menu
+
+- Öffnen auf allen Seiten mit `Cmd + K` (macOS) oder `Ctrl + K` (Windows/Linux)
+- Basisaktionen: Home, Dashboard, Suche
+- Auth-Aktionen: Login/Register oder Logout/Settings/Stundenplan (abhängig von Session)
+- Admin-Aktionen: Admin Panel + Admin Setup (nur Rolle `ADMIN`)
+- Debug-Aktion: `Generate test data` nur bei `APP_MODE=demo` und Rolle `ADMIN` (öffnet `/stundenplan/admin`)
 
 ---
 

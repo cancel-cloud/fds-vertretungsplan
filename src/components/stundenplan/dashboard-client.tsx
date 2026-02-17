@@ -17,7 +17,7 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ApplePushPromoCard } from '@/components/stundenplan/apple-push-promo-card';
 import { DashboardScope, DASHBOARD_SCOPE_PARAM, parseDashboardScope } from '@/lib/dashboard-scope';
-import { WeekMode, Weekday } from '@/types/user-system';
+import { LessonDuration, WeekMode, Weekday } from '@/types/user-system';
 import {
   DEMO_ANCHOR_DATE,
   DEMO_RANGE_END_DATE,
@@ -46,7 +46,7 @@ interface TimetableEntryResponse {
   id: string;
   weekday: Weekday;
   startPeriod: number;
-  duration: 1 | 2;
+  duration: LessonDuration;
   subjectCode: string;
   teacherCode: string;
   room: string | null;

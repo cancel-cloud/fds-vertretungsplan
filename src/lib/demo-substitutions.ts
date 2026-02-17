@@ -1,7 +1,7 @@
 import { ProcessedSubstitution, SubstitutionType, WebUntisSubstitutionRow } from '@/types';
 import { processApiResponse } from '@/lib/data-processing';
 import { TimetableMatchEntry, findRelevantSubstitutions } from '@/lib/schedule-matching';
-import { WeekMode, Weekday } from '@/types/user-system';
+import { LessonDuration, WeekMode, Weekday } from '@/types/user-system';
 import { appliesToWeekMode } from '@/lib/timetable';
 import {
   DEMO_ANCHOR_DATE,
@@ -198,11 +198,18 @@ const toDateList = (start: Date, end: Date): Date[] => {
 
 const toMatchEntries = (entries: TimetableEntryLike[]): TimetableMatchEntry[] =>
   entries
-    .filter((entry) => (entry.duration === 1 || entry.duration === 2) && entry.startPeriod >= 1 && entry.startPeriod <= 16)
+    .filter(
+      (entry) =>
+        entry.duration >= 1 &&
+        entry.duration <= 4 &&
+        entry.startPeriod >= 1 &&
+        entry.startPeriod <= 16 &&
+        entry.startPeriod + entry.duration - 1 <= 16
+    )
     .map((entry) => ({
       weekday: entry.weekday,
       startPeriod: entry.startPeriod,
-      duration: entry.duration as 1 | 2,
+      duration: entry.duration as LessonDuration,
       subjectCode: normalizeToken(entry.subjectCode),
       teacherCode: normalizeToken(entry.teacherCode),
       room: entry.room ? entry.room.trim() : null,

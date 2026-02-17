@@ -14,8 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { TimetableEntryInput, WeekMode, Weekday } from '@/types/user-system';
-import { validateTimetableEntries } from '@/lib/timetable';
+import { LessonDuration, TimetableEntryInput, WeekMode, Weekday } from '@/types/user-system';
+import { findTimetableConflicts, TimetableConflict, validateTimetableEntries } from '@/lib/timetable';
 
 interface LocalEntry extends TimetableEntryInput {
   id: string;
@@ -46,6 +46,11 @@ const WEEK_MODE_LABELS: Record<WeekMode, string> = {
 const PERIODS = Array.from({ length: 16 }, (_, index) => index + 1);
 
 const createLocalId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const getMaxUsedPeriod = (entries: Array<{ startPeriod: number; duration: LessonDuration }>): number =>
+  entries.reduce((maxValue, entry) => Math.max(maxValue, entry.startPeriod + entry.duration - 1), 8);
+const MAX_PERIOD = 16;
+const MAX_DURATION = 4;
+const DURATION_OPTIONS: LessonDuration[] = [1, 2, 3, 4];
 
 interface TeacherOption {
   code: string;
@@ -81,7 +86,8 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
 
   const [selectedWeekday, setSelectedWeekday] = useState<Weekday>('MON');
   const [selectedStartPeriod, setSelectedStartPeriod] = useState(1);
-  const [selectedDuration, setSelectedDuration] = useState<1 | 2>(1);
+  const [selectedEndPeriod, setSelectedEndPeriod] = useState(1);
+  const [selectedDuration, setSelectedDuration] = useState<LessonDuration>(1);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
 
   const [visiblePeriodsCount, setVisiblePeriodsCount] = useState(8);
@@ -90,6 +96,8 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
   const [teacherCode, setTeacherCode] = useState('');
   const [room, setRoom] = useState('');
   const [weekMode, setWeekMode] = useState<WeekMode>('ALL');
+  const [overlapConfirmOpen, setOverlapConfirmOpen] = useState(false);
+  const [overlapConflicts, setOverlapConflicts] = useState<TimetableConflict[]>([]);
 
   const sortedEntries = useMemo(
     () =>
@@ -106,6 +114,17 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
   );
 
   const displayedPeriods = useMemo(() => PERIODS.slice(0, visiblePeriodsCount), [visiblePeriodsCount]);
+  const overlapConflictSummaries = useMemo(
+    () =>
+      overlapConflicts.map((conflict) => {
+        const dayLabel = WEEKDAY_ORDER.find((day) => day.key === conflict.weekday)?.label ?? conflict.weekday;
+        const periodsLabel = conflict.periods.join(', ');
+        const leftLabel = `${conflict.left.subjectCode}/${conflict.left.teacherCode}`;
+        const rightLabel = `${conflict.right.subjectCode}/${conflict.right.teacherCode}`;
+        return `${dayLabel}, Stunde(n) ${periodsLabel}: ${leftLabel} ↔ ${rightLabel}`;
+      }),
+    [overlapConflicts]
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -127,7 +146,7 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
             id: string;
             weekday: Weekday;
             startPeriod: number;
-            duration: 1 | 2;
+            duration: LessonDuration;
             subjectCode: string;
             teacherCode: string;
             room: string | null;
@@ -149,12 +168,7 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
 
         setEntries(loadedEntries);
         setPresets(timetableData.presets ?? []);
-
-        const maxUsedPeriod = loadedEntries.reduce(
-          (maxValue, entry) => Math.max(maxValue, entry.startPeriod + entry.duration - 1),
-          8
-        );
-        setVisiblePeriodsCount(Math.min(16, maxUsedPeriod));
+        setVisiblePeriodsCount(Math.min(16, getMaxUsedPeriod(loadedEntries)));
 
         if (teachersRes.ok) {
           const teacherData = (await teachersRes.json()) as { teachers: TeacherOption[] };
@@ -200,6 +214,33 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
     };
   }, [durationMenu]);
 
+  const getMaxEndPeriodForStart = (startPeriod: number): number => Math.min(MAX_PERIOD, startPeriod + MAX_DURATION - 1);
+  const toDuration = (startPeriod: number, endPeriod: number): LessonDuration =>
+    Math.max(1, Math.min(MAX_DURATION, endPeriod - startPeriod + 1)) as LessonDuration;
+
+  const setStartPeriodInForm = (startPeriod: number) => {
+    const boundedStart = Math.max(1, Math.min(MAX_PERIOD, startPeriod));
+    const maxEndForStart = getMaxEndPeriodForStart(boundedStart);
+    const nextEnd = Math.max(boundedStart, Math.min(selectedEndPeriod, maxEndForStart));
+    setSelectedStartPeriod(boundedStart);
+    setSelectedEndPeriod(nextEnd);
+    setSelectedDuration(toDuration(boundedStart, nextEnd));
+  };
+
+  const setEndPeriodInForm = (endPeriod: number) => {
+    const maxEndForStart = getMaxEndPeriodForStart(selectedStartPeriod);
+    const boundedEnd = Math.max(selectedStartPeriod, Math.min(maxEndForStart, endPeriod));
+    setSelectedEndPeriod(boundedEnd);
+    setSelectedDuration(toDuration(selectedStartPeriod, boundedEnd));
+  };
+
+  const setDurationInForm = (duration: LessonDuration) => {
+    const maxDuration = Math.min(MAX_DURATION, MAX_PERIOD - selectedStartPeriod + 1) as LessonDuration;
+    const boundedDuration = Math.min(maxDuration, Math.max(1, duration)) as LessonDuration;
+    setSelectedDuration(boundedDuration);
+    setSelectedEndPeriod(selectedStartPeriod + boundedDuration - 1);
+  };
+
   const getCellEntries = (weekday: Weekday, period: number): LocalEntry[] =>
     sortedEntries.filter((entry) => {
       if (entry.weekday !== weekday) {
@@ -218,7 +259,7 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
   ) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const menuWidth = 220;
-    const menuHeight = 120;
+    const menuHeight = 220;
 
     const x = Math.min(Math.max(8, rect.left), window.innerWidth - menuWidth - 8);
     const y = Math.min(rect.bottom + 8, window.innerHeight - menuHeight - 8);
@@ -240,7 +281,7 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
     setWeekMode('ALL');
   };
 
-  const startCreateFromMenu = (duration: 1 | 2) => {
+  const startCreateFromMenu = (duration: LessonDuration) => {
     if (!durationMenu) {
       return;
     }
@@ -249,6 +290,7 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
     setSelectedWeekday(durationMenu.weekday);
     setSelectedStartPeriod(durationMenu.startPeriod);
     setSelectedDuration(duration);
+    setSelectedEndPeriod(durationMenu.startPeriod + duration - 1);
     resetEntryForm();
     setWeekMode(durationMenu.preferredWeekMode ?? 'ALL');
     setDurationMenu(null);
@@ -260,6 +302,7 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
     setSelectedWeekday(entry.weekday);
     setSelectedStartPeriod(entry.startPeriod);
     setSelectedDuration(entry.duration);
+    setSelectedEndPeriod(entry.startPeriod + entry.duration - 1);
     setSubjectCode(entry.subjectCode);
     setTeacherCode(entry.teacherCode);
     setRoom(entry.room ?? '');
@@ -279,12 +322,13 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
     const normalizedSubjectCode = subjectCode.trim().toUpperCase();
     const normalizedTeacherCode = teacherCode.trim().toUpperCase();
     const normalizedRoom = room.trim();
+    const normalizedDuration = toDuration(selectedStartPeriod, selectedEndPeriod);
 
     const nextEntry: LocalEntry = {
       id: editingEntryId ?? createLocalId(),
       weekday: selectedWeekday,
       startPeriod: selectedStartPeriod,
-      duration: selectedDuration,
+      duration: normalizedDuration,
       subjectCode: normalizedSubjectCode,
       teacherCode: normalizedTeacherCode,
       room: normalizedRoom.length > 0 ? normalizedRoom : null,
@@ -296,7 +340,7 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
         ? entries.map((entry) => (entry.id === editingEntryId ? nextEntry : entry))
         : [...entries, nextEntry];
 
-      validateTimetableEntries(updatedEntries);
+      validateTimetableEntries(updatedEntries, { allowOverlaps: true });
       setEntries(updatedEntries);
       setEntryDialogOpen(false);
       setEditingEntryId(null);
@@ -311,11 +355,11 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
     setEntries((current) => current.filter((entry) => entry.id !== entryId));
   };
 
-  const saveEntries = async () => {
+  const persistEntries = async (allowOverlaps: boolean) => {
     try {
       setIsSaving(true);
       setError(null);
-      validateTimetableEntries(entries);
+      validateTimetableEntries(entries, { allowOverlaps: true });
 
       const response = await fetch('/api/timetable', {
         method: 'PUT',
@@ -332,6 +376,7 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
             room: entry.room,
             weekMode: entry.weekMode,
           })),
+          ...(allowOverlaps ? { allowOverlaps: true } : {}),
         }),
       });
 
@@ -347,6 +392,29 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const saveEntries = async () => {
+    try {
+      const normalizedEntries = validateTimetableEntries(entries, { allowOverlaps: true });
+      const conflicts = findTimetableConflicts(normalizedEntries);
+
+      if (conflicts.length > 0) {
+        setOverlapConflicts(conflicts);
+        setOverlapConfirmOpen(true);
+        setError(null);
+        return;
+      }
+
+      await persistEntries(false);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Speichern fehlgeschlagen.');
+    }
+  };
+
+  const confirmSaveWithOverlaps = async () => {
+    setOverlapConfirmOpen(false);
+    await persistEntries(true);
   };
 
   const skipOnboarding = async () => {
@@ -419,10 +487,9 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
 
                 {WEEKDAY_ORDER.map((day) => {
                   const cellEntries = getCellEntries(day.key, period);
-                  const hasAll = cellEntries.some((entry) => entry.weekMode === 'ALL');
                   const hasEven = cellEntries.some((entry) => entry.weekMode === 'EVEN');
                   const hasOdd = cellEntries.some((entry) => entry.weekMode === 'ODD');
-                  const canAdd = !hasAll && !(hasEven && hasOdd);
+                  const canAdd = true;
                   const preferredWeekMode: WeekMode | null = hasEven && !hasOdd ? 'ODD' : hasOdd && !hasEven ? 'EVEN' : null;
 
                   return (
@@ -431,14 +498,16 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
                         {cellEntries.map((entry) => {
                           const isEntryStart = period === entry.startPeriod;
                           const isEntryEnd = period === entry.startPeriod + entry.duration - 1;
-                          const isDouble = entry.duration === 2;
+                          const isMultiPeriod = entry.duration > 1;
                           const widthClass = entry.weekMode === 'ALL' ? 'w-full' : 'w-[calc(50%-0.25rem)]';
                           const shapeClass =
-                            isDouble && !isEntryStart
-                              ? 'rounded-t-none border-t-0'
-                              : isDouble && !isEntryEnd
-                                ? 'rounded-b-none border-b-0'
-                                : 'rounded-xl';
+                            isMultiPeriod && !isEntryStart && !isEntryEnd
+                              ? 'rounded-none border-y-0'
+                              : isMultiPeriod && !isEntryStart
+                                ? 'rounded-t-none border-t-0'
+                                : isMultiPeriod && !isEntryEnd
+                                  ? 'rounded-b-none border-b-0'
+                                  : 'rounded-xl';
 
                           return (
                             <div
@@ -552,24 +621,59 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
             Stunde {durationMenu.startPeriod}: Eintrag anlegen
           </p>
           <div className="space-y-1">
-            <button
-              type="button"
-              onClick={() => startCreateFromMenu(1)}
-              className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[rgb(var(--color-background))]"
-            >
-              Einzelstunde
-            </button>
-            <button
-              type="button"
-              onClick={() => startCreateFromMenu(2)}
-              disabled={durationMenu.startPeriod === 16}
-              className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[rgb(var(--color-background))] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Doppelstunde
-            </button>
+            {DURATION_OPTIONS.map((durationOption) => {
+              const disabled = durationMenu.startPeriod + durationOption - 1 > MAX_PERIOD;
+              return (
+                <button
+                  key={`duration-option-${durationOption}`}
+                  type="button"
+                  onClick={() => startCreateFromMenu(durationOption)}
+                  disabled={disabled}
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[rgb(var(--color-background))] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {durationOption} {durationOption === 1 ? 'Stunde' : 'Stunden'}
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}
+
+      <Dialog open={overlapConfirmOpen} onOpenChange={setOverlapConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Überlappungen erkannt</DialogTitle>
+            <DialogDescription>
+              Einige Stunden überlappen sich. Du kannst zurückgehen und korrigieren oder trotzdem speichern.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
+            {overlapConflictSummaries.slice(0, 12).map((summary, index) => (
+              <p
+                key={`overlap-summary-${index}`}
+                className="rounded-md bg-[rgb(var(--color-warning)/0.12)] px-3 py-2 text-sm text-[rgb(var(--color-text))]"
+              >
+                {summary}
+              </p>
+            ))}
+            {overlapConflictSummaries.length > 12 ? (
+              <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+                +{overlapConflictSummaries.length - 12} weitere Konflikte
+              </p>
+            ) : null}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOverlapConfirmOpen(false)}>
+              Zurück bearbeiten
+            </Button>
+            <Button type="button" onClick={confirmSaveWithOverlaps} loading={isSaving}>
+              Trotzdem speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={entryDialogOpen}
@@ -584,12 +688,94 @@ export function TimetableOnboarding({ mode = 'onboarding' }: TimetableOnboarding
           <DialogHeader>
             <DialogTitle>{editingEntryId ? 'Eintrag bearbeiten' : 'Eintrag hinzufügen'}</DialogTitle>
             <DialogDescription>
-              {WEEKDAY_ORDER.find((day) => day.key === selectedWeekday)?.label}, Start Stunde {selectedStartPeriod},
-              Dauer {selectedDuration}
+              {WEEKDAY_ORDER.find((day) => day.key === selectedWeekday)?.label}, Stunde {selectedStartPeriod} bis{' '}
+              {selectedEndPeriod}, Dauer {selectedDuration}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="space-y-1">
+                <label htmlFor="weekday-select" className="text-sm font-medium">
+                  Tag
+                </label>
+                <select
+                  id="weekday-select"
+                  name="weekday-select"
+                  className="h-9 w-full rounded-md border border-[rgb(var(--color-border)/0.25)] bg-transparent px-3 text-sm"
+                  value={selectedWeekday}
+                  onChange={(event) => setSelectedWeekday(event.target.value as Weekday)}
+                >
+                  {WEEKDAY_ORDER.map((day) => (
+                    <option key={`weekday-option-${day.key}`} value={day.key}>
+                      {day.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="start-period-select" className="text-sm font-medium">
+                  Startstunde
+                </label>
+                <select
+                  id="start-period-select"
+                  name="start-period-select"
+                  className="h-9 w-full rounded-md border border-[rgb(var(--color-border)/0.25)] bg-transparent px-3 text-sm"
+                  value={selectedStartPeriod}
+                  onChange={(event) => setStartPeriodInForm(Number(event.target.value))}
+                >
+                  {PERIODS.map((period) => (
+                    <option key={`start-period-${period}`} value={period}>
+                      {period}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="end-period-select" className="text-sm font-medium">
+                  Endstunde
+                </label>
+                <select
+                  id="end-period-select"
+                  name="end-period-select"
+                  className="h-9 w-full rounded-md border border-[rgb(var(--color-border)/0.25)] bg-transparent px-3 text-sm"
+                  value={selectedEndPeriod}
+                  onChange={(event) => setEndPeriodInForm(Number(event.target.value))}
+                >
+                  {PERIODS.filter(
+                    (period) => period >= selectedStartPeriod && period <= getMaxEndPeriodForStart(selectedStartPeriod)
+                  ).map((period) => (
+                    <option key={`end-period-${period}`} value={period}>
+                      {period}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="duration-select" className="text-sm font-medium">
+                  Dauer
+                </label>
+                <select
+                  id="duration-select"
+                  name="duration-select"
+                  className="h-9 w-full rounded-md border border-[rgb(var(--color-border)/0.25)] bg-transparent px-3 text-sm"
+                  value={selectedDuration}
+                  onChange={(event) => setDurationInForm(Number(event.target.value) as LessonDuration)}
+                >
+                  {DURATION_OPTIONS.filter((durationOption) => selectedStartPeriod + durationOption - 1 <= MAX_PERIOD).map(
+                    (durationOption) => (
+                      <option key={`duration-option-${durationOption}`} value={durationOption}>
+                        {durationOption} {durationOption === 1 ? 'Stunde' : 'Stunden'}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            </div>
+
             {presets.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Vorlagen wiederverwenden</p>
