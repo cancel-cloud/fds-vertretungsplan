@@ -22,6 +22,7 @@ export function AppShell({
   contentClassName = 'mx-auto flex max-w-7xl',
 }: AppShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileMenuId = 'app-shell-mobile-menu';
 
   const toggleMobileMenu = () => {
     const next = !isMobileMenuOpen;
@@ -36,9 +37,9 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-[rgb(var(--color-background))]">
-      <Header onMenuToggle={toggleMobileMenu} />
+      <Header onMenuToggle={toggleMobileMenu} isMenuOpen={isMobileMenuOpen} menuId={mobileMenuId} />
 
-      <MobileMenu isOpen={isMobileMenuOpen} onClose={closeMobileMenu}>
+      <MobileMenu id={mobileMenuId} isOpen={isMobileMenuOpen} onClose={closeMobileMenu}>
         {mobileMenuContent}
       </MobileMenu>
 

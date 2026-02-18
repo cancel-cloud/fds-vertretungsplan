@@ -4,14 +4,16 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
+  id?: string;
   children?: React.ReactNode;
 }
 
-export function MobileMenu({ isOpen, onClose, children }: MobileMenuProps) {
+export function MobileMenu({ isOpen, onClose, id, children }: MobileMenuProps) {
   // Handle escape key and body scroll lock
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -35,11 +37,10 @@ export function MobileMenu({ isOpen, onClose, children }: MobileMenuProps) {
 
   return (
     <div
-      className={`fixed inset-0 z-20 justify-start bg-black/50 transition-opacity duration-200 md:hidden ${
-        isOpen
-          ? 'visible flex opacity-100 pointer-events-auto'
-          : 'invisible flex opacity-0 pointer-events-none'
-      }`}
+      className={cn(
+        'fixed inset-0 z-20 flex items-center justify-end bg-white/80 p-4 transition-opacity duration-300 md:hidden',
+        isOpen ? 'visible opacity-100 pointer-events-auto' : 'invisible opacity-0 pointer-events-none'
+      )}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -47,8 +48,14 @@ export function MobileMenu({ isOpen, onClose, children }: MobileMenuProps) {
       }}
     >
       <div
-        className={`h-full w-[85%] max-w-[350px] overflow-y-auto bg-[rgb(var(--color-surface))]
-          transition-transform duration-200 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        id={id}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menü"
+        className={cn(
+          'h-[70vh] w-full max-w-[360px] overflow-y-auto rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] shadow-xl transition-transform duration-300 ease-out',
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        )}
       >
         {/* Mobile menu header */}
         <div className="flex items-center justify-between p-4 border-b border-[rgb(var(--color-border)/0.3)]">

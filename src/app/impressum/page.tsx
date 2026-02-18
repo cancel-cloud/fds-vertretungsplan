@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { AppShell } from '@/components/layout/app-shell';
-import { MobileThemePanel } from '@/components/layout/mobile-theme-panel';
 import { ImpressumContent } from '@/components/legal/impressum-content';
 
 export const metadata: Metadata = {
@@ -11,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function ImpressumPage() {
   return (
-    <AppShell mobileMenuContent={<MobileThemePanel />} sidebar={<div className="h-80" aria-hidden="true" />}>
+    <AppShell sidebar={<div className="h-80" aria-hidden="true" />}>
       <ImpressumContent />
     </AppShell>
   );
