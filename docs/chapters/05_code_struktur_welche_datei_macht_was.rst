@@ -18,9 +18,7 @@ Datei- und Ordnerlandkarte
    * - Datei oder Ordner
      - Zweck im Gesamtsystem
    * - ``src/app/page.tsx``
-     - Hauptseite, Feature-Flag-Entscheidung Legacy/New UI.
-   * - ``src/app/newui/page.tsx``
-     - Alternative Oberfläche für schrittweise Produktweiterentwicklung.
+     - Auth-aware Hauptseite (öffentlich für Gäste, Dashboard für eingeloggte Nutzer).
    * - ``src/app/api/substitutions/route.ts``
      - API-Proxy mit Rate-Limit, Server-Cache und Fehlernormalisierung.
    * - ``src/app/api/substitutions/route-utils.ts``
