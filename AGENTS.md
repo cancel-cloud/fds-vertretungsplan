@@ -19,6 +19,12 @@ Configuration files are at the repo root (`next.config.ts`, `vitest.config.ts`, 
 - `npm run test:run`: run tests once (CI-friendly).
 - `npm run test:coverage`: run tests with coverage reporting.
 
+## Operational Workflows & Scripts
+- `npm run prisma:generate`: generate Prisma client using `.env.local` (preferred over raw `prisma ...`).
+- `npm run prisma:push`: push Prisma schema to the configured database from `.env.local`.
+- `npm run qstash:schedule`: (re)create the Upstash QStash dispatch schedule after first deploy or config changes.
+- `npm run demo:scheduler:start` / `npm run demo:scheduler:stop`: start/stop the demo mode dispatch scheduler (requires `APP_MODE=demo` and demo env vars).
+
 ## Coding Style & Naming Conventions
 - Language: TypeScript (`.ts`/`.tsx`) with 2-space indentation and semicolons.
 - Formatting: Prettier (`tabWidth: 2`, `trailingComma: es5`) with Tailwind plugin.
