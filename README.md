@@ -194,7 +194,6 @@ Ohne diese Kombination bleibt die normale Delta-Logik aktiv.
 ## 🧭 Relevante Routen
 
 - `/` öffentliche Ansicht
-- `/newui` alternative UI
 - `/stundenplan` Root-Redirect
 - `/stundenplan/login`
 - `/stundenplan/register`

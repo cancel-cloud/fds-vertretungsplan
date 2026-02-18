@@ -23,7 +23,7 @@ export async function LandingHeader() {
           {hasSession ? <HeaderAuthActions role={userRole} /> : null}
           <ThemeToggle />
           {!hasSession ? (
-            <Link href="/stundenplan/login" className={buttonVariants({ size: 'sm' })}>
+            <Link href="/stundenplan/login?next=/" className={buttonVariants({ size: 'sm' })}>
               Login
             </Link>
           ) : null}

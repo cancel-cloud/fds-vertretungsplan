@@ -22,7 +22,7 @@ export function LoginPromoCard({ className }: LoginPromoCardProps) {
           Melde dich an, um deinen persönlichen Stundenplan zu verwalten und Push-Benachrichtigungen zu erhalten.
         </p>
       </div>
-      <Link href="/stundenplan/login" className={cn(buttonVariants({ size: 'sm' }), 'w-full')}>
+      <Link href="/stundenplan/login?next=/" className={cn(buttonVariants({ size: 'sm' }), 'w-full')}>
         Zum Login
       </Link>
     </Card>
