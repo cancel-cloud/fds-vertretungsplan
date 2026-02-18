@@ -85,7 +85,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  return runDispatch(req);
+  void req;
+  return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405, headers: { Allow: 'POST' } });
 }
 
 function hasValidBearerToken(req: NextRequest): boolean {

@@ -3,8 +3,14 @@ import crypto from 'node:crypto';
 import { requireUser } from '@/lib/auth/guards';
 import { prisma } from '@/lib/prisma';
 import { getPushAppName, sendPushMessage } from '@/lib/push';
+import { enforceSameOrigin } from '@/lib/security/request-integrity';
 
 export async function POST(req: Request) {
+  const invalidOriginResponse = enforceSameOrigin(req);
+  if (invalidOriginResponse) {
+    return invalidOriginResponse;
+  }
+
   const auth = await requireUser();
   if (auth.response || !auth.user) {
     return auth.response;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/guards';
 import { prisma } from '@/lib/prisma';
 import { getVapidPublicKey } from '@/lib/push';
+import { enforceSameOrigin } from '@/lib/security/request-integrity';
 
 export async function GET() {
   const vapidPublicKey = getVapidPublicKey();
@@ -13,6 +14,11 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const invalidOriginResponse = enforceSameOrigin(req);
+  if (invalidOriginResponse) {
+    return invalidOriginResponse;
+  }
+
   const auth = await requireUser();
   if (auth.response || !auth.user) {
     return auth.response;

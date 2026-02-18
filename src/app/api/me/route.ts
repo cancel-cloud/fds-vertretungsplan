@@ -5,6 +5,7 @@ import {
   MIN_NOTIFICATION_LOOKAHEAD_SCHOOL_DAYS,
 } from '@/lib/notification-state';
 import { prisma } from '@/lib/prisma';
+import { enforceSameOrigin } from '@/lib/security/request-integrity';
 import { toAuthUserDto } from '@/lib/user-system-mappers';
 
 export async function GET() {
@@ -17,6 +18,11 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
+  const invalidOriginResponse = enforceSameOrigin(req);
+  if (invalidOriginResponse) {
+    return invalidOriginResponse;
+  }
+
   const auth = await requireUser();
   if (auth.response || !auth.user) {
     return auth.response;

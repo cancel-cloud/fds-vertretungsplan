@@ -3,9 +3,15 @@ import { Prisma } from '@prisma/client';
 import { requireAdmin } from '@/lib/auth/guards';
 import { isDemoMode } from '@/lib/demo-config';
 import { prisma } from '@/lib/prisma';
+import { enforceSameOrigin } from '@/lib/security/request-integrity';
 import { DemoDatasetGenerationError, generateDemoDatasetForUser } from '@/lib/demo-substitutions';
 
 export async function POST(req: NextRequest) {
+  const invalidOriginResponse = enforceSameOrigin(req);
+  if (invalidOriginResponse) {
+    return invalidOriginResponse;
+  }
+
   const auth = await requireAdmin();
   if (auth.response || !auth.user) {
     return auth.response;
