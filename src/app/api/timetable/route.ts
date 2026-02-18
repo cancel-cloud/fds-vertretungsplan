@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/guards';
 import { prisma } from '@/lib/prisma';
+import { enforceSameOrigin } from '@/lib/security/request-integrity';
 import { TimetableValidationError, validateTimetableEntries } from '@/lib/timetable';
 import { toTimetableEntryDto, toTimetablePresetDto } from '@/lib/user-system-mappers';
 
@@ -36,6 +37,11 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
+  const invalidOriginResponse = enforceSameOrigin(req);
+  if (invalidOriginResponse) {
+    return invalidOriginResponse;
+  }
+
   const auth = await requireUser();
   if (auth.response || !auth.user) {
     return auth.response;

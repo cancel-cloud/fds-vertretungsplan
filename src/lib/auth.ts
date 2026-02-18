@@ -3,20 +3,43 @@ import { getServerSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { consumeRateLimit, resetRateLimit, resolveClientIp } from '@/lib/security/rate-limit';
 
 export const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 
-export const getAdminEmailSet = (): Set<string> => {
+const LOGIN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_RATE_LIMIT_PER_IP = 20;
+const LOGIN_RATE_LIMIT_PER_EMAIL_IP = 8;
+
+const getNormalizedAdminEmails = (): string[] => {
   const raw = process.env.ADMIN_EMAILS ?? '';
-  return new Set(
-    raw
-      .split(',')
-      .map((email) => email.trim().toLowerCase())
-      .filter((email) => email.length > 0)
-  );
+  return raw
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter((email) => email.length > 0);
 };
 
+export const getAdminEmailSet = (): Set<string> => new Set(getNormalizedAdminEmails());
+
 export const isAdminEmail = (email: string): boolean => getAdminEmailSet().has(normalizeEmail(email));
+
+export const getBootstrapAdminEmail = (): string | null => {
+  const [first] = getNormalizedAdminEmails();
+  return first ?? null;
+};
+
+const getAuthHeaderRecord = (requestLike: unknown): Record<string, string | string[] | undefined> | undefined => {
+  if (!requestLike || typeof requestLike !== 'object') {
+    return undefined;
+  }
+
+  const rawHeaders = (requestLike as { headers?: unknown }).headers;
+  if (!rawHeaders || typeof rawHeaders !== 'object') {
+    return undefined;
+  }
+
+  return rawHeaders as Record<string, string | string[] | undefined>;
+};
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -32,11 +55,31 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'E-Mail', type: 'email' },
         password: { label: 'Passwort', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, requestLike) {
         const email = normalizeEmail(credentials?.email ?? '');
         const password = credentials?.password ?? '';
+        const headers = getAuthHeaderRecord(requestLike);
+        const clientIp = resolveClientIp(headers);
+        const ipRateLimit = consumeRateLimit({
+          key: `login:ip:${clientIp}`,
+          limit: LOGIN_RATE_LIMIT_PER_IP,
+          windowMs: LOGIN_RATE_LIMIT_WINDOW_MS,
+        });
+        if (!ipRateLimit.allowed) {
+          return null;
+        }
 
         if (!email || !password) {
+          return null;
+        }
+
+        const emailIpRateLimitKey = `login:email-ip:${email}:${clientIp}`;
+        const emailIpRateLimit = consumeRateLimit({
+          key: emailIpRateLimitKey,
+          limit: LOGIN_RATE_LIMIT_PER_EMAIL_IP,
+          windowMs: LOGIN_RATE_LIMIT_WINDOW_MS,
+        });
+        if (!emailIpRateLimit.allowed) {
           return null;
         }
 
@@ -52,6 +95,8 @@ export const authOptions: NextAuthOptions = {
         if (!isValid) {
           return null;
         }
+
+        resetRateLimit(emailIpRateLimitKey);
 
         return {
           id: user.id,

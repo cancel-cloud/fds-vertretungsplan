@@ -57,7 +57,9 @@ UNTIS_BASE_URL=https://friedrich-dessauer-schule-limburg.webuntis.com
 
 # Auth
 AUTH_SECRET=replace-with-a-long-random-secret
-ADMIN_EMAILS=
+# Comma-separated allowlist; first entry is bootstrap-first-admin email
+# (required for first registration, otherwise /api/auth/register returns 503 until configured)
+ADMIN_EMAILS=bootstrap-admin@example.com,second-admin@example.com
 APP_TIMEZONE=Europe/Berlin
 BCRYPT_ROUNDS=12  # Password hashing cost factor (10-14 recommended, higher = more secure but slower)
 
@@ -179,7 +181,8 @@ Ohne diese Kombination bleibt die normale Delta-Logik aktiv.
 
 ## 👨‍💼 Admin-Setup (First Run)
 
-- Der **erste registrierte User** wird Admin
+- Der **erste registrierte User** darf nur die **erste E-Mail in `ADMIN_EMAILS`** sein (Bootstrap-Admin)
+- Wenn noch kein Admin existiert und `ADMIN_EMAILS` leer ist, blockiert `/api/auth/register` mit `503`
 - Beim ersten Admin-Setup müssen erlaubte E-Mail-Domains gesetzt werden
 - Danach im Admin-Bereich:
   - Lehrer-Kürzel verwalten
@@ -250,6 +253,13 @@ npm run start
 - Keine Secrets committen
 - Nur `.env.local`/Secret Manager verwenden
 - `AUTH_SECRET` und `PUSH_CRON_SECRET` stark und einzigartig setzen
+- CSRF / Request-Integrity:
+  - Produktion (`NODE_ENV=production`, nicht Demo): mutierende Cookie-Auth-APIs verlangen Same-Origin (`Origin`/`Referer`), sonst `403`
+  - Demo (`APP_MODE=demo`): Request-Integrity-Checks sind absichtlich gelockert
+  - Entwicklung (nicht Produktion): permissiv für lokale Workflows
+- Abuse-Throttling:
+  - Registrierung (`/api/auth/register`) limitiert auf IP + E-Mail und antwortet bei Überschreitung mit `429` + `Retry-After`
+  - Login (Credentials) limitiert auf IP + E-Mail/IP und verweigert bei Überschreitung weitere Versuche
 
 ---
 

@@ -142,6 +142,14 @@ const createRequest = (query: string) =>
     },
   });
 
+const createGetRequest = (query: string) =>
+  new NextRequest(`http://localhost/api/internal/push/dispatch${query}`, {
+    method: 'GET',
+    headers: {
+      authorization: 'Bearer test-secret',
+    },
+  });
+
 describe('api/internal/push/dispatch route', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -302,5 +310,15 @@ describe('api/internal/push/dispatch route', () => {
     expect(body.skippedUnchanged).toBe(2);
     expect(sendPushMessageMock).not.toHaveBeenCalled();
     expect(notificationStateFindManyMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects GET requests with method not allowed', async () => {
+    const { GET } = await import('@/app/api/internal/push/dispatch/route');
+    const response = await GET(createGetRequest('?force=1'));
+    const body = await response.json();
+
+    expect(response.status).toBe(405);
+    expect(body.error).toBe('Method Not Allowed');
+    expect(response.headers.get('Allow')).toBe('POST');
   });
 });

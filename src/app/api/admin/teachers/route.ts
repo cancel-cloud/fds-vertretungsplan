@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/guards';
 import { prisma } from '@/lib/prisma';
+import { enforceSameOrigin } from '@/lib/security/request-integrity';
 import { normalizeCode } from '@/lib/timetable';
 import { toTeacherDto } from '@/lib/user-system-mappers';
 
@@ -32,6 +33,11 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const invalidOriginResponse = enforceSameOrigin(req);
+  if (invalidOriginResponse) {
+    return invalidOriginResponse;
+  }
+
   const auth = await requireAdmin();
   if (auth.response || !auth.user) {
     return auth.response;
@@ -65,6 +71,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const invalidOriginResponse = enforceSameOrigin(req);
+  if (invalidOriginResponse) {
+    return invalidOriginResponse;
+  }
+
   const auth = await requireAdmin();
   if (auth.response || !auth.user) {
     return auth.response;
@@ -136,6 +147,11 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const invalidOriginResponse = enforceSameOrigin(req);
+  if (invalidOriginResponse) {
+    return invalidOriginResponse;
+  }
+
   const auth = await requireAdmin();
   if (auth.response || !auth.user) {
     return auth.response;

@@ -7,21 +7,19 @@
     <list default="true" id="228ae0a9-7468-4548-9b79-c7d65acbd30e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/admin/demo-data/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/admin/demo-data/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/admin/teachers/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/admin/teachers/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/admin/users/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/admin/users/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/auth/register/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/auth/register/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/internal/push/dispatch/route.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/internal/push/dispatch/route.test.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/api/internal/push/dispatch/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/internal/push/dispatch/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/me/route.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/me/route.test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/me/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/me/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/push/subscribe/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/push/subscribe/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/push/test/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/push/test/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/push/unsubscribe/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/push/unsubscribe/route.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/api/timetable/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/timetable/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/globals.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/newui/new-ui-client.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/newui/new-ui-client.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/stundenplan/dashboard-client.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/stundenplan/dashboard-client.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/stundenplan/timetable-onboarding.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/stundenplan/timetable-onboarding.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/demo-substitutions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/demo-substitutions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/schedule-matching.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/schedule-matching.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/timetable.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/timetable.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/user-system-mappers.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/user-system-mappers.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/setup.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/setup.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/types/user-system.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/types/user-system.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/auth.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -174,7 +172,9 @@
       <workItem from="1770846389053" duration="34000" />
       <workItem from="1770912780151" duration="7276000" />
       <workItem from="1770994288696" duration="7450000" />
-      <workItem from="1771322828267" duration="6836000" />
+      <workItem from="1771322828267" duration="9541000" />
+      <workItem from="1771406235100" duration="28000" />
+      <workItem from="1771406264724" duration="1680000" />
     </task>
     <servers />
   </component>

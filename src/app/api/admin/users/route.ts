@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/guards';
 import { prisma } from '@/lib/prisma';
+import { enforceSameOrigin } from '@/lib/security/request-integrity';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
@@ -132,6 +133,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const invalidOriginResponse = enforceSameOrigin(req);
+  if (invalidOriginResponse) {
+    return invalidOriginResponse;
+  }
+
   const auth = await requireAdmin();
   if (auth.response || !auth.user) {
     return auth.response;
