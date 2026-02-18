@@ -4,23 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="228ae0a9-7468-4548-9b79-c7d65acbd30e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/admin/demo-data/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/admin/demo-data/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/admin/teachers/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/admin/teachers/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/admin/users/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/admin/users/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/auth/register/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/auth/register/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/internal/push/dispatch/route.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/internal/push/dispatch/route.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/internal/push/dispatch/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/internal/push/dispatch/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/me/route.test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/me/route.test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/me/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/me/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/push/subscribe/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/push/subscribe/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/push/test/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/push/test/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/push/unsubscribe/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/push/unsubscribe/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/timetable/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/timetable/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/auth.ts" afterDir="false" />
-    </list>
+    <list default="true" id="228ae0a9-7468-4548-9b79-c7d65acbd30e" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -174,7 +158,7 @@
       <workItem from="1770994288696" duration="7450000" />
       <workItem from="1771322828267" duration="9541000" />
       <workItem from="1771406235100" duration="28000" />
-      <workItem from="1771406264724" duration="1680000" />
+      <workItem from="1771406264724" duration="3780000" />
     </task>
     <servers />
   </component>

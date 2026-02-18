@@ -7,6 +7,7 @@ import { GlobalCommandMenu } from '@/components/command/global-command-menu';
 import { isDemoMode } from '@/lib/demo-config';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { SiteFooter } from '@/components/layout/site-footer';
 
 export const metadata: Metadata = {
   title: 'Vertretungsplan - Dessauer Schule Limburg',
@@ -46,6 +47,7 @@ export default function RootLayout({
           <ThemeProvider>
             <PostHogProvider>
               {children}
+              <SiteFooter />
               <GlobalCommandMenu isDemoMode={demoMode} />
               <Analytics />
               <SpeedInsights />
