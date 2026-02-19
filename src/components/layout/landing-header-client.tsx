@@ -116,8 +116,8 @@ export function LandingHeaderClient({ hasSession, userRole }: LandingHeaderClien
             <Button
               type="button"
               size="sm"
-              variant="ghost"
-              className="justify-start"
+              variant="outline"
+              className="w-full justify-start"
               onClick={() => {
                 closeMobileMenu();
                 void signOut({ callbackUrl: '/' });
