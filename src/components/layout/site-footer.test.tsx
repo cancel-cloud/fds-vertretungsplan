@@ -23,8 +23,27 @@ describe('SiteFooter', () => {
     expect(emailLink).toHaveClass('motion-safe-base');
   });
 
+  it('uses legacy performance timing when navigation entry is unavailable', () => {
+    vi.spyOn(window.performance, 'getEntriesByType').mockReturnValue([]);
+    Object.defineProperty(window.performance, 'timing', {
+      configurable: true,
+      value: {
+        navigationStart: 1000,
+        loadEventEnd: 1465,
+      } as PerformanceTiming,
+    });
+
+    render(<SiteFooter />);
+
+    expect(screen.getByText('Ladezeit: 465 ms')).toBeInTheDocument();
+  });
+
   it('falls back to n/a when navigation timing is unavailable', () => {
     vi.spyOn(window.performance, 'getEntriesByType').mockReturnValue([]);
+    Object.defineProperty(window.performance, 'timing', {
+      configurable: true,
+      value: undefined,
+    });
 
     render(<SiteFooter />);
 
