@@ -2,24 +2,73 @@
 
 import { useEffect, useState } from 'react';
 
-const readInitialLoadDuration = (): number | null => {
+const isValidDuration = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+const readNavigationEntryDuration = (): number | null => {
   if (typeof window === 'undefined' || typeof window.performance === 'undefined') {
     return null;
   }
 
-  const navigationEntry = window.performance.getEntriesByType('navigation')[0];
-  if (navigationEntry && Number.isFinite(navigationEntry.duration) && navigationEntry.duration >= 0) {
+  const navigationEntry = window.performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  if (!navigationEntry) {
+    return null;
+  }
+
+  if (isValidDuration(navigationEntry.duration)) {
     return Math.round(navigationEntry.duration);
   }
 
   return null;
 };
 
+const readLegacyTimingDuration = (): number | null => {
+  if (typeof window === 'undefined' || typeof window.performance === 'undefined') {
+    return null;
+  }
+
+  const timing = window.performance.timing;
+  if (!timing || !isValidDuration(timing.navigationStart)) {
+    return null;
+  }
+
+  const endCandidates = [
+    timing.loadEventEnd,
+    timing.domComplete,
+    timing.domContentLoadedEventEnd,
+    timing.responseEnd,
+  ];
+  const end = endCandidates.find((candidate) => isValidDuration(candidate) && candidate > timing.navigationStart);
+  if (typeof end !== 'number') {
+    return null;
+  }
+
+  return Math.round(end - timing.navigationStart);
+};
+
+const readInitialLoadDuration = (): number | null => {
+  return readNavigationEntryDuration() ?? readLegacyTimingDuration();
+};
+
 export function SiteFooter() {
   const [initialLoadDuration, setInitialLoadDuration] = useState<number | null>(null);
 
   useEffect(() => {
-    setInitialLoadDuration(readInitialLoadDuration());
+    const updateLoadDuration = () => {
+      setInitialLoadDuration(readInitialLoadDuration());
+    };
+
+    updateLoadDuration();
+
+    if (document.readyState === 'complete') {
+      return undefined;
+    }
+
+    window.addEventListener('load', updateLoadDuration, { once: true });
+
+    return () => {
+      window.removeEventListener('load', updateLoadDuration);
+    };
   }, []);
 
   return (
