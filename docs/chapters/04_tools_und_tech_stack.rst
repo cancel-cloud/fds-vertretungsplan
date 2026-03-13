@@ -4,24 +4,38 @@
 Ziel der Toolauswahl
 --------------------
 
-Der Stack wurde nicht nach "neuester Trend" ausgewählt, sondern nach
+Der Stack wurde nicht nach "neuester Trend" gewaehlt, sondern nach
 Projektanforderung: schnelle Iteration, stabile Auslieferung und gute
-Wartbarkeit für ein Schulprojekt mit professionellem Anspruch.
+Wartbarkeit fuer ein Schulprojekt mit professionellem Anspruch.
+
+Warum Framework statt reinem HTML/CSS (kurz)
+--------------------------------------------
+
+Fuer dieses Projekt ist ein Framework sinnvoller als eine reine HTML/CSS-
+Loesung, weil Routing, Datenabruf und geschuetzte Bereiche zusammen gedacht
+werden muessen. Next.js stellt dafuer einheitliche Strukturen bereit, die in
+``src/app`` und ``src/app/api`` direkt sichtbar sind.
+
+- Routing: Seiten und API-Routen sind konsistent im App-Router organisiert.
+- Wartbarkeit: Komponenten, Hooks und Lib-Module sind klar getrennt.
+- State: Client-Zustaende (Loading, Error, Cache) sind zentral im Hook abgebildet.
+- Testing: Vitest-Tests greifen direkt auf klar abgegrenzte Module zu.
+- Sicherheit: Middleware, Header und Auth-Guards sind zentral steuerbar.
 
 Kernstack
 ---------
 
-- Next.js (App Router) für Frontend und interne API im selben Projekt.
-- React + TypeScript für klar typisierte Komponentenlogik.
-- Tailwind + Komponentenlayer für konsistente UI.
-- Vitest + Testing Library für schnelle Regressionstests.
-- ESLint für frühe Qualitätskontrolle.
+- Next.js (App Router) fuer Frontend und interne API im selben Projekt.
+- React + TypeScript fuer klar typisierte Komponentenlogik.
+- Tailwind + Komponentenlayer fuer konsistente UI.
+- Vitest + Testing Library fuer schnelle Regressionstests.
+- ESLint fuer fruehe Qualitaetskontrolle.
 
 Projekt-Skripte und Laufwege
 ----------------------------
 
-Dieser Ausschnitt belegt die zentralen Arbeitsabläufe: Entwicklung, Build,
-Linting und Testausführung.
+Dieser Ausschnitt belegt die zentralen Arbeitsablaeufe: Entwicklung, Build,
+Linting und Testausfuehrung.
 
 .. literalinclude:: ../../package.json
    :language: json
@@ -29,20 +43,20 @@ Linting und Testausführung.
 
 Warum dieser Ausschnitt wichtig ist:
 
-- Er zeigt reproduzierbare Kommandos für Betrieb und Qualität.
-- Er dient als technische Grundlage für Kapitel 08 (Ergebnisbewertung).
-- Er stützt dieses Kapitel, weil die Toolkette konkret nachprüfbar wird.
+- Er zeigt reproduzierbare Kommandos fuer Betrieb und Qualitaet.
+- Er dient als technische Grundlage fuer Kapitel 08 (Ergebnisbewertung).
+- Er stuetzt dieses Kapitel, weil die Toolkette konkret nachpruefbar wird.
 
 Sicherheits- und Integrationskonfiguration
 ------------------------------------------
 
 Die Next.js-Konfiguration (``next.config.ts``) zeigt, dass Security-Header und
 externe Analytics-Routen bewusst zentral gepflegt werden. Diese Trennung von
-Produktlogik und Infrastrukturkonfiguration ist für Wartbarkeit und Sicherheit
+Produktlogik und Infrastrukturkonfiguration ist fuer Wartbarkeit und Sicherheit
 entscheidend.
 
 Einordnung
 ----------
 
-Die Toolkombination ist für die BLL sinnvoll: fachlich gut erklärbar,
-technisch belastbar und für spätere Erweiterungen offen.
+Die Toolkombination ist fuer die BLL sinnvoll: fachlich gut erklaerbar,
+technisch belastbar und fuer spaetere Erweiterungen offen.

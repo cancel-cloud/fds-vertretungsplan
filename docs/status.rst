@@ -1,34 +1,27 @@
-Documentation Status
-====================
+Interner Dokumentationsstatus
+=============================
 
-Stand: Komplett überarbeiteter Vollentwurf mit Kapitel 00 bis 10,
-PlantUML-Diagrammen und PDF-Formalia.
+Diese Datei ist ein Arbeitsartefakt und nicht Teil der finalen PDF-Abgabe.
 
-Done
-----
+Stand
+-----
 
-- Kapitelstruktur 00 bis 10 ist vollständig vorhanden.
-- Jedes Kapitel ist in Fließtextform ausgearbeitet (kein reiner Stichpunkt-Satzbau).
-- Kapitel 03, 04, 05, 07 und 08 enthalten kurze, gezielte ``literalinclude``-Snippets.
-- Vier UML-Typen (Use Case, Klasse, Aktivität, Sequenz) sind eingebunden.
-- LaTeX-Setup für 1.5 Zeilenabstand, Deckblatt und Seitenzahl unten rechts ist aktiv.
-- Kapitelüberschriften im PDF wurden so angepasst, dass der obere Weißraum reduziert ist.
-- Build-Anleitung für HTML und PDF liegt in ``BUILDING.md`` vor.
-- Prüferdaten und offizieller Dokumentationstitel sind auf dem Deckblatt eingetragen.
+- Die Kapitel 01 bis 10 sind angelegt.
+- Gantt, Netzplan sowie die zentralen UML-Dateien sind vorhanden.
+- HTML- und PDF-Build funktionieren grundsaetzlich.
 
-Missing
--------
+Aktueller Fokus
+---------------
 
-- Keine formalen Pflichtangaben offen.
+- Bedienung des Produkts klarer beschreiben.
+- Kapitel 03 auf Hosting, Nutzerfluss und Push-Architektur zuschneiden.
+- Kapitel `03a` als Projektverlauf mit Meilensteinen statt starrem Vorgehensmodell schreiben.
+- Kapitel 07 als echtes Lessons-Learned-Kapitel schaerfen.
+- PDF-Umfang aktiv reduzieren.
 
-Next Tasks
-----------
+Offene Pruefpunkte
+------------------
 
-- Endkorrektur auf Sprache und Orthografie.
-- Schülerfeedback in Kapitel 08 als Zusatzbewertung aufnehmen.
-- Falls gewünscht: UML um Authentifizierung/Fehler-Wiederholung erweitern.
-
-Open Questions
---------------
-
-- Soll zusätzlich eine unterschriebene Eigenständigkeitserklärung als Anhang ergänzt werden?
+- Seitenumfang nach jedem Build kontrollieren.
+- Diagramme nur dann breit im Hauptteil lassen, wenn sie echten Mehrwert bieten.
+- Endkorrektur auf Sprache, Schreibweise und Lesefluss durchfuehren.

@@ -1,41 +1,56 @@
-08 Ergebnisbewertung (Ziele erfüllt?)
+08 Ergebnisbewertung (Ziele erfuellt?)
 ======================================
 
 Bewertungslogik
 ---------------
 
-Die Bewertung orientiert sich an den Anforderungen aus Kapitel 02. Entscheidend
-ist nicht nur, ob Funktionen vorhanden sind, sondern ob sie im Alltag robust,
-verständlich und wartbar arbeiten.
+Die Bewertung orientiert sich direkt an den SMART-Zielen aus Kapitel 02.
+Dadurch ist transparent, ob die vereinbarten Soll-Werte nur behauptet oder
+real nachgewiesen wurden.
 
-Zielerreichung
---------------
+Soll-Ist-Abgleich zu den SMART-Zielen
+-------------------------------------
 
-.. list-table:: Zielerreichung nach Kriterien
+.. list-table:: Soll-Ist-Abgleich (identische Ziel-IDs wie in Kapitel 02)
    :header-rows: 1
-   :widths: 30 20 50
+   :widths: 8 16 24 52
 
-   * - Kriterium
+   * - ID
      - Status
-     - Begründung
-   * - Schneller Zugriff auf Vertretungen
-     - Erfüllt
-     - Datumswahl, Suche und Kategorienfilter reduzieren Suchaufwand deutlich.
-   * - Robuster Betrieb
-     - Weitgehend erfüllt
-     - Cache + Rate-Limit + Fehlerpfade sind vorhanden und getestet.
-   * - Sicherheit im Browserbetrieb
-     - Erfüllt
-     - CSP und Security-Header sind zentral konfiguriert.
-   * - Wartbarkeit
-     - Erfüllt
-     - Klare Trennung von UI, Hook, API und Verarbeitung.
+     - Soll
+     - Ist-Nachweis
+   * - S1
+     - Erfuellt
+     - Vertretungsinfos in max. drei Interaktionen.
+     - Datumswahl und direkte Anzeige sind in der Hauptansicht verknuepft
+       (``src/app/page.tsx`` + ``src/components/stundenplan/dashboard-client.tsx``).
+   * - S2
+     - Erfuellt
+     - Kombinierte Suche und Kategorienfilter stabil nutzbar.
+     - Filter-/Suche-Logik wird in ``src/lib/data-processing.ts`` umgesetzt und
+       ueber UI-Komponenten eingebunden.
+   * - S3
+     - Erfuellt
+     - API robust bei Last und Upstream-Fehlern.
+     - ``src/app/api/substitutions/route.ts`` enthaelt Rate-Limit, Retry,
+       Cache und Fehlernormalisierung; Testbelege liegen vor.
+   * - S4
+     - Erfuellt
+     - Sicherheits- und Datenschutzbasis aktiv.
+     - CSP/Redirect-Guards in ``src/middleware.ts``; Impressum/Datenschutz sind
+       als eigene Seiten im App-Router vorhanden.
+   * - S5
+     - Weitgehend erfuellt
+     - Wartbarkeit/Testbarkeit und dokumentierter Prozess.
+     - Umfangreiche Tests fuer API-, Hook- und Komponentenpfade vorhanden;
+       Doku- und Build-Prozess dokumentiert, weitere UI-Randfaelle bleiben
+       als Ausbaupotenzial.
 
-Testbeleg für kritische Randbedingungen
+Testbeleg fuer kritische Randbedingungen
 ----------------------------------------
 
-Die Tests zur API dokumentieren, dass sowohl Konfigurationsvalidierung als auch
-Fehlerbehandlung tatsächlich geprüft werden.
+Die Tests zur API dokumentieren, dass Konfigurationsvalidierung und
+Fehlerbehandlung wirklich geprueft werden.
 
 .. literalinclude:: ../../src/app/api/substitutions/route.test.ts
    :language: ts
@@ -43,13 +58,13 @@ Fehlerbehandlung tatsächlich geprüft werden.
 
 Warum dieser Ausschnitt wichtig ist:
 
-- Er verknüpft Qualitätsaussage mit automatisiertem Nachweis.
+- Er verknuepft Qualitätsaussage mit automatisiertem Nachweis.
 - Er zeigt explizit einen Sicherheits-/Validierungsfall.
-- Er stützt dieses Kapitel als evidenzbasierte Bewertung.
+- Er stuetzt dieses Kapitel als evidenzbasierte Bewertung.
 
 Zusammenfassung der Bewertung
 -----------------------------
 
-Das Projekt erreicht die gesetzten Kernziele in einer für eine BLL-Arbeit
-angemessen tiefen und technisch belastbaren Form. Verbesserbar bleiben vor allem
-langfristige Nutzungsmetriken und breitere UI-Testabdeckung.
+Die Kernziele ``S1`` bis ``S4`` sind erreicht, ``S5`` ist in weiten Teilen
+umgesetzt. Insgesamt ist das Projekt fuer eine BLL-Arbeit technisch belastbar
+und nachvollziehbar dokumentiert.

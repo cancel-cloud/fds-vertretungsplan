@@ -5,8 +5,8 @@ Prinzip der Struktur
 --------------------
 
 Das Repository ist nach Verantwortlichkeiten aufgeteilt. Diese Trennung ist
-entscheidend für Lesbarkeit und Erweiterbarkeit: UI, Datenabruf, Verarbeitung,
-Sicherheit und Analytics liegen in eigenen Bereichen.
+entscheidend fuer Lesbarkeit und Erweiterbarkeit: UI, Datenabruf,
+Verarbeitung, Sicherheit und Analytics liegen in eigenen Bereichen.
 
 Datei- und Ordnerlandkarte
 --------------------------
@@ -18,7 +18,7 @@ Datei- und Ordnerlandkarte
    * - Datei oder Ordner
      - Zweck im Gesamtsystem
    * - ``src/app/page.tsx``
-     - Auth-aware Hauptseite (öffentlich für Gäste, Dashboard für eingeloggte Nutzer).
+     - Auth-aware Hauptseite (oeffentlich fuer Gaeste, Dashboard fuer eingeloggte Nutzer).
    * - ``src/app/api/substitutions/route.ts``
      - API-Proxy mit Rate-Limit, Server-Cache und Fehlernormalisierung.
    * - ``src/app/api/substitutions/route-utils.ts``
@@ -27,8 +27,10 @@ Datei- und Ordnerlandkarte
      - Globale Provider, Error-Boundary, Basislayout.
    * - ``src/components/layout/*``
      - Shell, Header und mobile Navigation.
-   * - ``src/components/substitution-list.tsx``
-     - Darstellung aller Ergebniszustände.
+   * - ``src/components/substitution-card.tsx``
+     - Einzelkarte fuer Vertretungseintraege in der Ergebnisansicht.
+   * - ``src/components/stundenplan/dashboard-client.tsx``
+     - Dashboard-Integration von Datum, Filter, Datenabruf und Anzeigezustaenden.
    * - ``src/hooks/use-substitutions.ts``
      - Client-Datenabruf, Cache, Abort und Fehlerzustand.
    * - ``src/lib/data-processing.ts``
@@ -38,7 +40,7 @@ Datei- und Ordnerlandkarte
    * - ``src/providers/posthog-provider.tsx``
      - Analytics-Kontext und Feature-Flag-Zugriff in der UI.
    * - ``src/middleware.ts``
-     - CSP-Header für Browser-Sicherheit.
+     - CSP-Header und Zugriffsschutz fuer sichere Browserauslieferung.
    * - ``src/types/index.ts``
      - Gemeinsame Daten- und API-Typen als Vertragsgrundlage.
 
@@ -56,18 +58,19 @@ Warum dieser Ausschnitt wichtig ist:
 
 - Er zeigt zentrale Initialisierung statt verteilter Einzel-Setups.
 - Er belegt die Trennung von Produktfunktionen und Querschnittslogik.
-- Er stützt Kapitel 05, weil er Strukturentscheidungen direkt zeigt.
+- Er stuetzt Kapitel 05, weil er Strukturentscheidungen direkt zeigt.
 
 Sichere API-Hilfsfunktionen als Wartbarkeitsbaustein
 -----------------------------------------------------
 
-Die Hilfsfunktionen für URL- und Datumslogik liegen separat in
-``src/app/api/substitutions/route-utils.ts``. Dadurch bleibt die größere
-Route-Datei fokussiert und besser testbar. Gleichzeitig wird der Sicherheitsfokus
-(nur HTTPS, nur ``*.webuntis.com``) an einer zentralen Stelle abgesichert.
+Die Hilfsfunktionen fuer URL- und Datumslogik liegen separat in
+``src/app/api/substitutions/route-utils.ts``. Dadurch bleibt die groessere
+Route-Datei fokussiert und besser testbar. Gleichzeitig wird der
+Sicherheitsfokus (nur HTTPS, nur ``*.webuntis.com``) zentral abgesichert.
 
 Fazit zur Code-Struktur
 -----------------------
 
-Die Struktur ist für Umfang und Zielgruppe sehr passend: neue Funktionen können
-gezielt in einem Bereich erweitert werden, ohne den gesamten Code anfassen zu müssen.
+Die Struktur ist fuer Umfang und Zielgruppe passend: neue Funktionen koennen
+gezielt in einem Bereich erweitert werden, ohne den gesamten Code anfassen zu
+muessen.

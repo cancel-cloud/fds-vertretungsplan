@@ -8,10 +8,11 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
     'sphinxcontrib.plantuml',
+    'sphinxcontrib.mermaid',
 ]
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '.venv', '.venv/**']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '.venv', '.venv/**', 'status.rst', 'chapters/00_deckblatt.rst']
 language = 'de'
 autosectionlabel_prefix_document = True
 todo_include_todos = True
@@ -19,12 +20,17 @@ numfig = True
 
 html_theme = 'furo'
 html_title = 'Moderne Webentwicklung am Beispiel einer alternativen Vertretungsplan-Anwendung'
-html_static_path = ['_static']
+html_static_path = []
 
 plantuml = 'plantuml'
 plantuml_output_format = 'svg'
 
+# Mermaid diagrams are rendered as SVG to support PDF output.
+mermaid_output_format = 'svg'
+mermaid_cmd = 'npx -p @mermaid-js/mermaid-cli mmdc'
+
 latex_engine = 'pdflatex'
+latex_toplevel_sectioning = 'section'
 latex_additional_files = ['_latex/deckblatt-content.tex.txt']
 latex_documents = [
     (
@@ -63,6 +69,9 @@ latex_elements = {
 \usepackage{titlesec}
 \titleformat{\chapter}[hang]{\normalfont\huge\bfseries}{\thechapter\quad}{0pt}{}
 \titlespacing*{\chapter}{0pt}{0.5\baselineskip}{1.0\baselineskip}
+% Keep compact top-level sectioning without the unwanted "0." prefix in PDF numbering.
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
 ''',
     'maketitle': r'\input{deckblatt-content.tex.txt}\clearpage',
 }
