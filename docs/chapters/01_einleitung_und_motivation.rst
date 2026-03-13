@@ -36,6 +36,21 @@ Projektziele im BLL-Kontext
 3. Datenschutz und Sicherheit systematisch berücksichtigen.
 4. Eine wartbare Struktur für spätere Erweiterungen schaffen.
 
+Einordnung als Informatik-BLL
+------------------------------
+
+Dieses Projekt ist eine Informatik-BLL, weil seine zentralen Herausforderungen
+informatische Probleme sind. Es verbindet mehrere Teildisziplinen der
+Informatik: Softwarearchitektur (Schichtenmodell mit API, UI und
+Hintergrundprozessen), Datenverarbeitung (Parsing, Matching, Caching),
+API-Entwurf (Proxy mit Rate-Limiting, Retry und Validierung),
+Sicherheitstechnik (CSP, Authentifizierung, Hashing) sowie automatisiertes
+Testen und wartbare Codestruktur. Damit unterscheidet sich das Projekt von
+einer reinen Webseite: Im Mittelpunkt stehen nicht visuelle Gestaltung, sondern
+Systementwurf, Algorithmen und technische Abwaegungen. Die Dokumentation
+spiegelt das wider, indem sie Architekturentscheidungen, Algorithmen und
+technische Begruendungen in den Vordergrund stellt.
+
 Wie bedient man die Anwendung?
 ------------------------------
 

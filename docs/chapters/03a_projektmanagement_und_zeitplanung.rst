@@ -20,6 +20,25 @@ Scrum ist die hier genutzte Variante bewusst leichtgewichtig und
 pragmatisch, da formale Rollen und Zeremonien bei einem Einzelprojekt
 keinen Mehrwert bieten.
 
+Tagesueblicher Arbeitsprozess
+------------------------------
+
+Innerhalb der einzelnen Meilensteine sah eine typische Arbeitssitzung so aus:
+Die lokale Entwicklungsumgebung mit HTTPS (``vertretungsplan.local``) wurde
+gestartet, Aenderungen in kleinen Schritten umgesetzt und jeweils als
+Git-Commit festgehalten. Automatisierte Tests mit Vitest sicherten dabei ab,
+dass bestehende Funktionen nicht unbemerkt brechen.
+
+Entscheidungen wurden direkt am Code getroffen: Loesungsansaetze als
+Git-Branch ausprobiert und bei Erfolg in den Hauptzweig uebernommen, bei
+Misserfolg verworfen. Neben den automatisierten Tests wurde die Anwendung
+regelmaessig manuell auf verschiedenen Geraeten geprueft — Desktop und
+Smartphone —, besonders fuer Push-Benachrichtigungen und mobile Darstellung.
+
+Erkenntnisse und Architekturentscheidungen wurden parallel zur Entwicklung
+dokumentiert, nicht erst am Ende. So blieb der Bezug zwischen Code und
+Begruendung eng.
+
 Arbeitsweise: Try-and-Error mit klaren Meilensteinen
 ----------------------------------------------------
 

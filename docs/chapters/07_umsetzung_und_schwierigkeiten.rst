@@ -75,6 +75,42 @@ Rueckblickend gab es drei typische Stolperstellen:
 Diese Punkte waren keine Rueckschlaege ohne Nutzen, sondern genau die Phasen,
 aus denen der groesste Lerngewinn entstand.
 
+Grenzen der Loesung und verworfene Alternativen
+------------------------------------------------
+
+**Kein Mehrmandantenbetrieb.** Das System ist auf eine Schule (FDS Limburg)
+zugeschnitten. Mehrere Schulen zu unterstuetzen wuerde Mandantentrennung und
+separate WebUntis-Zugangsdaten erfordern — ein deutlich groesserer
+Architekturaufwand, der den BLL-Rahmen sprengen wuerde.
+
+**Keine native App.** Web Push funktioniert auf Android und Desktop zuverlaessig,
+aber die iOS-Unterstuetzung fuer Web Push ist weiterhin eingeschraenkt. Eine
+native App haette dieses Problem geloest, waere aber mit erheblichem Mehraufwand
+fuer Entwicklung und Verteilung verbunden gewesen.
+
+**Keine Echtzeit-Aktualisierung.** WebUntis bietet keinen Event-Stream. Die
+15-Minuten-Abfrage ueber QStash ist daher die praktisch sinnvolle Obergrenze,
+nicht eine kuenstliche Einschraenkung.
+
+**Kein formales DSGVO-Audit.** Technische Massnahmen (Hashing, HTTPS, CSP,
+minimale Datenhaltung) sind umgesetzt, eine juristische Pruefung lag jedoch
+ausserhalb des Projektumfangs.
+
+**Verworfene Alternative: WebSocket/SSE.** Echtzeitprotokolle wurden frueh
+verworfen, weil die Datenquelle kein ereignisbasiertes Modell unterstuetzt.
+Die zusaetzliche Komplexitaet haette keinen realen Vorteil gebracht.
+
+**Verworfene Alternative: Native App.** Eine PWA deckt die meisten
+Anwendungsfaelle ohne App-Store-Aufwand ab. Push war der Haupttreiber, und
+Web Push genuegt dafuer auf den relevanten Plattformen.
+
+**Verworfene Alternative: Redis als externer Cache.** Ein In-Memory-Cache
+genuegt, weil die Anwendung als einzelne Instanz laeuft. Redis haette
+operativen Mehraufwand erzeugt, ohne die Leistung merklich zu verbessern.
+
+Die Architektur bevorzugt bewusst Einfachheit, Wartbarkeit und Passung zum
+Schulkontext gegenueber Featurevollstaendigkeit oder theoretischer Eleganz.
+
 Eigenleistung und Werkzeugeinsatz
 ---------------------------------
 
