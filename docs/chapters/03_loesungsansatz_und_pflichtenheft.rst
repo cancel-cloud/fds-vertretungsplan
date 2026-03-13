@@ -58,7 +58,9 @@ umgesetzt. Stattdessen kombiniert die Anwendung mehrere Bausteine:
 
 Die Route ``src/app/api/internal/push/dispatch/route.ts`` verarbeitet diesen
 Hintergrundlauf. Dort werden nur Nutzer mit aktivierten Benachrichtigungen,
-Stundenplaneintraegen und vorhandenen Push-Subscriptions beruecksichtigt. Erst
+Stundenplaneintraegen und vorhandenen Push-Subscriptions beruecksichtigt. Die
+Zustellung erfolgt ueber das VAPID-Protokoll (vgl. RFC 8292), das eine
+standardkonforme Authentifizierung gegenueber Push-Diensten ermoeglicht. Erst
 dann werden relevante Vertretungen gesucht und passende Push-Nachrichten
 erzeugt.
 
@@ -87,6 +89,58 @@ Warum dieser Ausschnitt wichtig ist:
   nicht als Dauerabfrage im Sekundentakt.
 - Er stuetzt dieses Kapitel, weil er die Architekturentscheidung direkt aus dem
   Repository nachweist.
+
+Technische Kernentscheidungen
+-----------------------------
+
+Drei algorithmische Bausteine praegen die Architektur und gehen ueber
+Standardfunktionalitaet hinaus.
+
+**Schedule-Matching.** Der Abgleich zwischen persoenlichem Stundenplan und
+Vertretungsliste vergleicht Wochentag, Stundenblock-Ueberlappung sowie Fach
+oder Lehrkraft. Daraus ergibt sich ein Confidence-Score: hoch bei Fach- und
+Lehrkraftmatch oder Raumumzug, mittel bei nur teilweiser Uebereinstimmung.
+Die Logik liegt in ``src/lib/schedule-matching.ts``.
+
+**Caching-Strategie.** Die API nutzt einen In-Memory-Cache mit 30 Sekunden
+TTL und Stale-while-revalidate bis 30 Minuten bei Upstream-Fehlern
+(vgl. RFC 5861). LRU-Pruning bei 200 Eintraegen begrenzt den
+Speicherverbrauch in serverlosen Umgebungen. Fehlgeschlagene Abrufe werden
+mit exponentiellem Backoff bis zu dreimal wiederholt. Implementierung in
+``src/app/api/substitutions/route.ts``.
+
+**Push-Delta-Logik.** Ob eine Benachrichtigung versendet wird, entscheidet
+ein SHA-256-Fingerprint ueber die kanonisierten Match-Schluessel (Grossschreibung,
+sortiert, dedupliziert). Drei Zustaende sind moeglich: senden (neuer oder
+geaenderter Fingerprint), ueberspringen (unveraendert) und aufloesen (keine
+Treffer mehr). Ein konfigurierbares Vorausschaufenster von ein bis fuenf
+Schultagen schliesst Wochenenden aus. Die Zustandsverwaltung liegt in
+``src/lib/notification-state.ts``.
+
+Datenschutz und Sicherheitsarchitektur
+--------------------------------------
+
+**Gespeicherte personenbezogene Daten.** Die Anwendung speichert
+E-Mail-Adresse, bcrypt-gehashtes Passwort, persoenlichen Stundenplan,
+Push-Subscription-Endpunkte sowie optional anonymisierte Analytics-Daten.
+Klarnamen oder Schuelerdaten werden nicht erfasst.
+
+**Technische Schutzmassnahmen.** Passwoerter werden ausschliesslich als
+bcrypt-Hashes gespeichert. Die Sitzungsverwaltung nutzt JWT-Tokens mit
+HTTPS-only Secure-Cookies (``__Secure-``-Praefix). Elf CSP-Direktiven in
+der Produktionskonfiguration beschraenken Skript- und Verbindungsquellen
+(vgl. OWASP Top 10, Abschnitt A05 Security Misconfiguration). Zusaetzlich
+schuetzt ein duales Rate-Limiting auf IP- und E-Mail-Ebene die
+Authentifizierungsendpunkte. Die zentrale Konfiguration liegt in
+``src/middleware.ts``, die Authentifizierungslogik in ``src/lib/auth.ts``.
+
+**Analytics.** PostHog ist als optionaler Analysedienst integriert und kann
+vollstaendig deaktiviert werden, ohne die Kernfunktionalitaet zu
+beeintraechtigen.
+
+**Einordnung.** Eine vollstaendige DSGVO-Konformitaetspruefung uebersteigt
+den Rahmen eines Schulprojekts. Die beschriebenen technischen Grundlagen
+decken jedoch die wesentlichen Schutzziele ab.
 
 Pflichtenheft-Abgleich
 ----------------------

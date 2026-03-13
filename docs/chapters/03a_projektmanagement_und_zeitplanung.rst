@@ -4,10 +4,21 @@
 Einordnung
 ----------
 
-Dieses Kapitel beschreibt den Projektverlauf. Das Projekt wurde nicht nach
-einem starren Lehrbuchmodell umgesetzt, sondern schrittweise im Stil von
-Try-and-Error weiterentwickelt: ausprobieren, Probleme erkennen, nachbessern
+Dieses Kapitel beschreibt den Projektverlauf. Das Projekt folgt einer
+iterativ-inkrementellen Entwicklung: Statt alle Anforderungen vorab
+festzulegen und sequenziell abzuarbeiten (Wasserfallmodell), wurde in
+kurzen Zyklen gearbeitet — ausprobieren, Probleme erkennen, nachbessern
 und daraus den naechsten Meilenstein ableiten.
+
+Ein klassisches Wasserfallmodell passt hier nicht, weil sich Anforderungen
+im Projektverlauf erst konkretisierten, schnelles Nutzerfeedback wichtig
+war und eine Einzelperson flexibel auf Probleme reagieren muss. Die
+Meilensteine M1 bis M5 entsprechen dabei funktionalen Inkrementen: Jeder
+Meilenstein liefert ein eigenstaendig nutzbares Teilergebnis, auf dem der
+naechste Schritt aufbaut. Im Vergleich zu etablierten agilen Methoden wie
+Scrum ist die hier genutzte Variante bewusst leichtgewichtig und
+pragmatisch, da formale Rollen und Zeremonien bei einem Einzelprojekt
+keinen Mehrwert bieten.
 
 Arbeitsweise: Try-and-Error mit klaren Meilensteinen
 ----------------------------------------------------
@@ -116,6 +127,18 @@ Dateien zum Diagrammstand
 
 - ``docs/pm/gantt.mmd``
 - ``docs/pm/netzplan.mmd``
+
+Austausch und Rueckmeldungen
+----------------------------
+
+Die Projektarbeit wurde durch regelmaessigen Austausch begleitet. Mehrere
+Gespraeche mit den betreuenden Lehrkraeften Alexander Rhode und Michael
+Knobl dienten der fachlichen Orientierung und Meilensteinbesprechung.
+
+Darueber hinaus wurde die Anwendung intensiv von Mitschuelerinnen und
+Mitschuelern im Alltag getestet. Deren Rueckmeldungen fuehrten zu
+konkreten Verbesserungen, etwa bei der mobilen Bedienbarkeit und der
+Ladegeschwindigkeit der Vertretungsanzeige.
 
 Fazit
 -----

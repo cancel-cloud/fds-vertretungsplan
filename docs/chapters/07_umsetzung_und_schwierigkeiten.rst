@@ -75,6 +75,24 @@ Rueckblickend gab es drei typische Stolperstellen:
 Diese Punkte waren keine Rueckschlaege ohne Nutzen, sondern genau die Phasen,
 aus denen der groesste Lerngewinn entstand.
 
+Eigenleistung und Werkzeugeinsatz
+---------------------------------
+
+Das Projekt nutzt etablierte Frameworks und Bibliotheken als Bausteine:
+Next.js fuer Routing und serverseitige Logik, shadcn/ui fuer
+UI-Komponenten und Prisma fuer den Datenbankzugriff. Diese Werkzeuge
+liefern Struktur und Grundfunktionen, aber keine projektspezifischen
+Loesungen — Architektur, Geschaeftslogik und Integration mussten
+eigenstaendig entworfen und umgesetzt werden.
+
+Die eigentliche Kernleistung liegt in der Problemanalyse, dem
+Architekturentwurf, der Datenflussgestaltung und den projektspezifischen
+Algorithmen: Schedule-Matching mit Confidence-Scoring, Delta-basierte
+Push-Logik mit Fingerprint-Vergleich und die Caching-Strategie mit
+Stale-while-revalidate. Diese Bestandteile sind nicht aus Vorlagen oder
+Standardloesungen ableitbar, sondern Ergebnis eigenstaendiger
+Entwurfsarbeit.
+
 Fazit
 -----
 

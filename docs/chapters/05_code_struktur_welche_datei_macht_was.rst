@@ -68,6 +68,44 @@ Die Hilfsfunktionen fuer URL- und Datumslogik liegen separat in
 Route-Datei fokussiert und besser testbar. Gleichzeitig wird der
 Sicherheitsfokus (nur HTTPS, nur ``*.webuntis.com``) zentral abgesichert.
 
+Datenbank und Prisma-Schema
+----------------------------
+
+Das Datenbankschema ist in ``prisma/schema.prisma`` definiert und wird ueber
+Prisma verwaltet. Die folgende Tabelle zeigt die zentralen Modelle:
+
+.. list-table:: Prisma-Modelle und ihre Aufgaben
+   :header-rows: 1
+   :widths: 24 44 32
+
+   * - Modell
+     - Zweck
+     - Besonderheit
+   * - ``User``
+     - Nutzerkonto mit Rolle (USER/ADMIN)
+     - Erster registrierter Nutzer wird automatisch Admin
+   * - ``TimetableEntry``
+     - Persoenlicher Stundenplan (Wochentag, Stunde, Fach, Lehrkraft, Wochenmodus)
+     - Speichert Dauer statt Endstunde fuer flexible Blocklaengen
+   * - ``TeacherDirectory``
+     - Zuordnung Lehrerkuerzel zu vollem Namen
+     - Zentral vom Admin gepflegt
+   * - ``PushSubscription``
+     - Web-Push-Endpunkte je Nutzer und Geraet
+     - Mehrere Geraete pro Nutzer moeglich
+   * - ``NotificationFingerprint`` / ``NotificationState``
+     - Delta-Erkennung fuer Push (Fingerprint = Pruefwert, State = aktueller Zustand)
+     - Trennung ermoeglicht Audit-Trail und zustandslosen Vergleich
+   * - ``AppSettings``
+     - Globale Einstellungen (z.B. erlaubte E-Mail-Domains)
+     - Singleton-Muster: genau ein Datensatz
+
+Drei Designentscheidungen praegen das Schema: Die Speicherung von Dauer statt
+Endstunde erlaubt variable Blocklaengen ohne Umrechnung. Die Trennung von
+Fingerprint und State ermoeglicht nachvollziehbare Aenderungshistorie bei
+gleichzeitig einfachem Zustandsvergleich. AppSettings als Singleton
+vereinfacht den Zugriff auf globale Konfiguration.
+
 Fazit zur Code-Struktur
 -----------------------
 

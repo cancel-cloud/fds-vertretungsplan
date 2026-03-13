@@ -51,9 +51,11 @@ Sicherheits- und Integrationskonfiguration
 ------------------------------------------
 
 Die Next.js-Konfiguration (``next.config.ts``) zeigt, dass Security-Header und
-externe Analytics-Routen bewusst zentral gepflegt werden. Diese Trennung von
-Produktlogik und Infrastrukturkonfiguration ist fuer Wartbarkeit und Sicherheit
-entscheidend.
+externe Analytics-Routen bewusst zentral gepflegt werden. Die
+Content-Security-Policy (vgl. W3C CSP Level 3) wird in der Middleware
+erzeugt und umfasst in der Produktionskonfiguration elf Direktiven. Diese
+Trennung von Produktlogik und Infrastrukturkonfiguration ist fuer Wartbarkeit
+und Sicherheit entscheidend.
 
 Einordnung
 ----------
