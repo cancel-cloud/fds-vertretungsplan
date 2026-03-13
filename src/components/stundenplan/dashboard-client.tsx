@@ -149,7 +149,7 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
   const [user, setUser] = useState<UserData | null>(null);
   const [loadingTimetable, setLoadingTimetable] = useState(initialScope === 'personal' && isAuthenticated);
   const [timetableError, setTimetableError] = useState<string | null>(null);
-  const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
+  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
   const [isInitialDateResolved, setIsInitialDateResolved] = useState(
     () => !(initialScope === 'personal' && isAuthenticated && fromPush && !queryDate)
   );
@@ -435,20 +435,24 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" className="md:hidden" onClick={() => setIsMobileCalendarOpen(true)}>
+              <Button type="button" variant="outline" className="md:hidden" onClick={() => setIsCalendarDialogOpen(true)}>
                 <CalendarDays className="mr-1 h-4 w-4" aria-hidden="true" />
                 Kalender
               </Button>
             </div>
           </div>
 
-          <div
-            className="motion-enter rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] px-4 py-3"
+          <button
+            type="button"
+            className="motion-enter w-full rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] px-4 py-3 text-left transition-colors hover:border-[rgb(var(--color-primary)/0.35)] hover:bg-[rgb(var(--color-background)/0.92)] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
             style={{ animationDelay: '85ms' }}
+            onClick={() => setIsCalendarDialogOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={isCalendarDialogOpen}
           >
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">Ausgewähltes Datum</p>
             <p className="text-lg font-medium text-[rgb(var(--color-text))]">{formattedSelectedDate}</p>
-          </div>
+          </button>
 
           <div className="motion-enter" style={{ animationDelay: '115ms' }}>
             <SearchInput value={searchQuery} onChange={handleSearchChange} />
@@ -718,7 +722,7 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
         </div>
       </div>
 
-      <Dialog open={isMobileCalendarOpen} onOpenChange={setIsMobileCalendarOpen}>
+      <Dialog open={isCalendarDialogOpen} onOpenChange={setIsCalendarDialogOpen}>
         <DialogContent className="max-w-[calc(100%-1.5rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Datum wählen</DialogTitle>
@@ -729,7 +733,7 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
               selectedDate={selectedDate}
               onDateSelect={(date) => {
                 setDate(date);
-                setIsMobileCalendarOpen(false);
+                setIsCalendarDialogOpen(false);
               }}
               className="w-full"
               minDate={isDemoMode ? demoMinDate : undefined}

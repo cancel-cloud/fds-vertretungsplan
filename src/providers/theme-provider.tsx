@@ -17,7 +17,7 @@ const themes: ThemeMode[] = ['system', 'light', 'dark'];
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>('light');
+  const [theme, setThemeState] = useState<ThemeMode>('system');
   const [mounted, setMounted] = useState(false);
 
   const applyTheme = useCallback((newTheme: ThemeMode) => {
@@ -40,12 +40,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const savedTheme = localStorage.getItem(STORAGE_KEY);
       const parsedTheme = themes.includes(savedTheme as ThemeMode)
         ? (savedTheme as ThemeMode)
-        : 'light';
+        : 'system';
 
       setThemeState(parsedTheme);
       applyTheme(parsedTheme);
     } catch {
-      applyTheme('light');
+      setThemeState('system');
+      applyTheme('system');
     }
   }, [applyTheme]);
 

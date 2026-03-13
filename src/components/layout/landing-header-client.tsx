@@ -49,6 +49,18 @@ export function LandingHeaderClient({ hasSession, userRole }: LandingHeaderClien
 
           <div className="flex items-center justify-end gap-2">
             <div className="hidden md:flex md:flex-wrap md:items-center md:justify-end md:gap-2">
+              <Link
+                href="/impressum"
+                className="motion-link-underline motion-safe-base rounded-sm px-2 py-1 text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-secondary)/0.12)] hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
+              >
+                Impressum
+              </Link>
+              <Link
+                href="/datenschutz"
+                className="motion-link-underline motion-safe-base rounded-sm px-2 py-1 text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-secondary)/0.12)] hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
+              >
+                Datenschutz
+              </Link>
               {hasSession ? <HeaderAuthActions role={userRole} /> : null}
               {!hasSession ? (
                 <Link href="/stundenplan/login?next=/" className={buttonVariants({ size: 'sm' })}>

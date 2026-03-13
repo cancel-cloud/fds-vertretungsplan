@@ -5,6 +5,20 @@ import { useEffect, useState } from 'react';
 const isValidDuration = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0;
 
+const readCompletedDuration = (start: unknown, ...endCandidates: unknown[]): number | null => {
+  if (!isValidDuration(start)) {
+    return null;
+  }
+
+  const end = endCandidates.find((candidate) => isValidDuration(candidate) && candidate > start);
+  if (typeof end !== 'number') {
+    return null;
+  }
+
+  const duration = Math.round(end - start);
+  return duration > 0 ? duration : null;
+};
+
 const readNavigationEntryDuration = (): number | null => {
   if (typeof window === 'undefined' || typeof window.performance === 'undefined') {
     return null;
@@ -16,10 +30,19 @@ const readNavigationEntryDuration = (): number | null => {
   }
 
   if (isValidDuration(navigationEntry.duration)) {
-    return Math.round(navigationEntry.duration);
+    const roundedDuration = Math.round(navigationEntry.duration);
+    if (roundedDuration > 0) {
+      return roundedDuration;
+    }
   }
 
-  return null;
+  return readCompletedDuration(
+    navigationEntry.startTime,
+    navigationEntry.loadEventEnd,
+    navigationEntry.domComplete,
+    navigationEntry.domContentLoadedEventEnd,
+    navigationEntry.responseEnd
+  );
 };
 
 const readLegacyTimingDuration = (): number | null => {
@@ -32,18 +55,13 @@ const readLegacyTimingDuration = (): number | null => {
     return null;
   }
 
-  const endCandidates = [
+  return readCompletedDuration(
+    timing.navigationStart,
     timing.loadEventEnd,
     timing.domComplete,
     timing.domContentLoadedEventEnd,
-    timing.responseEnd,
-  ];
-  const end = endCandidates.find((candidate) => isValidDuration(candidate) && candidate > timing.navigationStart);
-  if (typeof end !== 'number') {
-    return null;
-  }
-
-  return Math.round(end - timing.navigationStart);
+    timing.responseEnd
+  );
 };
 
 const readInitialLoadDuration = (): number | null => {

@@ -23,6 +23,23 @@ describe('SiteFooter', () => {
     expect(emailLink).toHaveClass('motion-safe-base');
   });
 
+  it('uses completed navigation timing fields when duration is zero', () => {
+    vi.spyOn(window.performance, 'getEntriesByType').mockReturnValue([
+      {
+        duration: 0,
+        startTime: 0,
+        loadEventEnd: 0,
+        domComplete: 465,
+        domContentLoadedEventEnd: 420,
+        responseEnd: 300,
+      } as PerformanceNavigationTiming,
+    ]);
+
+    render(<SiteFooter />);
+
+    expect(screen.getByText('Ladezeit: 465 ms')).toBeInTheDocument();
+  });
+
   it('uses legacy performance timing when navigation entry is unavailable', () => {
     vi.spyOn(window.performance, 'getEntriesByType').mockReturnValue([]);
     Object.defineProperty(window.performance, 'timing', {
@@ -38,8 +55,17 @@ describe('SiteFooter', () => {
     expect(screen.getByText('Ladezeit: 465 ms')).toBeInTheDocument();
   });
 
-  it('falls back to n/a when navigation timing is unavailable', () => {
-    vi.spyOn(window.performance, 'getEntriesByType').mockReturnValue([]);
+  it('falls back to n/a when no completed timing is available', () => {
+    vi.spyOn(window.performance, 'getEntriesByType').mockReturnValue([
+      {
+        duration: 0,
+        startTime: 0,
+        loadEventEnd: 0,
+        domComplete: 0,
+        domContentLoadedEventEnd: 0,
+        responseEnd: 0,
+      } as PerformanceNavigationTiming,
+    ]);
     Object.defineProperty(window.performance, 'timing', {
       configurable: true,
       value: undefined,

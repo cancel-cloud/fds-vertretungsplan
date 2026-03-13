@@ -52,6 +52,8 @@ describe('LandingHeader', () => {
 
     const loginLinks = screen.getAllByRole('link', { name: 'Login' });
     expect(loginLinks.some((link) => link.getAttribute('href') === '/stundenplan/login?next=/')).toBe(true);
+    expect(screen.getAllByRole('link', { name: 'Impressum' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Datenschutz' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Menü öffnen' })).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
     expect(screen.queryByTestId('header-auth-actions')).not.toBeInTheDocument();
