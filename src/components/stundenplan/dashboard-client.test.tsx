@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DashboardClient } from '@/components/stundenplan/dashboard-client';
 
@@ -36,6 +36,17 @@ vi.mock('@/hooks/use-substitutions', () => ({
 
 vi.mock('@/hooks/use-substitution-polling', () => ({
   useSubstitutionPolling: vi.fn(),
+}));
+
+vi.mock('@/components/calendar-widget', () => ({
+  CalendarWidget: ({ onDateSelect }: { onDateSelect: (date: Date) => void }) => (
+    <div>
+      <p>Kalender-Widget</p>
+      <button type="button" onClick={() => onDateSelect(new Date(2026, 1, 17))}>
+        Datum im Kalender wählen
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock('@/providers/posthog-provider', () => ({
@@ -146,6 +157,24 @@ describe('DashboardClient Apple push promo integration', () => {
     });
     await waitFor(() => {
       expect(screen.queryByText('Push Notifications')).not.toBeInTheDocument();
+    });
+  });
+
+  it('opens the calendar dialog from the desktop date trigger', async () => {
+    renderDashboard(false);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /ausgewähltes datum/i }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText('Datum wählen')).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Datum im Kalender wählen' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 });

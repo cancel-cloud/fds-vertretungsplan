@@ -242,7 +242,7 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false, isDemoMod
   const demoMinDate = useMemo(() => new Date(DEMO_RANGE_START_DATE), []);
   const demoMaxDate = useMemo(() => new Date(DEMO_RANGE_END_DATE), []);
 
-  const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
+  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(() =>
     isDemoMode ? demoAnchorDate : adjustWeekendToMonday(new Date())
   );
@@ -390,7 +390,7 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false, isDemoMod
                   variant="outline"
                   size="sm"
                   className="md:hidden"
-                  onClick={() => setIsMobileCalendarOpen(true)}
+                  onClick={() => setIsCalendarDialogOpen(true)}
                 >
                   <CalendarDays className="mr-1 h-4 w-4" aria-hidden="true" />
                   Kalender
@@ -398,13 +398,17 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false, isDemoMod
               </div>
             </div>
 
-            <div
-              className="motion-enter rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] px-4 py-3"
+            <button
+              type="button"
+              className="motion-enter w-full rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] px-4 py-3 text-left transition-colors hover:border-[rgb(var(--color-primary)/0.35)] hover:bg-[rgb(var(--color-background)/0.92)] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
               style={{ animationDelay: '85ms' }}
+              onClick={() => setIsCalendarDialogOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={isCalendarDialogOpen}
             >
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">Ausgewähltes Datum</p>
               <p className="text-lg font-medium text-[rgb(var(--color-text))]">{formatLongDate(selectedDate)}</p>
-            </div>
+            </button>
 
             <div className="motion-enter" style={{ animationDelay: '115ms' }}>
               <SearchInput value={filterState.search} onChange={handleSearchChange} />
@@ -493,7 +497,7 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false, isDemoMod
         </div>
       </main>
 
-      <Dialog open={isMobileCalendarOpen} onOpenChange={setIsMobileCalendarOpen}>
+      <Dialog open={isCalendarDialogOpen} onOpenChange={setIsCalendarDialogOpen}>
         <DialogContent className="max-w-[calc(100%-1.5rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Datum wählen</DialogTitle>
@@ -503,7 +507,7 @@ export function NewUiClient({ analyticsSource, showLoginPromo = false, isDemoMod
             selectedDate={selectedDate}
             onDateSelect={(date) => {
               setDateAndTrack(date, 'newui_mobile_dialog_calendar');
-              setIsMobileCalendarOpen(false);
+              setIsCalendarDialogOpen(false);
             }}
             className="w-full"
             enableAdvancedFeatures={advancedCalendarEnabled}
