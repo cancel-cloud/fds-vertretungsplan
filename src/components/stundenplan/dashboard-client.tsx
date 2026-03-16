@@ -348,7 +348,7 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
 
-    // Debounce URL sync so typing stays responsive — filtering is already client-side.
+    // Debounce URL sync so typing stays responsive - filtering is already client-side.
     clearTimeout(searchUrlTimeoutRef.current);
     searchUrlTimeoutRef.current = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());

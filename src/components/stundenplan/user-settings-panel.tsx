@@ -85,7 +85,7 @@ const formatEndpointHost = (endpoint: string): string => {
 const formatDateTime = (value: string): string => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return '—';
+    return '-';
   }
   return date.toLocaleString('de-DE', {
     dateStyle: 'medium',

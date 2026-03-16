@@ -1,7 +1,7 @@
 Moderne Webentwicklung am Beispiel einer alternativen Vertretungsplan-Anwendung
 ================================================================================
 
-Diese Dokumentation beschreibt das Projekt ``fds-vertretungsplan`` als BLL-Arbeit
+Diese Dokumentation beschreibt das Projekt fds-vertretungsplan als BLL-Arbeit
 im 5. Prüfungsfach. Im Mittelpunkt stehen Motivation, Nutzungsablauf,
 technische Entscheidungen, Projekterfahrungen und die Frage, wie aus einem
 Schulprojekt eine belastbare Webanwendung geworden ist.

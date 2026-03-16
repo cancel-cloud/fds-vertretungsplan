@@ -4,26 +4,26 @@
 Ausgangssituation
 -----------------
 
-Vertretungsplaene sind im Schulalltag eine zentrale Informationsquelle. In vielen
-Schulen liegen diese Informationen zwar digital vor, sind fuer Lernende aber oft
-nur umstaendlich nutzbar: lange Tabellen, wenig mobile Optimierung und fehlende
-Filter fuer konkrete Klassen oder Faecher.
+Vertretungspläne sind im Schulalltag eine zentrale Informationsquelle. In vielen
+Schulen liegen diese Informationen zwar digital vor, sind für Lernende aber oft
+nur umständlich nutzbar: lange Tabellen, wenig mobile Optimierung und fehlende
+Filter für konkrete Klassen oder Fächer.
 
 Motivation des Projekts
 -----------------------
 
-Das Projekt ``fds-vertretungsplan`` adressiert genau diese Luecke. Ziel ist
+Das Projekt fds-vertretungsplan adressiert genau diese Lücke. Ziel ist
 keine neue Datenquelle, sondern eine deutlich bessere Darstellung und
-Nutzbarkeit der vorhandenen Vertretungsdaten. Damit rueckt die Software vom
-reinen Anzeigen langer Listen zu einem alltagsnahen Werkzeug fuer den
+Nutzbarkeit der vorhandenen Vertretungsdaten. Damit rückt die Software vom
+reinen Anzeigen langer Listen zu einem alltagsnahen Werkzeug für den
 Schulalltag.
 
 Warum Web statt nativer App?
 ----------------------------
 
-Die Entscheidung fuer eine Webanwendung ist fachlich sinnvoll:
+Die Entscheidung für eine Webanwendung ist fachlich sinnvoll:
 
-- Keine Installation auf Endgeraeten notwendig.
+- Keine Installation auf Endgeräten notwendig.
 - Sofort nutzbar auf Smartphone, Tablet und Desktop.
 - Zentrale Updates ohne App-Store-Prozess.
 
@@ -38,21 +38,21 @@ Projektziele im BLL-Kontext
 Einordnung als Informatik-BLL
 ------------------------------
 
-Dieses Projekt ist eine Informatik-BLL, weil es ueber eine reine Webseite
+Dieses Projekt ist eine Informatik-BLL, weil es über eine reine Webseite
 hinausgeht. Im Mittelpunkt stehen Systementwurf, Algorithmen und technische
-Abwaegungen — nicht visuelle Gestaltung.
+Abwägungen - nicht visuelle Gestaltung.
 
-Wie bedient man die Anwendung?
-------------------------------
+Bedienung der Anwendung
+-----------------------
 
 Der typische Nutzungsablauf ist bewusst kurz gehalten:
 
-1. Oeffentliche Nutzer rufen die Startseite auf und koennen den Vertretungsplan
+1. Öffentliche Nutzer rufen die Startseite auf und können den Vertretungsplan
    direkt ansehen.
-2. Wer persoenliche Funktionen nutzen will, registriert sich und meldet sich an.
-3. Danach fuehrt die Anwendung zur Eingabe des persoenlichen Stundenplans.
-4. Im Dashboard werden passende Vertretungen, Filter und spaeter auch
-   Benachrichtigungen gebuendelt angezeigt.
+2. Wer persönliche Funktionen nutzen will, registriert sich und meldet sich an.
+3. Danach führt die Anwendung zur Eingabe des persönlichen Stundenplans.
+4. Im Dashboard werden passende Vertretungen, Filter und später auch
+   Benachrichtigungen gebündelt angezeigt.
 
 Damit ist die Bedienung im Alltag auf wenige Schritte reduziert: aufrufen,
-Datum waehlen, Ergebnisse lesen und bei Bedarf den eigenen Stundenplan pflegen.
+Datum wählen, Ergebnisse lesen und bei Bedarf den eigenen Stundenplan pflegen.

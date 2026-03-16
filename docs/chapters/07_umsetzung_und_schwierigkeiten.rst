@@ -4,13 +4,13 @@
 Lesson Learned 1: Gute Bedienung entsteht nicht von allein
 ----------------------------------------------------------
 
-Am Anfang lag der Fokus stark auf der reinen Vertretungsanzeige. Erst spaeter
-wurde deutlich, dass ein brauchbares Produkt auch einen gefuehrten Nutzerfluss
+Am Anfang lag der Fokus stark auf der reinen Vertretungsanzeige. Erst später
+wurde deutlich, dass ein brauchbares Produkt auch einen geführten Nutzerfluss
 braucht: Registrierung, Admin-Ersteinrichtung, Onboarding und Dashboard mussten
-aufeinander abgestimmt werden. Ohne diese Schritte waere zwar Code vorhanden
-gewesen, aber kein in sich schluessiger Arbeitsablauf fuer echte Nutzer.
+aufeinander abgestimmt werden. Ohne diese Schritte wäre zwar Code vorhanden
+gewesen, aber kein in sich schlüssiger Arbeitsablauf für echte Nutzer.
 
-Gelernt wurde dabei vor allem, dass Produktqualitaet nicht nur aus
+Gelernt wurde dabei vor allem, dass Produktqualität nicht nur aus
 Datenverarbeitung besteht. Auch Weiterleitungen, Rollen und klare Einstiege sind
 Teil der eigentlichen Funktion.
 
@@ -18,15 +18,15 @@ Lesson Learned 2: Echtzeit klingt besser, ist hier aber nicht sinnvoll
 -----------------------------------------------------------------------
 
 Die 15-Minuten-Frequenz ist ein bewusstes Ergebnis aus technischem Rahmen und
-praktischem Nutzen. WebUntis liefert keinen Event-Stream, haeufigeres Polling
-wuerde Last und Fehlerpotenzial erhoehen, und im Schulalltag zaehlt
-Verlaesslichkeit mehr als Sekunden-Echtzeit.
+praktischem Nutzen. WebUntis liefert keinen Event-Stream, häufigeres Polling
+würde Last und Fehlerpotenzial erhöhen, und im Schulalltag zählt
+Verlässlichkeit mehr als Sekunden-Echtzeit.
 
 Lesson Learned 3: Push-Notifications brauchen Zustandslogik
 -----------------------------------------------------------
 
-Es reicht nicht, bei jeder Aenderung blind eine Nachricht zu verschicken. Erst
-mit persoenlichem Stundenplan, Delta-Logik und einem geplanten Dispatcher wurde
+Es reicht nicht, bei jeder Änderung blind eine Nachricht zu verschicken. Erst
+mit persönlichem Stundenplan, Delta-Logik und einem geplanten Dispatcher wurde
 daraus eine Benachrichtigung, die im Alltag wirklich hilfreich ist. Die Einsicht:
 Benachrichtigungen sind nur dann gut, wenn sie sparsam, relevant und technisch
 kontrolliert ausgeliefert werden.
@@ -34,44 +34,59 @@ kontrolliert ausgeliefert werden.
 Lesson Learned 4: Hosting zwingt zu sauberen Schnittstellen
 -----------------------------------------------------------
 
-Sobald das Projekt nicht nur lokal, sondern als oeffentliche Webanwendung
-gedacht wurde, veraenderte sich der Anspruch. Eine externe URL, gesetzte
-Secrets, geschuetzte Routen und ein reproduzierbarer Deploy-Prozess wurden zu
-Pflichtpunkten. Gerade fuer QStash und Push zeigte sich, dass eine lokale
-Entwicklungsumgebung noch kein Beweis fuer echten Webbetrieb ist.
+Sobald das Projekt nicht nur lokal, sondern als öffentliche Webanwendung
+gedacht wurde, veränderte sich der Anspruch. Eine externe URL, gesetzte
+Secrets, geschützte Routen und ein reproduzierbarer Deploy-Prozess wurden zu
+Pflichtpunkten. Gerade für QStash und Push zeigte sich, dass eine lokale
+Entwicklungsumgebung noch kein Beweis für echten Webbetrieb ist. Hinzu kam,
+dass der Scheduler-Dienst QStash ausschließlich HTTPS-Endpunkte akzeptiert.
+Diese Anforderung erzwang ein SSL-Zertifikat, brachte aber gleichzeitig den
+Vorteil, dass sämtlicher Datenverkehr zwischen Nutzer und Anwendung
+verschlüsselt übertragen wird.
+
+Lesson Learned 5: Oberfläche gestalten braucht Klarheit
+-------------------------------------------------------
+
+Die Gestaltung der Benutzeroberfläche erwies sich als einer der aufwendigsten
+Teile des Projekts. Insgesamt durchlief das Interface drei Iterationen: von
+einer rein funktionalen ersten Version über eine benutzbare zweite bis hin zu
+einer Oberfläche, die funktional, hilfreich und ansprechend ist. Der größte
+Zeitfresser war dabei, dass Styling-Entscheidungen erst sinnvoll getroffen
+werden konnten, nachdem klar war, welche Inhalte und Funktionen die Anwendung
+überhaupt anbieten soll.
 
 Wo es nicht sofort funktioniert hat
 -----------------------------------
 
-Rueckblickend gab es drei typische Stolperstellen:
+Rückblickend gab es drei typische Stolperstellen:
 
 1. Der Produktumfang war anfangs zu breit gedacht und musste auf einen klaren
    Nutzerkern reduziert werden.
 2. Der Nutzerfluss zwischen Registrierung, Admin-Setup und Onboarding war erst
-   nach mehreren Anpassungen wirklich schluessig.
+   nach mehreren Anpassungen wirklich schlüssig.
 3. Push-Notifications brauchten mehr Hintergrundlogik als anfangs erwartet.
 
-Diese Punkte waren keine Rueckschlaege ohne Nutzen, sondern genau die Phasen,
-aus denen der groesste Lerngewinn entstand.
+Diese Punkte waren keine Rückschläge ohne Nutzen, sondern genau die Phasen,
+aus denen der größte Lerngewinn entstand.
 
-Grenzen der Loesung
+Grenzen der Lösung
 -------------------
 
 **Kein Mehrmandantenbetrieb.** Das System ist auf eine Schule (FDS Limburg)
-zugeschnitten. Mehrere Schulen zu unterstuetzen wuerde Mandantentrennung und
-separate WebUntis-Zugangsdaten erfordern.
+bezogen. Mehrere Schulen zu unterstützen würde bedeuten, für jede separate
+WebUntis-Zugangsdaten zu haben.
 
-**Keine native App.** Web Push funktioniert auf Android und Desktop zuverlaessig,
-aber die iOS-Unterstuetzung fuer Web Push ist weiterhin eingeschraenkt.
+**Keine native App.** Web Push funktioniert auf Apple-Geräten (iPhone, iPad
+und Mac) als auch auf Desktop zuverlässig.
 
-**Kein formales DSGVO-Audit.** Technische Massnahmen (Hashing, HTTPS, CSP,
-minimale Datenhaltung) sind umgesetzt, eine juristische Pruefung lag jedoch
-ausserhalb des Projektumfangs.
+**Kein formales DSGVO-Audit.** Technische Maßnahmen (Hashing, HTTPS, CSP,
+minimale Datenhaltung) sind umgesetzt, eine juristische Prüfung lag jedoch
+außerhalb des Projektumfangs.
 
 Eigenleistung und Werkzeugeinsatz
 ---------------------------------
 
-Frameworks und Bibliotheken liefern Grundfunktionen, aber keine
-projektspezifischen Loesungen. Architektur, Geschaeftslogik und die Algorithmen
-fuer Stundenplanabgleich, Benachrichtigungslogik und Caching wurden
-eigenstaendig entworfen.
+Kein Framework liefert eine fertige Vertretungsplan-App. Die Eigenleistung
+liegt in Architektur, Stundenplanabgleich, Delta-basierter
+Benachrichtigungslogik und Caching - also genau den Teilen, die das Projekt
+von einer reinen Konfigurationsarbeit unterscheiden.

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FDS Vertretungsplan — a full-stack substitution plan app for Friedrich-Dessauer-Schule Limburg. Built with Next.js (App Router), NextAuth (credentials), Prisma (PostgreSQL), and Web Push notifications (VAPID + Upstash QStash).
+FDS Vertretungsplan - a full-stack substitution plan app for Friedrich-Dessauer-Schule Limburg. Built with Next.js (App Router), NextAuth (credentials), Prisma (PostgreSQL), and Web Push notifications (VAPID + Upstash QStash).
 
 ## Commands
 
@@ -32,13 +32,13 @@ App Router under `src/app/`. Two main areas:
 
 ### API Routes (`src/app/api/`)
 
-- `/api/substitutions?date=YYYYMMDD` — WebUntis proxy with in-memory cache (30s TTL, stale-if-error 30min), rate limiting (60 req/min), retry with exponential backoff
-- `/api/timetable` — GET/PUT for user's schedule entries
-- `/api/push/subscribe|unsubscribe|test|last-target` — VAPID push subscription management
-- `/api/internal/push/dispatch` — QStash webhook endpoint for scheduled push notification delivery (Mo–Fr 06:00–20:00)
-- `/api/admin/teachers|users` — Admin CRUD
-- `/api/auth/register` — Registration with email domain validation
-- `/api/me` — Current user data
+- `/api/substitutions?date=YYYYMMDD` - WebUntis proxy with in-memory cache (30s TTL, stale-if-error 30min), rate limiting (60 req/min), retry with exponential backoff
+- `/api/timetable` - GET/PUT for user's schedule entries
+- `/api/push/subscribe|unsubscribe|test|last-target` - VAPID push subscription management
+- `/api/internal/push/dispatch` - QStash webhook endpoint for scheduled push notification delivery (Mo–Fr 06:00–20:00)
+- `/api/admin/teachers|users` - Admin CRUD
+- `/api/auth/register` - Registration with email domain validation
+- `/api/me` - Current user data
 
 ### Auth
 
@@ -50,7 +50,7 @@ Schema at `prisma/schema.prisma`. Key models: `User`, `TimetableEntry` (schedule
 
 ### Push Notifications
 
-Delta-based: fingerprint (hash of matching substitutions) is compared to `NotificationState` — only sends when data actually changes. VAPID keys for Web Push standard. Upstash QStash triggers `/api/internal/push/dispatch` every 15 minutes. Service worker at `public/sw.js` handles `push` and `notificationclick` events.
+Delta-based: fingerprint (hash of matching substitutions) is compared to `NotificationState` - only sends when data actually changes. VAPID keys for Web Push standard. Upstash QStash triggers `/api/internal/push/dispatch` every 15 minutes. Service worker at `public/sw.js` handles `push` and `notificationclick` events.
 
 ### Key Libraries
 

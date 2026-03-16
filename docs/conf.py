@@ -72,6 +72,21 @@ latex_elements = {
 % Keep compact top-level sectioning without the unwanted "0." prefix in PDF numbering.
 \renewcommand{\thesection}{\arabic{section}}
 \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+% Prevent huge word gaps in narrow table columns.
+% Sphinx defines \X columns as plain p{} (justified). Override to ragged-right.
+% sphinxlatextables.sty is loaded before this preamble, so array.sty will warn
+% "Column X already defined, redefining" but proceed correctly.
+\usepackage{ragged2e}
+\makeatletter
+\newcolumntype{\X}[2]{>{\RaggedRight\arraybackslash}p{\dimexpr
+  (\linewidth-\spx@arrayrulewidth)*#1/#2-\tw@\tabcolsep-\spx@arrayrulewidth\relax}}
+\makeatother
+% Move table captions below tables.
+\usepackage{caption}
+\captionsetup[table]{position=below}
+% Reduce float spacing around figures.
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
 ''',
     'maketitle': r'\input{deckblatt-content.tex.txt}\clearpage',
 }

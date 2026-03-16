@@ -3,7 +3,7 @@ left to right direction
 
 actor "Schüler/Lehrkraft" as User
 actor "WebUntis" as Untis
-actor "PostHog" as Posthog
+actor "PostHog\n(optional)" as Posthog
 
 rectangle "FDS Vertretungsplan" {
   usecase "Datum wählen" as UC_Date
@@ -23,7 +23,7 @@ User --> UC_Legal
 
 UC_View .> UC_Untis : include
 UC_Filter .> UC_View : extend
-UC_View .> UC_Analytics : include
+UC_View ..> UC_Analytics : <<optional>>
 UC_Untis --> Untis
 UC_Analytics --> Posthog
 

@@ -4,7 +4,7 @@
 Projektinterne Quellen
 ----------------------
 
-- Repository ``fds-vertretungsplan`` (Code, Tests, Konfiguration).
+- Repository fds-vertretungsplan (Code, Tests, Konfiguration).
 
 Technische Dokumentationen
 --------------------------
@@ -39,5 +39,5 @@ Fachliteratur Software Engineering
 Rechtliche und organisatorische Quellen
 ---------------------------------------
 
-- Impressum und Datenschutzerklaerung sind in der Anwendung enthalten.
+- Impressum und Datenschutzerklärung sind in der Anwendung enthalten.
 - Schulkontext: Friedrich-Dessauer-Schule Limburg

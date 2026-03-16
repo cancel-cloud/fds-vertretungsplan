@@ -1,4 +1,4 @@
-06 UML-Diagramme und Ablaeufe
+06 UML-Diagramme und Abläufe
 =============================
 
 Die Diagramme zeigen das Projekt aus drei Perspektiven: Nutzung, Struktur und
@@ -11,7 +11,7 @@ Das Use-Case-Diagramm zeigt die Nutzerperspektive mit den externen Akteuren
 WebUntis und PostHog.
 
 .. uml:: ../uml/usecase.puml
-   :caption: Use Cases fuer Nutzung, Datenabruf und Rechtsseiten
+   :caption: Use Cases für Nutzung, Datenabruf und Rechtsseiten
 
 Klassendiagramm
 ---------------
@@ -27,7 +27,7 @@ Kommunikation. Im Mittelpunkt stehen drei Wege:
    :caption: Modulorientiertes Klassendiagramm
 
 Die Schichten sind klar getrennt: UI-Komponenten sprechen nie direkt mit
-externen Systemen, sondern ueber Hooks, API-Routen und abgegrenzte Services.
+externen Systemen, sondern über Hooks, API-Routen und abgegrenzte Services.
 
 Objektdiagramm
 --------------
@@ -57,4 +57,4 @@ sondern einen beispielhaften Betriebszustand.
        pushApi --> untis
 
 Neben dem sichtbaren Dashboard existiert im Hintergrund ein zweiter Laufpfad
-ueber QStash und die Push-API.
+über QStash und die Push-API.

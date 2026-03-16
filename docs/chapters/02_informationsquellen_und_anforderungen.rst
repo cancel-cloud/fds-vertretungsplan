@@ -4,42 +4,42 @@
 Informationsquellen
 -------------------
 
-Die Anforderungen wurden aus folgenden Quellen zusammengefuehrt:
+Die Anforderungen wurden aus folgenden Quellen zusammengeführt:
 
 - Schulalltag: Bedarf an schneller, mobiler Vertretungsinformation.
-- Eigene Projektdokumentation und vorhandene Oberflaechenstruktur.
+- Eigene Projektdokumentation und vorhandene Oberflächenstruktur.
 - Rechtliche Anforderungen: Impressum und Datenschutz als Pflichtbestandteil.
-- Qualitaetsziele: Tests, Linting und robuste Fehlerdarstellung.
+- Qualitätsziele: Tests, Linting und robuste Fehlerdarstellung.
 
-Stakeholder
------------
+Zielgruppen und Beteiligte
+--------------------------
 
-- Primaer: Schuelerinnen, Schueler und Lehrkraefte.
-- Sekundaer: Projektbetreiber und Schule als organisatorischer Rahmen.
+- Primär: Schülerinnen, Schüler und Lehrkräfte.
+- Sekundär: Projektbetreiber und Schule als organisatorischer Rahmen.
 - Extern: WebUntis als datenlieferndes Fremdsystem.
 
 Funktionale Anforderungen
 -------------------------
 
 1. Tagesbezogene Anzeige von Vertretungen.
-2. Such- und Filtermoeglichkeiten fuer schnelle Orientierung.
-3. Verstaendliche Darstellung bei leerem Plan, Teildaten oder Fehlern.
-4. Registrierung, Login und persoenlicher Stundenplan fuer angemeldete Nutzer.
+2. Such- und Filtermöglichkeiten für schnelle Orientierung.
+3. Verständliche Darstellung bei leerem Plan, Teildaten oder Fehlern.
+4. Registrierung, Login und persönlicher Stundenplan für angemeldete Nutzer.
 5. Zugriff auf rechtliche Pflichtseiten.
 
 Bedienanforderungen
 -------------------
 
 Die Anwendung sollte nicht nur Informationen bereitstellen, sondern auch ohne
-Einweisung verstaendlich benutzbar sein. Daraus ergeben sich drei
+Einweisung verständlich benutzbar sein. Daraus ergeben sich drei
 Bedienanforderungen:
 
-1. Der Einstieg fuer Gaeste muss sofort funktionieren, ohne dass zuerst ein
+1. Der Einstieg für Gäste muss sofort funktionieren, ohne dass zuerst ein
    Konto angelegt werden muss.
 2. Der Wechsel von Registrierung zu Onboarding und danach ins Dashboard muss
-   nachvollziehbar gefuehrt werden.
-3. Push-Notifications und persoenliche Einstellungen muessen als Zusatznutzen
-   erkennbar sein, ohne die Grundfunktion der Vertretungsanzeige zu ueberladen.
+   nachvollziehbar geführt werden.
+3. Push-Notifications und persönliche Einstellungen müssen als Zusatznutzen
+   erkennbar sein, ohne die Grundfunktion der Vertretungsanzeige zu überladen.
 
 Nicht-funktionale Anforderungen
 -------------------------------
@@ -62,27 +62,27 @@ SMART-Ziele (S1 bis S5)
      - Attraktiv/Relevant
      - Terminiert
    * - S1
-     - Vertretungsinfos fuer ein Datum in maximal drei Interaktionen erreichen.
-     - Datum waehlen, Daten laden, Ergebnis sichtbar; kein zusaetzlicher Seitenwechsel.
+     - Vertretungsinfos für ein Datum in maximal drei Interaktionen erreichen.
+     - Datum wählen, Daten laden, Ergebnis sichtbar; kein zusätzlicher Seitenwechsel.
      - Spart Zeit im Schulalltag.
      - Bis 30.11.2025
    * - S2
-     - Such- und Filterfunktionen fuer Klassen/Faecher/Typen bereitstellen.
+     - Such- und Filterfunktionen für Klassen/Fächer/Typen bereitstellen.
      - Kombination aus Textsuche plus Kategorienfilter funktioniert stabil.
-     - Erhoeht Orientierung bei vielen Eintraegen.
+     - Erhöht Orientierung bei vielen Einträgen.
      - Bis 15.12.2025
    * - S3
      - Robuste API-Nutzung mit klaren Fehlerpfaden sicherstellen.
      - Rate-Limit, Retry-Logik und definierte Fehlerantworten sind implementiert und getestet.
-     - Verhindert Ausfaelle bei Lastspitzen oder Upstream-Problemen.
+     - Verhindert Ausfälle bei Lastspitzen oder Upstream-Problemen.
      - Bis 22.12.2025
    * - S4
-     - Sicherheits- und Datenschutzbasis fuer Browserbetrieb sicherstellen.
-     - CSP aktiv, Auth-Guard fuer geschuetzte Bereiche, Impressum/Datenschutz erreichbar.
-     - Erfuellt Schul- und Web-Grundanforderungen.
+     - Sicherheits- und Datenschutzbasis für Browserbetrieb sicherstellen.
+     - CSP aktiv, Auth-Guard für geschützte Bereiche, Impressum/Datenschutz erreichbar.
+     - Erfüllt Schul- und Web-Grundanforderungen.
      - Bis 10.01.2026
    * - S5
-     - Wartbarkeit und Nachvollziehbarkeit der Loesung absichern.
-     - Testdateien fuer Kernrouten vorhanden und Build-/Doku-Prozess dokumentiert.
-     - Senkt Risiko bei spaeteren Aenderungen.
+     - Wartbarkeit und Nachvollziehbarkeit der Lösung absichern.
+     - Testdateien für Kernrouten vorhanden und Build-/Doku-Prozess dokumentiert.
+     - Senkt Risiko bei späteren Änderungen.
      - Bis 31.01.2026

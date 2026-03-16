@@ -1,4 +1,4 @@
-08 Ergebnisbewertung (Ziele erfuellt?)
+08 Ergebnisbewertung (Ziele erfüllt?)
 ======================================
 
 Die Bewertung orientiert sich an den SMART-Zielen aus Kapitel 02.
@@ -15,26 +15,24 @@ Soll-Ist-Abgleich zu den SMART-Zielen
      - Soll
      - Ist-Nachweis
    * - S1
-     - Erfuellt
+     - Erfüllt
      - Vertretungsinfos in max. drei Interaktionen.
-     - Datumswahl und Anzeige in der Hauptansicht — maximal zwei Klicks.
+     - Datumswahl und Anzeige in der Hauptansicht - maximal zwei Klicks.
    * - S2
-     - Erfuellt
+     - Erfüllt
      - Kombinierte Suche und Kategorienfilter stabil nutzbar.
      - Filter- und Suchlogik in der Datenverarbeitungsschicht umgesetzt.
    * - S3
-     - Erfuellt
+     - Erfüllt
      - API robust bei Last und Upstream-Fehlern.
      - Rate-Limiting, Retry-Logik, Cache und Fehlernormalisierung; Tests belegen das.
    * - S4
-     - Erfuellt
+     - Erfüllt
      - Sicherheits- und Datenschutzbasis aktiv.
      - CSP und Zugriffsschutz aktiv; Impressum und Datenschutz erreichbar.
    * - S5
-     - Weitgehend erfuellt
+     - Weitgehend erfüllt
      - Wartbarkeit/Testbarkeit und dokumentierter Prozess.
-     - Tests fuer API-, Hook- und Komponentenpfade vorhanden; weitere UI-Randfaelle als Ausbaupotenzial.
+     - Tests für API-, Hook- und Komponentenpfade vorhanden; weitere UI-Randfälle als Ausbaupotenzial.
 
-Die Kernziele ``S1`` bis ``S4`` sind erreicht, ``S5`` ist in weiten Teilen
-umgesetzt. Das Projekt ist fuer eine BLL-Arbeit technisch belastbar und
-nachvollziehbar dokumentiert.
+Die Kernziele S1 bis S4 sind erreicht, S5 ist in weiten Teilen umgesetzt.
