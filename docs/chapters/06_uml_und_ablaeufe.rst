@@ -1,14 +1,8 @@
 06 UML-Diagramme und Ablaeufe
 =============================
 
-Einordnung
-----------
-
-Die Diagramme verdichten Kapitel 02 bis 05 in mehrere Perspektiven. Dadurch
-wird sichtbar, wie fachliche Anforderungen in konkrete technische Interaktionen
-ueberfuehrt wurden. Fuer die Abgabe stehen drei Diagrammtypen im Mittelpunkt:
-Use-Case, Klasse und Objekt. Sie reichen aus, um Nutzung, Struktur und
-Zusammenspiel der wichtigsten Bausteine nachvollziehbar zu machen.
+Die Diagramme zeigen das Projekt aus drei Perspektiven: Nutzung, Struktur und
+Laufzeit.
 
 Use-Case-Diagramm
 -----------------
@@ -18,9 +12,6 @@ WebUntis und PostHog.
 
 .. uml:: ../uml/usecase.puml
    :caption: Use Cases fuer Nutzung, Datenabruf und Rechtsseiten
-
-Interpretation: Das System ist aus Nutzersicht auf schnellen Informationszugriff
-und nachvollziehbare Zusatzfunktionen reduziert.
 
 Klassendiagramm
 ---------------
@@ -35,16 +26,15 @@ Kommunikation. Im Mittelpunkt stehen drei Wege:
 .. uml:: ../uml/classdiagram.puml
    :caption: Modulorientiertes Klassendiagramm
 
-Interpretation: Die Schichten sind klar getrennt. Besonders wichtig ist, dass
-UI-Komponenten nie direkt mit externen Systemen sprechen. Stattdessen laufen
-die Kommunikationswege ueber Hooks, API-Routen und klar abgegrenzte Services.
+Die Schichten sind klar getrennt: UI-Komponenten sprechen nie direkt mit
+externen Systemen, sondern ueber Hooks, API-Routen und abgegrenzte Services.
 
 Objektdiagramm
 --------------
 
-Das Objektdiagramm zeigt eine konkrete Laufzeitsicht mit realen Instanzen aus
-diesem Repository. Anders als das Klassendiagramm beschreibt es keine
-allgemeinen Modultypen, sondern einen beispielhaften Betriebszustand.
+Das Objektdiagramm zeigt eine konkrete Laufzeitsicht mit realen Instanzen.
+Anders als das Klassendiagramm beschreibt es keine allgemeinen Modultypen,
+sondern einen beispielhaften Betriebszustand.
 
 .. mermaid::
 
@@ -66,23 +56,5 @@ allgemeinen Modultypen, sondern einen beispielhaften Betriebszustand.
        schedule --> pushApi
        pushApi --> untis
 
-Interpretation: Die Objekte verdeutlichen, dass Sicherheits- und Datenpfad im
-Betrieb zusammenspielen. Neben dem sichtbaren Dashboard existiert im Hintergrund
-ein zweiter Laufpfad ueber QStash und die Push-API.
-
-Dateiablage Diagramme
----------------------
-
-- ``docs/uml/usecase.puml``
-- ``docs/uml/classdiagram.puml``
-- ``docs/uml/objectdiagram.mmd``
-
-Optional im Repository vorhanden, aber fuer die Hauptargumentation nicht
-zwingend: ``docs/uml/activity.puml`` und ``docs/uml/sequence.puml``.
-
-Bewertung der UML-Ergebnisse
-----------------------------
-
-Die Diagramme bestaetigen den Architekturansatz: klare Verantwortlichkeiten,
-eine bewusste Trennung zwischen UI und Infrastruktur sowie nachvollziehbare
-Kommunikationswege zwischen Seite, Hook, API und Hintergrundprozess.
+Neben dem sichtbaren Dashboard existiert im Hintergrund ein zweiter Laufpfad
+ueber QStash und die Push-API.

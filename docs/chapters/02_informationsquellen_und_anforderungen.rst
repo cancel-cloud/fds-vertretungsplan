@@ -1,20 +1,13 @@
 02 Informationsquellen und Anforderungen (Lastenheft)
 =====================================================
 
-Rolle dieses Kapitels
----------------------
-
-Das Lastenheft beschreibt die fachliche Sicht: Welche Probleme sollen geloest
-werden, welche Anforderungen bestehen, und woran Erfolg gemessen wird.
-Technische Implementierungsdetails gehoeren nicht in dieses Kapitel.
-
 Informationsquellen
 -------------------
 
 Die Anforderungen wurden aus folgenden Quellen zusammengefuehrt:
 
 - Schulalltag: Bedarf an schneller, mobiler Vertretungsinformation.
-- Projektartefakte: ``README.md``, ``TODO.md`` und vorhandene UI-Struktur.
+- Eigene Projektdokumentation und vorhandene Oberflaechenstruktur.
 - Rechtliche Anforderungen: Impressum und Datenschutz als Pflichtbestandteil.
 - Qualitaetsziele: Tests, Linting und robuste Fehlerdarstellung.
 
@@ -52,9 +45,9 @@ Nicht-funktionale Anforderungen
 -------------------------------
 
 1. Kurze Antwortzeiten und stabile Darstellung.
-2. Sicherheit im Browserbetrieb (CSP, geschuetzte Endpunkte, Login-Fuehrung).
+2. Sicherheit im Browserbetrieb.
 3. Wartbarkeit durch klare Modultrennung.
-4. Nachvollziehbarkeit durch dokumentierten Build- und Testprozess.
+4. Nachvollziehbarkeit durch Tests und Dokumentation.
 
 SMART-Ziele (S1 bis S5)
 -----------------------
@@ -93,19 +86,3 @@ SMART-Ziele (S1 bis S5)
      - Testdateien fuer Kernrouten vorhanden und Build-/Doku-Prozess dokumentiert.
      - Senkt Risiko bei spaeteren Aenderungen.
      - Bis 31.01.2026
-
-Abgrenzung zu Kapitel 03
-------------------------
-
-- Kapitel 02: Ziele, Anforderungen, Erfolgskriterien aus Nutzersicht.
-- Kapitel 03: konkrete technische Architektur und Implementierung.
-
-Diese Trennung sorgt dafuer, dass die Dokumentation fachlich und technisch
-sauber argumentiert.
-
-Fazit
------
-
-Das Lastenheft legt mit den SMART-Zielen ``S1`` bis ``S5`` den verbindlichen
-Bewertungsrahmen fest. Kapitel 08 nutzt dieselben IDs fuer den Soll-Ist-
-Abgleich.

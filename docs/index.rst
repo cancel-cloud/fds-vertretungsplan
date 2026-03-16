@@ -16,7 +16,6 @@ Schulprojekt eine belastbare Webanwendung geworden ist.
    chapters/03_loesungsansatz_und_pflichtenheft
    chapters/03a_projektmanagement_und_zeitplanung
    chapters/04_tools_und_tech_stack
-   chapters/05_code_struktur_welche_datei_macht_was
    chapters/06_uml_und_ablaeufe
    chapters/07_umsetzung_und_schwierigkeiten
    chapters/08_ergebnisbewertung

@@ -1,43 +1,10 @@
 03a Projektmanagement und Zeitplanung
 =====================================
 
-Einordnung
-----------
-
-Dieses Kapitel beschreibt den Projektverlauf. Das Projekt folgt einer
-iterativ-inkrementellen Entwicklung: Statt alle Anforderungen vorab
-festzulegen und sequenziell abzuarbeiten (Wasserfallmodell), wurde in
-kurzen Zyklen gearbeitet — ausprobieren, Probleme erkennen, nachbessern
-und daraus den naechsten Meilenstein ableiten.
-
-Ein klassisches Wasserfallmodell passt hier nicht, weil sich Anforderungen
-im Projektverlauf erst konkretisierten, schnelles Nutzerfeedback wichtig
-war und eine Einzelperson flexibel auf Probleme reagieren muss. Die
-Meilensteine M1 bis M5 entsprechen dabei funktionalen Inkrementen: Jeder
-Meilenstein liefert ein eigenstaendig nutzbares Teilergebnis, auf dem der
-naechste Schritt aufbaut. Im Vergleich zu etablierten agilen Methoden wie
-Scrum ist die hier genutzte Variante bewusst leichtgewichtig und
-pragmatisch, da formale Rollen und Zeremonien bei einem Einzelprojekt
-keinen Mehrwert bieten.
-
-Tagesueblicher Arbeitsprozess
-------------------------------
-
-Innerhalb der einzelnen Meilensteine sah eine typische Arbeitssitzung so aus:
-Die lokale Entwicklungsumgebung mit HTTPS (``vertretungsplan.local``) wurde
-gestartet, Aenderungen in kleinen Schritten umgesetzt und jeweils als
-Git-Commit festgehalten. Automatisierte Tests mit Vitest sicherten dabei ab,
-dass bestehende Funktionen nicht unbemerkt brechen.
-
-Entscheidungen wurden direkt am Code getroffen: Loesungsansaetze als
-Git-Branch ausprobiert und bei Erfolg in den Hauptzweig uebernommen, bei
-Misserfolg verworfen. Neben den automatisierten Tests wurde die Anwendung
-regelmaessig manuell auf verschiedenen Geraeten geprueft — Desktop und
-Smartphone —, besonders fuer Push-Benachrichtigungen und mobile Darstellung.
-
-Erkenntnisse und Architekturentscheidungen wurden parallel zur Entwicklung
-dokumentiert, nicht erst am Ende. So blieb der Bezug zwischen Code und
-Begruendung eng.
+Das Projekt wurde iterativ entwickelt: ausprobieren, Probleme erkennen,
+naechsten Meilenstein ableiten. Ein formales Vorgehensmodell war bei einem
+Einzelprojekt nicht sinnvoll. Aenderungen wurden in kleinen Schritten
+umgesetzt, automatisiert getestet und bei Erfolg uebernommen.
 
 Arbeitsweise: Try-and-Error mit klaren Meilensteinen
 ----------------------------------------------------
@@ -74,9 +41,7 @@ Arbeitsweise: Try-and-Error mit klaren Meilensteinen
 Gantt-Plan mit Meilensteinen
 ----------------------------
 
-Das Gantt-Diagramm zeigt denselben Verlauf in zeitlicher Form. Die
-Meilensteine markieren keine abstrakten Prozessphasen, sondern die Stellen, an
-denen ein konkreter Teil des Produkts erstmals belastbar funktionierte.
+Das Gantt-Diagramm zeigt denselben Verlauf in zeitlicher Form.
 
 .. mermaid::
 
@@ -105,16 +70,15 @@ denen ein konkreter Teil des Produkts erstmals belastbar funktionierte.
        Doku Diagramme Review                   :a5, 2025-12-29, 13d
        Doku fertig                             :milestone, m5, 2026-01-11, 0d
 
-Interpretation: Gut sichtbar ist, dass neue Anforderungen nicht am Anfang
-vollstaendig feststanden. Erst im Verlauf wurden aus der Grundidee ein
-webfaehiger Nutzerfluss und spaeter ein sinnvoller Push-Prozess.
+Neue Anforderungen standen nicht am Anfang vollstaendig fest. Erst im Verlauf
+wurden aus der Grundidee ein webfaehiger Nutzerfluss und spaeter ein
+sinnvoller Push-Prozess.
 
 Netzplan und kritischer Pfad
 ----------------------------
 
-Der Netzplan kombiniert Projektphasen und einzelne Feature-Vorgaenge mit
-sichtbaren Abhaengigkeiten. Er zeigt, welche Schritte wirklich aufeinander
-aufbauen und warum einzelne Themen spaeter als erwartet entstanden sind.
+Der Netzplan zeigt, welche Schritte aufeinander aufbauen und warum einzelne
+Themen spaeter als erwartet entstanden sind.
 
 .. mermaid::
 
@@ -136,16 +100,9 @@ aufbauen und warum einzelne Themen spaeter als erwartet entstanden sind.
        classDef critical fill:#ffe8e8,stroke:#c62828,stroke-width:2px;
        class A,B,C,D,E,F,G,H,I critical;
 
-Interpretation: Der kritische Pfad verlaeuft ueber die Kette vom MVP bis zum
-Push-Dispatch und anschliessend zur Dokumentation. Besonders deutlich wird,
-dass Push erst sinnvoll werden konnte, nachdem Nutzerfluss, Hosting und
+Der kritische Pfad verlaeuft vom MVP ueber API-Stabilitaet und Nutzerfluss
+bis zum Push-Dispatch. Push konnte erst sinnvoll werden, nachdem Hosting und
 API-Stabilitaet bereits geloest waren.
-
-Dateien zum Diagrammstand
--------------------------
-
-- ``docs/pm/gantt.mmd``
-- ``docs/pm/netzplan.mmd``
 
 Austausch und Rueckmeldungen
 ----------------------------
@@ -158,11 +115,3 @@ Darueber hinaus wurde die Anwendung intensiv von Mitschuelerinnen und
 Mitschuelern im Alltag getestet. Deren Rueckmeldungen fuehrten zu
 konkreten Verbesserungen, etwa bei der mobilen Bedienbarkeit und der
 Ladegeschwindigkeit der Vertretungsanzeige.
-
-Fazit
------
-
-Rueckblickend war nicht ein formales Vorgehensmodell entscheidend, sondern die
-Faehigkeit, aus Problemen schnell die naechste sinnvolle Ausbaustufe
-abzuleiten. Genau das spiegeln Meilensteine, Gantt und Netzplan in dieser
-Dokumentation wider.

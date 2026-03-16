@@ -5,8 +5,6 @@ Projektinterne Quellen
 ----------------------
 
 - Repository ``fds-vertretungsplan`` (Code, Tests, Konfiguration).
-- ``README.md`` und ``TODO.md`` als Projekt- und Planungskontext.
-- API- und Hook-Implementierung unter ``src/app/api`` und ``src/hooks``.
 
 Technische Dokumentationen
 --------------------------
@@ -41,12 +39,5 @@ Fachliteratur Software Engineering
 Rechtliche und organisatorische Quellen
 ---------------------------------------
 
-- Impressum im Projekt: ``src/app/impressum/page.tsx``
-- Datenschutz im Projekt: ``src/app/datenschutz/page.tsx``
+- Impressum und Datenschutzerklaerung sind in der Anwendung enthalten.
 - Schulkontext: Friedrich-Dessauer-Schule Limburg
-
-Hinweis zur Nachvollziehbarkeit
--------------------------------
-
-Die Aussagen in dieser Dokumentation basieren auf dem realen Repository-Zustand
-zum Erstellungszeitpunkt und sind über konkrete Dateiverweise rückprüfbar.
