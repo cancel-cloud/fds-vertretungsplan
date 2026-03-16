@@ -28,6 +28,8 @@ plantuml_output_format = 'svg'
 # Mermaid diagrams are rendered as SVG to support PDF output.
 mermaid_output_format = 'svg'
 mermaid_cmd = 'npx -p @mermaid-js/mermaid-cli mmdc'
+# --pdfFit crops the PDF page to the diagram content (no letter-size whitespace).
+mermaid_params = ['--pdfFit']
 
 latex_engine = 'pdflatex'
 latex_toplevel_sectioning = 'section'
@@ -69,6 +71,8 @@ latex_elements = {
 \usepackage{titlesec}
 \titleformat{\chapter}[hang]{\normalfont\huge\bfseries}{\thechapter\quad}{0pt}{}
 \titlespacing*{\chapter}{0pt}{0.5\baselineskip}{1.0\baselineskip}
+% Each top-level section (= BLL chapter) starts on a new page.
+\newcommand{\sectionbreak}{\clearpage}
 % Keep compact top-level sectioning without the unwanted "0." prefix in PDF numbering.
 \renewcommand{\thesection}{\arabic{section}}
 \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
@@ -87,6 +91,13 @@ latex_elements = {
 % Reduce float spacing around figures.
 \setlength{\intextsep}{6pt plus 2pt minus 2pt}
 \setlength{\floatsep}{6pt plus 2pt minus 2pt}
+% Force PlantUML/figure floats to [H] placement (no floating to separate pages).
+% Patches \@xfloat to discard any explicit placement and always use H.
+\usepackage{float}
+\makeatletter
+\let\sphinx@orig@xfloat\@xfloat
+\def\@xfloat#1[#2]{\sphinx@orig@xfloat{#1}[H]}
+\makeatother
 ''',
     'maketitle': r'\input{deckblatt-content.tex.txt}\clearpage',
 }

@@ -23,11 +23,11 @@ Kommunikation. Im Mittelpunkt stehen drei Wege:
 2. Der Hook kapselt Client-Zustand, Cache und Datenabruf.
 3. API-Routen und Services sprechen mit WebUntis, Prisma oder dem Push-System.
 
-.. uml:: ../uml/classdiagram.puml
-   :caption: Modulorientiertes Klassendiagramm
-
 Die Schichten sind klar getrennt: UI-Komponenten sprechen nie direkt mit
 externen Systemen, sondern über Hooks, API-Routen und abgegrenzte Services.
+
+.. uml:: ../uml/classdiagram.puml
+   :caption: Modulorientiertes Klassendiagramm
 
 Objektdiagramm
 --------------
