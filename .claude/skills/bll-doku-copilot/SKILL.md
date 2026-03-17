@@ -19,6 +19,28 @@ Standardmäßig im PLAN-MODUS arbeiten.
 - HTML-, LaTeX- und PDF-Artefakte mitprüfen, wenn sie im Repository bereits existieren.
 - Lehrerfeedback hat Vorrang vor früheren Skill-Annahmen.
 
+## Domain-Wissen (FDS-spezifisch)
+
+Dieses Wissen ist aus Interviews mit dem Autor destilliert und soll Erklärungen
+präziser machen:
+
+- **Ausgangsproblem**: Der WebUntis-Vertretungsplan der FDS lief automatisch
+  durch — keine Suche, kein Filter. Wer seinen Eintrag sehen wollte, musste
+  warten, bis die eigene Klasse erschien.
+- **Rollen**: USER (Dashboard, Stundenplan, Push), ADMIN (zusätzlich
+  Lehrerkürzel-Verwaltung und Nutzerverwaltung).
+- **Admin-Vergabe**: Kombination aus Umgebungsvariable (ADMIN_EMAILS für
+  initialen Admin) und Web-Promotion (Admin kann andere per Klick hochstufen).
+- **Admin-Downgrade**: Modal mit E-Mail-Bestätigung des betroffenen Kontos;
+  letzter Admin ist systemseitig gegen Herabstufung geschützt.
+- **NotificationState**: Steuerungsebene — genau 1 Zeile pro Nutzer+Tag,
+  wird upsertet und bei Trefferwegfall gelöscht.
+- **NotificationFingerprint**: Protokollebene — nur angehängt (nie geändert),
+  Audit-Log aller gesendeten Fingerprints.
+- **TimetablePreset**: Autocomplete-Gedächtnis ohne Zeitdaten (kein Wochentag,
+  keine Stunde) — orthogonal zu TimetableEntry, das die eigentliche
+  Stundenplan-Instanz mit Zeitbezug repräsentiert.
+
 ## Lehrer-Update Pflichtkriterien
 
 Diese Punkte sind in PLAN und APPLY standardmäßig verbindlich:
@@ -35,6 +57,7 @@ Diese Punkte sind in PLAN und APPLY standardmäßig verbindlich:
    - Hosting/Web-Bereitstellung.
    - Nutzer anlegen und Onboarding/Admin-Flows.
    - Push-Notifications inklusive Begründung der gewählten Umsetzung.
+   - Rollen und Berechtigungen als eigenen Abschnitt im Pflichtenheft (Ch. 03).
 4. Scheduler-Begründung dokumentieren:
    - Erklären, warum nur alle 15 Minuten gepullt wird.
    - Begründen, warum kein sekundenweises Echtzeitmodell verwendet wird.
@@ -124,6 +147,8 @@ Folgende Muster aktiv vermeiden und bei Reviews entfernen:
 - **Entwicklersprache ohne Erklärung**: Begriffe wie SHA-256, LRU, exponential backoff nur verwenden, wenn sie für das Verständnis nötig sind und dann kurz erklärt.
 - **ASCII-Umlaut-Ersatz**: Niemals `oe`, `ae`, `ue`, `Oe`, `Ae`, `Ue` als Umlaut-Ersatz verwenden. Immer ö, ä, ü, Ö, Ä, Ü, ß schreiben.
 - **Monospace-Markup für Bezeichner**: Kein RST-Inline-Code-Markup (`` ``word`` ``) für Projektnamen, Konfigurationswerte oder Bezeichner in Prosa - alles soll in der normalen Schriftart erscheinen.
+- **Zu breite Use Cases**: Jeder UC beschreibt genau einen abgeschlossenen Nutzerablauf. Wenn zwei Vorgänge hintereinander ablaufen (z.B. Registrierung + Onboarding), in separate UCs aufteilen.
+- **Datenmodell ohne Kausalfluss**: Eine Entitätstabelle allein reicht nicht. Immer erklären, *warum* Entitäten getrennt sind und wie sie im Prozessfluss zusammenhängen (z.B. TimetableEntry → Matching → NotificationState).
 
 ## Kapitelstruktur
 

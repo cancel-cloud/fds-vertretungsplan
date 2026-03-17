@@ -9,6 +9,11 @@ Schulen liegen diese Informationen zwar digital vor, sind für Lernende aber oft
 nur umständlich nutzbar: lange Tabellen, wenig mobile Optimierung und fehlende
 Filter für konkrete Klassen oder Fächer.
 
+An der Friedrich-Dessauer-Schule Limburg war der Vertretungsplan als automatisch
+durchlaufende Ansicht in WebUntis verfügbar — ohne Suchfunktion und ohne
+Möglichkeit, gezielt nach der eigenen Klasse oder einem Fach zu filtern. Wer
+seinen Eintrag finden wollte, musste warten, bis er erschien.
+
 Motivation des Projekts
 -----------------------
 
@@ -56,3 +61,15 @@ Der typische Nutzungsablauf ist bewusst kurz gehalten:
 
 Damit ist die Bedienung im Alltag auf wenige Schritte reduziert: aufrufen,
 Datum wählen, Ergebnisse lesen und bei Bedarf den eigenen Stundenplan pflegen.
+
+Aufbau der Arbeit
+-----------------
+
+Die Dokumentation gliedert sich in zehn Abschnitte. Nach dieser Einleitung
+beschreibt Kapitel 2 die Anforderungen aus Nutzersicht (Lastenheft). Kapitel 3
+erläutert den technischen Lösungsansatz (Pflichtenheft), gefolgt von
+Projektverlauf und Zeitplanung in Kapitel 4. Kapitel 5 ordnet den verwendeten
+Tech Stack ein. Kapitel 6 zeigt die Systemstruktur anhand von
+UML-Diagrammen. Kapitel 7 dokumentiert Umsetzungserfahrungen und Lessons
+Learned. Kapitel 8 bewertet die Ergebnisse gegen die definierten SMART-Ziele.
+Kapitel 9 gibt einen Ausblick, und Kapitel 10 listet die verwendeten Quellen.

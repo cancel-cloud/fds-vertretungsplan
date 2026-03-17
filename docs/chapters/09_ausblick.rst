@@ -18,9 +18,25 @@ Verbesserungen ableiten:
 Solange das nicht der Fall ist, bleibt der 15-Minuten-Dispatcher die
 vernünftigere Lösung.
 
-Schlussgedanke
---------------
+Fazit
+-----
 
-Die Zukunft des Projekts liegt nicht darin, möglichst viele Funktionen
-anzuhäufen. Interessanter ist die Frage, wie aus der bereits tragfähigen
-Grundlage ein im Schulalltag wirklich bewährtes Produkt werden kann.
+Das Projekt hat sein zentrales Ziel erreicht: eine Webanwendung, die
+Vertretungsdaten der Friedrich-Dessauer-Schule schnell, gefiltert und
+personalisiert bereitstellt. Die vier Kernziele (S1–S4) sind vollständig
+erfüllt, das fünfte Ziel (S5, Wartbarkeit) ist in weiten Teilen umgesetzt.
+
+Die technisch anspruchsvollsten Eigenleistungen liegen im
+Stundenplan-Abgleich, der Delta-basierten Push-Logik und der mehrstufigen
+Caching-Strategie. Diese Bausteine unterscheiden das Projekt von einer reinen
+Konfigurationsarbeit und zeigen, dass auch ein Schulprojekt belastbare
+Architekturentscheidungen erfordert.
+
+Gleichzeitig bleiben Grenzen bestehen: Die Anwendung ist auf eine Schule
+bezogen, hat kein formales DSGVO-Audit durchlaufen und wird als Webanwendung
+statt als native App betrieben. Diese Einschränkungen waren von Anfang an
+bekannt und bewusst in Kauf genommen.
+
+Rückblickend war der größte Lerngewinn nicht die Implementierung einzelner
+Features, sondern das Zusammenspiel von Nutzerführung, API-Robustheit,
+Hintergrundprozessen und Hosting zu einem funktionierenden Gesamtprodukt.

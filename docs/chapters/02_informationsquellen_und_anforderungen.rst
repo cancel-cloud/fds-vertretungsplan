@@ -86,3 +86,42 @@ SMART-Ziele (S1 bis S5)
      - Testdateien für Kernrouten vorhanden und Build-/Doku-Prozess dokumentiert.
      - Senkt Risiko bei späteren Änderungen.
      - Bis 31.01.2026
+
+Zentrale Anwendungsfälle
+------------------------
+
+Die folgenden Anwendungsfälle beschreiben die wichtigsten Abläufe aus
+Nutzersicht. Sie ergänzen das Use-Case-Diagramm in Kapitel 6 um konkrete
+Schritte.
+
+**UC1: Vertretungsplan abrufen (öffentlich).** Ein Gast ruft die Startseite
+auf, wählt ein Datum und sieht die Vertretungen für diesen Tag. Suche und
+Kategorienfilter ermöglichen die Eingrenzung. Kein Login erforderlich.
+
+**UC2a: Registrierung.** Ein neuer Nutzer gibt E-Mail-Adresse und Passwort ein.
+Die Anwendung prüft, ob die E-Mail-Domain für Registrierungen zugelassen ist.
+Bei Erfolg wird das Konto angelegt und der Nutzer ist eingeloggt.
+
+**UC2b: Onboarding (Stundenplan anlegen).** Nach der Registrierung leitet die
+Anwendung automatisch zur Stundenplan-Eingabe. Der Nutzer wählt pro Stunde
+Wochentag, Fach und Lehrkraft. Häufig genutzte Kombinationen werden als
+Schnellauswahl angeboten. Nach dem Speichern leitet die Anwendung automatisch
+ins Dashboard weiter. Das Onboarding muss nur einmal durchlaufen werden.
+
+**UC3: Persönliche Vertretungen anzeigen.** Ein angemeldeter Nutzer öffnet
+das Dashboard. Die Anwendung gleicht die Vertretungen des gewählten Tages mit
+dem hinterlegten Stundenplan ab und hebt relevante Treffer hervor.
+
+**UC4: Push-Benachrichtigungen aktivieren.** Ein angemeldeter Nutzer
+aktiviert in den Einstellungen Push-Benachrichtigungen. Der Browser fragt die
+Berechtigung ab. Bei Zustimmung wird ein Web-Push-Abonnement angelegt. Ab
+sofort prüft der Hintergrundprozess alle 15 Minuten, ob sich relevante
+Vertretungen geändert haben, und sendet nur dann eine Nachricht.
+
+**UC5: Admin-Verwaltung (Lehrerkürzel und Nutzerrollen).** Ein Administrator
+pflegt die Lehrerkürzel-Tabelle und kann Nutzerrollen ändern. Das Hochstufen
+eines Nutzers zur Admin-Rolle erfordert einen einfachen Klick. Das Herabstufen
+eines Admins ist durch einen Bestätigungsdialog gesichert: Der Administrator
+muss die E-Mail-Adresse des betroffenen Kontos eingeben, bevor die Änderung
+durchgeführt wird. Das System verhindert außerdem, den letzten vorhandenen
+Administrator herabzustufen.

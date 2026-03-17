@@ -58,3 +58,17 @@ sondern einen beispielhaften Betriebszustand.
 
 Neben dem sichtbaren Dashboard existiert im Hintergrund ein zweiter Laufpfad
 über QStash und die Push-API.
+
+Sequenzdiagramm: Push-Dispatch
+------------------------------
+
+Das Sequenzdiagramm zeigt den zentralen Hintergrundprozess: den
+Push-Dispatch-Zyklus, der alle 15 Minuten prüft, ob Nutzer über geänderte
+Vertretungen benachrichtigt werden müssen.
+
+.. uml:: ../uml/sequence_push.puml
+   :caption: Sequenzdiagramm des Push-Dispatch-Zyklus
+
+Der Ablauf zeigt die drei möglichen Ergebnisse der Delta-Logik: Senden bei
+neuem oder geändertem Fingerprint, Überspringen bei unverändertem Stand und
+Auflösen, wenn keine relevanten Vertretungen mehr vorliegen.

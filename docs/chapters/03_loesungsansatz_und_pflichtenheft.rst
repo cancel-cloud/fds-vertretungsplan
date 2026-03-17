@@ -42,6 +42,24 @@ Dieser mehrstufige Ablauf stellt sicher, dass Nutzer erst nach vollständiger
 Einrichtung ihres Profils das Dashboard erreichen. Das verhindert
 unvollständige Konten im Echtbetrieb.
 
+Rollen und Berechtigungen
+--------------------------
+
+Die Anwendung kennt zwei Rollen: USER und ADMIN. Ein normaler Nutzer kann
+seinen Stundenplan pflegen, das Dashboard nutzen und Push-Benachrichtigungen
+aktivieren. Ein Administrator hat zusätzlich Zugriff auf die
+Lehrerkürzel-Verwaltung und die Nutzerverwaltung — er kann Rollen vergeben
+und Konten entfernen.
+
+Die erste Admin-Zuweisung erfolgt über eine Umgebungsvariable: Nur
+E-Mail-Adressen, die dort hinterlegt sind, erhalten beim Registrieren
+Admin-Rechte. Dieser erste Administrator kann weitere Nutzer per
+Weboberfläche hochstufen. Das Hochstufen erfordert einen einfachen Klick;
+das Herabstufen eines Admins erfordert dagegen die Eingabe der E-Mail-Adresse
+des betroffenen Kontos in einem Bestätigungsdialog. Das System stellt
+außerdem sicher, dass immer mindestens ein Administrator vorhanden ist — der
+letzte Admin kann nicht herabgestuft werden.
+
 Push-Notifications als Hintergrundprozess
 -----------------------------------------
 
@@ -107,3 +125,68 @@ Lehrerzuordnungen und Push-Subscriptions.
 Die gewählte Lösung erfüllt die zentralen Sollvorgaben des Pflichtenhefts:
 klare Nutzerführung, robuste API-Kontrolle, webtaugliches Hosting und eine
 Push-Architektur, die im Schulkontext sinnvoller ist als ein Echtzeitmodell.
+
+Datenmodell
+-----------
+
+Die Datenbank (PostgreSQL, verwaltet über Prisma) speichert acht Entitäten:
+
+.. list-table:: Übersicht der Datenbankentitäten
+   :header-rows: 1
+   :widths: 18 82
+
+   * - Entität
+     - Zweck und wichtigste Felder
+   * - User
+     - Nutzerkonto mit E-Mail, Passwort-Hash, Rolle (USER/ADMIN),
+       Onboarding-Status und Benachrichtigungseinstellungen.
+   * - TimetableEntry
+     - Persönlicher Stundenplan: Wochentag, Stunde, Fach, Lehrkraft, Raum
+       und Wochenmodus (jede/gerade/ungerade Woche). Grundlage für den
+       Vertretungsabgleich.
+   * - TeacherDirectory
+     - Zuordnung von Lehrerkürzel zu vollem Namen. Wird von Admins gepflegt
+       und im Stundenplan referenziert.
+   * - PushSubscription
+     - Web-Push-Endpunkt pro Gerät mit ECDH-Schlüsseln für die
+       verschlüsselte Zustellung (VAPID).
+   * - NotificationState
+     - Aktueller Fingerprint pro Nutzer und Zieldatum. Entscheidet, ob eine
+       Benachrichtigung gesendet, übersprungen oder aufgelöst wird.
+   * - NotificationFingerprint
+     - Unveränderliches Protokoll aller gesendeten Fingerprints (Audit-Log).
+   * - TimetablePreset
+     - Häufig verwendete Fach-Lehrkraft-Raum-Kombinationen für
+       Autovervollständigung im Stundenplan-Editor.
+   * - AppSettings
+     - Globale Konfiguration (Singleton): erlaubte E-Mail-Domains und
+       optionale Demo-Daten.
+
+Alle Nutzer-bezogenen Entitäten sind über Fremdschlüssel mit kaskadierendem
+Löschen verbunden: Wird ein Nutzerkonto entfernt, werden Stundenplan,
+Push-Abonnements und Benachrichtigungszustände automatisch bereinigt.
+
+**Zusammenhang der Entitäten im Push-Prozess.** TimetableEntry ist die
+Grundlage für die Push-Logik: Der Dispatcher liest für jeden Nutzer seinen
+Stundenplan und gleicht ihn mit den Vertretungen des Tages ab. Nur Treffer
+aus diesem Abgleich fließen in die Benachrichtigungsentscheidung ein. Das
+Ergebnis — ein Prüfwert (Fingerprint) über die relevanten Treffer — wird in
+NotificationState gespeichert.
+
+**Warum NotificationState und NotificationFingerprint getrennt sind.**
+NotificationState speichert genau eine Zeile pro Nutzer und Zieldatum: den
+zuletzt gesendeten Fingerprint. Er wird bei jedem Dispatch-Zyklus
+überschrieben und gelöscht, sobald keine Treffer mehr vorliegen.
+NotificationFingerprint hingegen wächst nur — jeder je gesendete Fingerprint
+wird dauerhaft protokolliert. Diese Trennung ist bewusst: Der State steuert,
+ob eine Benachrichtigung gesendet wird; der Fingerprint dokumentiert, was ein
+Nutzer zu welchem Zeitpunkt gesehen hat. Würde man beide in einer Tabelle
+zusammenfassen, ließe sich der Versandverlauf nicht mehr rekonstruieren.
+
+**Warum TimetablePreset neben TimetableEntry existiert.** Ein TimetableEntry
+repräsentiert eine konkrete Unterrichtsstunde mit Zeitdaten (Wochentag,
+Stunde, Wochenmodus). Ein TimetablePreset speichert nur die inhaltliche
+Kombination — Fach, Lehrkraft, Raum — ohne Zeitbezug. Er dient als
+Autocomplete-Gedächtnis im Stundenplan-Editor: Die am häufigsten genutzten
+Kombinationen erscheinen als Schnellauswahl. Beide Entitäten haben
+orthogonale Zwecke und lassen sich nicht sinnvoll zusammenlegen.
