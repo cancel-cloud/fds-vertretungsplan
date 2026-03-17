@@ -6,17 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="228ae0a9-7468-4548-9b79-c7d65acbd30e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/01_einleitung_und_motivation.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/01_einleitung_und_motivation.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/02_informationsquellen_und_anforderungen.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/02_informationsquellen_und_anforderungen.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/03_loesungsansatz_und_pflichtenheft.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/03_loesungsansatz_und_pflichtenheft.rst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/chapters/03a_projektmanagement_und_zeitplanung.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/03a_projektmanagement_und_zeitplanung.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/04_tools_und_tech_stack.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/04_tools_und_tech_stack.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/05_code_struktur_welche_datei_macht_was.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/05_code_struktur_welche_datei_macht_was.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/06_uml_und_ablaeufe.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/06_uml_und_ablaeufe.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/07_umsetzung_und_schwierigkeiten.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/07_umsetzung_und_schwierigkeiten.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/08_ergebnisbewertung.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/08_ergebnisbewertung.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/09_ausblick.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/09_ausblick.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/chapters/10_quellen.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/chapters/10_quellen.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -186,7 +176,7 @@
       <workItem from="1773432689086" duration="4207000" />
       <workItem from="1773437279223" duration="644000" />
       <workItem from="1773494824838" duration="4000" />
-      <workItem from="1773652776778" duration="28649000" />
+      <workItem from="1773652776778" duration="29936000" />
     </task>
     <servers />
   </component>

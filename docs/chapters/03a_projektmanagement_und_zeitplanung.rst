@@ -113,14 +113,28 @@ API-Stabilität bereits gelöst waren.
 Austausch und Rückmeldungen
 ----------------------------
 
-Die Projektarbeit wurde durch regelmäßigen Austausch begleitet. Mehrere
-Gespräche mit den betreuenden Lehrkräften Alexander Rhode und Michael
-Knobl dienten der Abstimmung über Thema und Projektumfang sowie der Begleitung an
-den Meilensteinen.
+Die Projektarbeit wurde durch regelmäßigen Austausch begleitet. Über das
+gesamte Projekt fanden laufende mündliche Rückmeldungen durch die
+betreuenden Lehrkräfte Alexander Rhode und Michael Knobl statt. Förmliche
+Gespräche mit schriftlichen Notizen konzentrierten sich auf die zweite
+Projekthälfte und betrafen konkret: die Kapitelstruktur der Dokumentation,
+fehlende inhaltliche Punkte sowie inhaltliche Verbesserungen einzelner
+Abschnitte.
 
 Darüber hinaus wurde die Anwendung von Mitschülerinnen und Mitschülern
 des Informatik-Kurses im Schulalltag getestet. Da sie unterschiedliche
-Smartphones verwendeten, zeigte sich früh, dass die Darstellung auf
-verschiedenen Bildschirmgrößen angepasst werden musste. Weitere
-Rückmeldungen führten zu Feature-Ergänzungen, die im ursprünglichen
-Entwurf nicht vorgesehen waren.
+Smartphones verwendeten, traten Darstellungsprobleme auf mehreren
+Bildschirmgrößen auf: Texte und Tabellen wurden abgeschnitten,
+Layout-Elemente verschoben sich, und Schaltflächen lagen teilweise
+außerhalb des sichtbaren Bereichs. Diese Probleme wurden im Verlauf
+der Meilensteine M3 und M4 behoben. Zusätzlich entstanden aus den
+Rückmeldungen konkrete Feature-Requests, die im ursprünglichen Entwurf
+nicht vorgesehen waren: ein Dark Mode sowie eine verbesserte
+Datumsnavigation. Kleinere Detailwünsche wurden laufend eingearbeitet.
+
+Einige technische Kernentscheidungen entstanden nicht durch externe
+Rückmeldungen, sondern aus eigener Initiative: die Delta-Logik für den
+Push-Prozess, die Erschließung der WebUntis-Schnittstelle per
+Browser-Netzwerkanalyse, das Rollenkonzept mit USER- und ADMIN-Berechtigungen
+sowie die Wahl von QStash als externem Scheduler. Diese Entscheidungen
+sind im Pflichtenheft (Kapitel 3) begründet.
