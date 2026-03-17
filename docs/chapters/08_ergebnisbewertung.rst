@@ -1,4 +1,4 @@
-08 Ergebnisbewertung (Ziele erfüllt?)
+Ergebnisbewertung (Ziele erfüllt?)
 ======================================
 
 Die Bewertung orientiert sich an den SMART-Zielen aus Kapitel 02.

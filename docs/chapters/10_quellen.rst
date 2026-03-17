@@ -1,10 +1,13 @@
-10 Quellen
+Quellen
 ==========
 
 Projektinterne Quellen
 ----------------------
 
 - Repository fds-vertretungsplan (Code, Tests, Konfiguration).
+- WebUntis-Schnittstelle (FDS): erschlossen durch Browser-Netzwerkanalyse
+  des öffentlich erreichbaren Vertretungsplans; keine offizielle
+  API-Dokumentation vorhanden.
 
 Technische Dokumentationen
 --------------------------
@@ -16,6 +19,8 @@ Technische Dokumentationen
 - Sphinx: https://www.sphinx-doc.org/ (abgerufen am 11.02.2026)
 - PlantUML: https://plantuml.com/ (abgerufen am 11.02.2026)
 - PostHog: https://posthog.com/docs (abgerufen am 11.02.2026)
+- Prisma: https://www.prisma.io/docs (abgerufen am 11.02.2026)
+- Upstash QStash: https://upstash.com/docs/qstash (abgerufen am 11.02.2026)
 
 Webstandards und Protokolle
 ---------------------------
@@ -35,9 +40,9 @@ Fachliteratur Software Engineering
 -----------------------------------
 
 - Sommerville, Ian: *Software Engineering*. 10. Auflage, Pearson, 2015.
+  (Anforderungsanalyse, Lastenheft-/Pflichtenheft-Struktur, Schichtenarchitektur)
 
 Rechtliche und organisatorische Quellen
 ---------------------------------------
 
 - Impressum und Datenschutzerklärung sind in der Anwendung enthalten.
-- Schulkontext: Friedrich-Dessauer-Schule Limburg

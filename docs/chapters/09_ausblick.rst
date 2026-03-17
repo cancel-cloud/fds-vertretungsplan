@@ -1,4 +1,4 @@
-09 Ausblick
+Ausblick
 ===========
 
 Weiterentwicklung

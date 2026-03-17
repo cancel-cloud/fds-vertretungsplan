@@ -1,4 +1,4 @@
-05 Code-Struktur: Welche Datei macht was
+Code-Struktur: Welche Datei macht was
 ========================================
 
 Prinzip der Struktur

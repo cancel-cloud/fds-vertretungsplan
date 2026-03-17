@@ -1,4 +1,4 @@
-03a Projektmanagement und Zeitplanung
+Projektmanagement und Zeitplanung
 =====================================
 
 Das Projekt wurde iterativ entwickelt: ausprobieren, Probleme erkennen,
@@ -115,9 +115,12 @@ Austausch und Rückmeldungen
 
 Die Projektarbeit wurde durch regelmäßigen Austausch begleitet. Mehrere
 Gespräche mit den betreuenden Lehrkräften Alexander Rhode und Michael
-Knobl dienten der fachlichen Orientierung und Meilensteinbesprechung.
+Knobl dienten der Abstimmung über Thema und Projektumfang sowie der Begleitung an
+den Meilensteinen.
 
-Darüber hinaus wurde die Anwendung intensiv von Mitschülerinnen und
-Mitschülern im Alltag getestet. Deren Rückmeldungen führten zu
-konkreten Verbesserungen, etwa bei der mobilen Bedienbarkeit und der
-Ladegeschwindigkeit der Vertretungsanzeige, als auch Feature-Requests.
+Darüber hinaus wurde die Anwendung von Mitschülerinnen und Mitschülern
+des Informatik-Kurses im Schulalltag getestet. Da sie unterschiedliche
+Smartphones verwendeten, zeigte sich früh, dass die Darstellung auf
+verschiedenen Bildschirmgrößen angepasst werden musste. Weitere
+Rückmeldungen führten zu Feature-Ergänzungen, die im ursprünglichen
+Entwurf nicht vorgesehen waren.

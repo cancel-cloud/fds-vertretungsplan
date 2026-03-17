@@ -1,4 +1,4 @@
-03 Lösungsansatz und Pflichtenheft
+Lösungsansatz und Pflichtenheft
 ===================================
 
 Architekturprinzip
@@ -72,10 +72,20 @@ umgesetzt. Stattdessen kombiniert die Anwendung mehrere Bausteine:
 - serverseitiger Abgleich gegen relevante Vertretungen,
 - Delta-Logik, damit nur neue oder geänderte Treffer versendet werden.
 
+Ein externer Scheduler ist notwendig, weil eine Webanwendung von sich
+aus nicht aktiv wird — sie reagiert nur auf eingehende Anfragen. QStash
+übernimmt die Rolle eines Weckers: Er sendet alle 15 Minuten eine
+Anfrage an die Anwendung und löst damit den Dispatch-Zyklus aus.
+
 Der Hintergrundprozess prüft für jeden Nutzer mit aktivierten
 Benachrichtigungen, ob relevante Vertretungen vorliegen. Nur bei neuen oder
 geänderten Treffern wird über das VAPID-Protokoll (RFC 8292) eine
 Push-Nachricht versendet.
+
+Die Logik funktioniert wie ein digitaler Fingerabdruck: Die Anwendung
+erstellt bei jedem Prüflauf einen Kurzwert über die relevanten
+Vertretungen des Nutzers. Stimmt er mit dem vorherigen überein, ist
+nichts Neues passiert — kein Push. Weicht er ab, wurde etwas geändert.
 
 **Wie funktioniert die Delta-Logik?**
 Für jeden Nutzer wird bei jedem

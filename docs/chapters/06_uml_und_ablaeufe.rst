@@ -1,4 +1,4 @@
-06 UML-Diagramme und Abläufe
+UML-Diagramme und Abläufe
 =============================
 
 Die Diagramme zeigen das Projekt aus drei Perspektiven: Nutzung, Struktur und

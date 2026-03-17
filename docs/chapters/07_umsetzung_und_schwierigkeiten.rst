@@ -1,4 +1,4 @@
-07 Umsetzung und Schwierigkeiten
+Umsetzung und Schwierigkeiten
 ================================
 
 Lesson Learned 1: Gute Bedienung entsteht nicht von allein

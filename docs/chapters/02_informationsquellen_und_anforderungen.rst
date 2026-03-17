@@ -1,4 +1,4 @@
-02 Informationsquellen und Anforderungen (Lastenheft)
+Informationsquellen und Anforderungen (Lastenheft)
 =====================================================
 
 Informationsquellen

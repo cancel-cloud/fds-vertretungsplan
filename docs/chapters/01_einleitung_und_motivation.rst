@@ -1,4 +1,4 @@
-01 Einleitung und Motivation
+Einleitung und Motivation
 ============================
 
 Ausgangssituation

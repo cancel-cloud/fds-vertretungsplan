@@ -1,4 +1,4 @@
-04 Tools und Tech Stack
+Tools und Tech Stack
 =======================
 
 Ziel der Toolauswahl
