@@ -1,50 +1,223 @@
-03 Lösungsansatz und Pflichtenheft
+Lösungsansatz und Pflichtenheft
 ===================================
 
 Architekturprinzip
 ------------------
 
-Die Umsetzung folgt einer klaren Kette: UI -> Hook -> interne API -> WebUntis.
-Dadurch bleibt der Browser schlank, während sicherheits- und robustheitsrelevante
-Logik serverseitig gebündelt wird.
+Die Architektur trennt vier Schichten: Die Benutzeroberfläche zeigt Daten an,
+eine Zwischenschicht verwaltet den lokalen Zustand, eine serverseitige
+API-Schicht bündelt Validierung und Fehlerbehandlung, und die externe
+Datenquelle (WebUntis) wird nur serverseitig kontaktiert. [#s03_1]_ Dadurch
+bleibt der Browser leichtgewichtig, während sensible Logik serverseitig
+gebündelt wird.
 
-Umsetzungspflicht 1: kontrollierte API-Schicht
-----------------------------------------------
+Hosting und Web-Bereitstellung
+------------------------------
 
-Die API-Route kapselt kritische Funktionen: Rate-Limit, Cache und konsistente
-Fehlerantworten. Das reduziert Lastspitzen und verhindert, dass die UI direkt an
-unkontrollierte Upstream-Antworten gekoppelt wird.
+Die Anwendung ist als normale Next.js-Webanwendung ausgelegt. Das Projekt kann
+auf Vercel oder auf eigener Infrastruktur betrieben werden, solange eine
+öffentlich erreichbare HTTPS-URL vorhanden ist, da der Scheduler - ein
+externer Dienst der Firma Upstash - keine lokalen Adressen aufrufen kann.
 
-.. literalinclude:: ../../src/app/api/substitutions/route.ts
-   :language: ts
-   :lines: 267-283
+Die Hosting-Entscheidung ist deshalb Teil des Pflichtenhefts: Ohne öffentliche
+URL, gesetzte Umgebungsvariablen und klaren Deploy-Prozess würden Dashboard,
+Registrierung und Push zwar lokal funktionieren, aber nicht als Webprodukt im
+echten Betrieb.
 
-Warum dieser Ausschnitt wichtig ist:
+Nutzer anlegen, Onboarding und Admin-Setup
+------------------------------------------
 
-- Er belegt die Schutzfunktion (Rate-Limit) auf Serverebene.
-- Er zeigt, wie bei Ueberlastung ein definierter Fehlerpfad entsteht.
-- Er stützt dieses Kapitel, weil er eine zentrale Pflichtenheft-Anforderung
-  technisch nachweist.
+Der Nutzerfluss ist bewusst mehrstufig aufgebaut:
 
-Umsetzungspflicht 2: stabiler Datenabruf im Client
----------------------------------------------------
+1. Neue Nutzer registrieren sich über die Registrierungsseite.
+2. Ob ein Nutzer Admin-Rechte erhält, wird über die Umgebungskonfiguration
+   festgelegt. So ist sichergestellt, dass niemand zufällig Admin-Rechte bekommt.
+3. Der erste registrierte Nutzer sollte idealerweise ein Admin sein, da nur
+   Admins die Lehrerkürzel auf der Admin-Seite pflegen können.
+4. Nach erfolgreichem Login führt die Anwendung ins persönliche Onboarding
+   oder - für Admins - ins Admin-Setup.
+5. Erst nach hinterlegten Lehrkräften und einem eigenen Stundenplan ist das
+   Dashboard der eigentliche Zielzustand.
 
-Der Hook ``useSubstitutions`` steuert Caching, Request-Abbruch und Fehlerzustand.
-Damit bleibt die UI konsistent, auch wenn Nutzer schnell zwischen Tagen wechseln.
-Die konkrete Umsetzung liegt in ``src/hooks/use-substitutions.ts`` und trennt
-bewusst Ladezustand, Fehlerzustand und Meta-Antwort.
+Dieser mehrstufige Ablauf stellt sicher, dass Nutzer erst nach vollständiger
+Einrichtung ihres Profils das Dashboard erreichen. Das verhindert
+unvollständige Konten im Echtbetrieb.
 
-Datenfluss Ende-zu-Ende
------------------------
+Rollen und Berechtigungen
+--------------------------
 
-1. Nutzer wählt Datum in der Oberfläche.
-2. Der Hook prüft Client-Cache und startet ggf. API-Request.
-3. Die API prüft Limits, validiert Parameter und kontaktiert WebUntis.
-4. Die Antwort wird normalisiert und als ``substitution`` oder ``meta`` geliefert.
-5. Die UI rendert den passenden Zustand (Liste, leer, meta, fehlerhaft).
+Die Anwendung kennt zwei Rollen: USER und ADMIN. Ein normaler Nutzer kann
+seinen Stundenplan pflegen, das Dashboard nutzen und Push-Benachrichtigungen
+aktivieren. Ein Administrator hat zusätzlich Zugriff auf die
+Lehrerkürzel-Verwaltung und die Nutzerverwaltung - er kann Rollen vergeben
+und Konten entfernen.
 
-Pflichtenheft-Abgleich
-----------------------
+Die erste Admin-Zuweisung erfolgt über eine Umgebungsvariable: Nur
+E-Mail-Adressen, die dort hinterlegt sind, erhalten beim Registrieren
+Admin-Rechte. Dieser erste Administrator kann weitere Nutzer per
+Weboberfläche hochstufen. Das Hochstufen erfordert einen einfachen Klick;
+das Herabstufen eines Admins erfordert dagegen die Eingabe der E-Mail-Adresse
+des betroffenen Kontos in einem Bestätigungsdialog. Das System stellt
+außerdem sicher, dass immer mindestens ein Administrator vorhanden ist - der
+letzte Admin kann nicht herabgestuft werden.
 
-Die gewählte Architektur erfüllt die zentrale Sollvorgabe des Pflichtenhefts:
-robuster Echtbetrieb mit klaren Schnittstellen und nachvollziehbaren Fehlerpfaden.
+Push-Notifications als Hintergrundprozess
+-----------------------------------------
+
+Push-Benachrichtigungen wurden nicht als einfache "Sende immer alles"-Funktion
+umgesetzt. Stattdessen kombiniert die Anwendung mehrere Bausteine:
+
+- persönlicher Stundenplan als Filtergrundlage,
+- periodischer Dispatch über QStash, einen Funktions-Scheduler der Firma
+  Upstash, dessen kostenloser Tarif für den Dauerbetrieb dieses Projekts ausreicht,
+- serverseitiger Abgleich gegen relevante Vertretungen,
+- Delta-Logik, damit nur neue oder geänderte Treffer versendet werden.
+
+Ein externer Scheduler ist notwendig, weil eine Webanwendung von sich
+aus nicht aktiv wird - sie reagiert nur auf eingehende Anfragen. QStash
+übernimmt die Rolle eines Weckers: Er sendet alle 15 Minuten eine
+Anfrage an die Anwendung und löst damit den Dispatch-Zyklus aus.
+
+Der Hintergrundprozess prüft für jeden Nutzer mit aktivierten
+Benachrichtigungen, ob relevante Vertretungen vorliegen. Nur bei neuen oder
+geänderten Treffern wird über das VAPID-Protokoll (RFC 8292) eine
+Push-Nachricht versendet. [#s03_2]_
+
+Die Push-Nachricht wird nicht direkt an die sichtbare Seite zugestellt,
+sondern an einen Service Worker. Ein Service Worker ist ein Hintergrundskript,
+das der Browser unabhängig von der geöffneten Seite ausführt. [#s03_3]_ Er
+empfängt die eingehende Push-Nachricht, erzeugt die sichtbare
+Benachrichtigung und reagiert auf Klicks - etwa durch Öffnen des Dashboards.
+Dadurch funktionieren Benachrichtigungen auch dann, wenn die Anwendung gerade
+nicht geöffnet ist.
+
+Die Logik funktioniert wie ein digitaler Fingerabdruck: Die Anwendung
+erstellt bei jedem Prüflauf einen Kurzwert über die relevanten
+Vertretungen des Nutzers. Stimmt er mit dem vorherigen überein, ist
+nichts Neues passiert - kein Push. Weicht er ab, wurde etwas geändert.
+
+**Wie funktioniert die Delta-Logik?**
+Für jeden Nutzer wird bei jedem
+Dispatch-Zyklus ein Prüfwert (Fingerprint) über die aktuell relevanten
+Vertretungen berechnet und in der Datenbank gespeichert. Beim nächsten Zyklus
+wird der Fingerprint erneut berechnet und mit dem gespeicherten verglichen.
+Drei Ergebnisse sind möglich: *Senden* (neuer oder geänderter Fingerprint -
+es hat sich etwas geändert), *Überspringen* (Fingerprint unverändert - keine
+Neuigkeit) oder *Auflösen* (keine Treffer mehr - gespeicherter Zustand wird
+bereinigt). So werden Nutzer nur dann benachrichtigt, wenn sich für sie
+tatsächlich etwas geändert hat.
+
+Warum nur alle 15 Minuten und nicht in Echtzeit?
+------------------------------------------------
+
+Die 15-Minuten-Frequenz ist eine fachliche und technische Abwägung:
+
+- WebUntis liefert hier keinen echten Event-Stream, sondern muss aktiv abgefragt werden.
+- Ein sekundenweises Polling würde die Last auf das Fremdsystem und auf die
+  eigene Anwendung unnötig erhöhen.
+- Im Schulalltag reicht ein kurzer, regelmäßiger Aktualisierungsrhythmus aus;
+  Sekunden-Echtzeit bringt kaum zusätzlichen Nutzen.
+
+Technische Kernentscheidungen
+-----------------------------
+
+**Schedule-Matching.** Der Abgleich zwischen persönlichem Stundenplan und
+Vertretungsliste vergleicht Wochentag, Stunde und Fach. Daraus ergibt sich ein
+Relevanzwert, der höher ist, wenn mehrere Kriterien übereinstimmen.
+
+**Caching-Strategie.** Die API nutzt einen serverseitigen Cache mit kurzer
+Gültigkeitsdauer. Bei Upstream-Fehlern werden zwischengespeicherte Daten
+weiterverwendet, damit Nutzer auch bei vorübergehenden Störungen stabile
+Ergebnisse erhalten. [#s03_4]_
+
+Datenschutz und Sicherheitsarchitektur
+--------------------------------------
+
+Passwörter werden gehasht gespeichert, Sitzungen laufen über verschlüsselte
+Tokens mit sicheren Cookies. Der Browser wird durch Sicherheitsrichtlinien
+(Content Security Policy) geschützt, [#s03_5]_ Login-Versuche sind
+ratenbegrenzt. Klarnamen oder Schülerdaten werden nicht erfasst. [#s03_6]_
+
+Die Datenbank speichert Nutzerkonten, persönliche Stundenpläne,
+Lehrerzuordnungen und Push-Subscriptions.
+
+Die gewählte Lösung erfüllt die zentralen Sollvorgaben des Pflichtenhefts:
+klare Nutzerführung, robuste API-Kontrolle, webtaugliches Hosting und eine
+Push-Architektur, die im Schulkontext sinnvoller ist als ein Echtzeitmodell.
+
+Datenmodell
+-----------
+
+Die Datenbank (PostgreSQL, verwaltet über Prisma) speichert acht Entitäten:
+
+.. list-table:: Übersicht der Datenbankentitäten
+   :header-rows: 1
+   :widths: 18 82
+
+   * - Entität
+     - Zweck und wichtigste Felder
+   * - User
+     - Nutzerkonto mit E-Mail, Passwort-Hash, Rolle (USER/ADMIN),
+       Onboarding-Status und Benachrichtigungseinstellungen.
+   * - TimetableEntry
+     - Persönlicher Stundenplan: Wochentag, Stunde, Fach, Lehrkraft, Raum
+       und Wochenmodus (jede/gerade/ungerade Woche). Grundlage für den
+       Vertretungsabgleich.
+   * - TeacherDirectory
+     - Zuordnung von Lehrerkürzel zu vollem Namen. Wird von Admins gepflegt
+       und im Stundenplan referenziert.
+   * - PushSubscription
+     - Web-Push-Endpunkt pro Gerät mit ECDH-Schlüsseln für die
+       verschlüsselte Zustellung (VAPID).
+   * - NotificationState
+     - Aktueller Fingerprint pro Nutzer und Zieldatum. Entscheidet, ob eine
+       Benachrichtigung gesendet, übersprungen oder aufgelöst wird.
+   * - NotificationFingerprint
+     - Unveränderliches Protokoll aller gesendeten Fingerprints (Audit-Log).
+   * - TimetablePreset
+     - Häufig verwendete Fach-Lehrkraft-Raum-Kombinationen für
+       Autovervollständigung im Stundenplan-Editor.
+   * - AppSettings
+     - Globale Konfiguration (Singleton): erlaubte E-Mail-Domains und
+       optionale Demo-Daten.
+
+Alle Nutzer-bezogenen Entitäten sind über Fremdschlüssel mit kaskadierendem
+Löschen verbunden: Wird ein Nutzerkonto entfernt, werden Stundenplan,
+Push-Abonnements und Benachrichtigungszustände automatisch bereinigt.
+
+**Zusammenhang der Entitäten im Push-Prozess.** TimetableEntry ist die
+Grundlage für die Push-Logik: Der Dispatcher liest für jeden Nutzer seinen
+Stundenplan und gleicht ihn mit den Vertretungen des Tages ab. Nur Treffer
+aus diesem Abgleich fließen in die Benachrichtigungsentscheidung ein. Das
+Ergebnis - ein Prüfwert (Fingerprint) über die relevanten Treffer - wird in
+NotificationState gespeichert.
+
+**Warum NotificationState und NotificationFingerprint getrennt sind.**
+NotificationState speichert genau eine Zeile pro Nutzer und Zieldatum: den
+zuletzt gesendeten Fingerprint. Er wird bei jedem Dispatch-Zyklus
+überschrieben und gelöscht, sobald keine Treffer mehr vorliegen.
+NotificationFingerprint hingegen wächst nur - jeder je gesendete Fingerprint
+wird dauerhaft protokolliert. Diese Trennung ist bewusst: Der State steuert,
+ob eine Benachrichtigung gesendet wird; der Fingerprint dokumentiert, was ein
+Nutzer zu welchem Zeitpunkt gesehen hat. Würde man beide in einer Tabelle
+zusammenfassen, ließe sich der Versandverlauf nicht mehr rekonstruieren.
+
+**Warum TimetablePreset neben TimetableEntry existiert.** Ein TimetableEntry
+repräsentiert eine konkrete Unterrichtsstunde mit Zeitdaten (Wochentag,
+Stunde, Wochenmodus). Ein TimetablePreset speichert nur die inhaltliche
+Kombination - Fach, Lehrkraft, Raum - ohne Zeitbezug. Er dient als
+Autocomplete-Gedächtnis im Stundenplan-Editor: Die am häufigsten genutzten
+Kombinationen erscheinen als Schnellauswahl. Beide Entitäten haben
+orthogonale Zwecke und lassen sich nicht sinnvoll zusammenlegen.
+
+.. [#s03_1] Vgl. Sommerville (2015), Kap. 6: Architekturentwurf -
+   Schichtenarchitekturen als Mittel zur Trennung von Zuständigkeiten.
+.. [#s03_2] Vgl. RFC 8292: Voluntary Application Server Identification
+   (VAPID) for Web Push.
+.. [#s03_3] Vgl. W3C Service Workers,
+   https://www.w3.org/TR/service-workers/.
+.. [#s03_4] Vgl. RFC 5861: HTTP Cache-Control Extensions for Stale Content
+   (stale-while-revalidate, stale-if-error).
+.. [#s03_5] Vgl. W3C Content Security Policy Level 3,
+   https://www.w3.org/TR/CSP3/.
+.. [#s03_6] Vgl. OWASP Top 10 (2021), https://owasp.org/Top10/.

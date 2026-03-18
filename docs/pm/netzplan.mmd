@@ -1,0 +1,17 @@
+flowchart LR
+    A["A Produktidee und Anforderungen schaerfen"] --> B["B MVP fuer Anzeige und Datum"]
+    B --> C["C Datenabruf im Hook und Client-Cache"]
+    C --> D["D API-Proxy mit Retry und Rate-Limit"]
+    D --> E["E Dashboard als persoenlicher Einstieg"]
+    E --> F["F Registrierung, Admin-Setup, Onboarding"]
+    F --> G["G Hosting und oeffentliche Web-URL"]
+    G --> H["H QStash-Dispatch fuer Push"]
+    H --> I["I Tests, Doku und PDF-Abgabe"]
+
+    D --> J["J Filterlogik und Datenaufbereitung"]
+    H --> K["K Push-Tests und Benutzerverwaltung"]
+    J --> E
+    K --> I
+
+    classDef critical fill:#ffe8e8,stroke:#c62828,stroke-width:2px;
+    class A,B,C,D,E,F,G,H,I critical;

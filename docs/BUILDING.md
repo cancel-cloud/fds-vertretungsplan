@@ -7,6 +7,7 @@
 - LaTeX mit `latexmk` und `pdflatex` (z. B. TeX Live / MacTeX)
 - Java Runtime
 - `plantuml` im `PATH`
+- Node.js + `npx` (fuer Mermaid CLI)
 
 ## 1) Umgebung einrichten
 
@@ -17,7 +18,22 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 2) HTML bauen
+## 2) Mermaid CLI pruefen
+
+In `conf.py` wird `mermaid_output_format = 'svg'` verwendet. Dafuer muss die
+Mermaid CLI verfuegbar sein.
+
+```bash
+npx -p @mermaid-js/mermaid-cli mmdc -h
+```
+
+Alternative global:
+
+```bash
+npm install -g @mermaid-js/mermaid-cli
+```
+
+## 3) HTML bauen
 
 ```bash
 make html
@@ -25,7 +41,7 @@ make html
 
 Ergebnis: `_build/html/index.html`
 
-## 3) PDF bauen
+## 4) PDF bauen
 
 ```bash
 make latexpdf
@@ -33,14 +49,15 @@ make latexpdf
 
 Ergebnis: `_build/latex/bll-dokumentation.pdf`
 
-## 4) Formale PDF-Prüfung
+## 5) Formale PDF-Pruefung
 
-Nach dem Build prüfen:
+Nach dem Build pruefen:
 
 - Deckblatt als erste Seite vorhanden
 - Zeilenabstand sichtbar 1.5
 - Seitenzahl unten rechts in den Folgeseiten
-- Kapitel 00 bis 10 in Reihenfolge enthalten
+- Kapitel 00 bis 10 plus Kapitel 03a in Reihenfolge enthalten
+- Gantt, Netzplan und Objektdiagramm sichtbar
 
 ## Troubleshooting
 
@@ -50,10 +67,16 @@ Nach dem Build prüfen:
 brew install plantuml graphviz
 ```
 
+### Fehler: `mmdc` nicht verfuegbar
+
+```bash
+npx -p @mermaid-js/mermaid-cli mmdc -h
+```
+
 ### Fehler: `latexmk` / `pdflatex` fehlt
 
-Installiere eine vollständige LaTeX-Distribution und starte `make latexpdf` erneut.
+Installiere eine vollstaendige LaTeX-Distribution und starte `make latexpdf` erneut.
 
-### Rückstandsfrei entfernen
+### Rueckstandsfrei entfernen
 
 Siehe `docs/DEINSTALLATION.md`.

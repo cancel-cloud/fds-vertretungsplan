@@ -56,7 +56,7 @@ const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 
 const formatTargetDate = (value: number | null): string => {
   if (!value) {
-    return '—';
+    return '-';
   }
 
   const date = String(value);
@@ -661,11 +661,11 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
                   <td className="px-2 py-2">{user.notificationsEnabled ? 'Aktiv' : 'Aus'}</td>
                   <td className="px-2 py-2">{user.notificationLookaheadSchoolDays}</td>
                   <td className="px-2 py-2 text-xs">
-                    <div>Letzter Versand: {user.notificationStats?.lastSentAt ? new Date(user.notificationStats.lastSentAt).toLocaleString('de-DE') : '—'}</div>
+                    <div>Letzter Versand: {user.notificationStats?.lastSentAt ? new Date(user.notificationStats.lastSentAt).toLocaleString('de-DE') : '-'}</div>
                     <div>Ziel-Tag: {formatTargetDate(user.notificationStats?.lastTargetDate ?? null)}</div>
                     <div>Aktive States: {user.notificationStats?.activeStates ?? 0}</div>
                     <div>Fingerprints: {user.notificationStats?.totalFingerprints ?? 0}</div>
-                    <div>Sub zuletzt gesehen: {user.subscriptionStats?.lastSeenAt ? new Date(user.subscriptionStats.lastSeenAt).toLocaleString('de-DE') : '—'}</div>
+                    <div>Sub zuletzt gesehen: {user.subscriptionStats?.lastSeenAt ? new Date(user.subscriptionStats.lastSeenAt).toLocaleString('de-DE') : '-'}</div>
                   </td>
                   <td className="px-2 py-2">
                     <div className="flex gap-2">
@@ -798,7 +798,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
           <DialogHeader>
             <DialogTitle>Admin-Rechte entfernen</DialogTitle>
             <DialogDescription>
-              Bitte geben Sie zur Bestätigung die E-Mail-Adresse <strong>{roleConfirmTarget?.email ?? '—'}</strong> ein.
+              Bitte geben Sie zur Bestätigung die E-Mail-Adresse <strong>{roleConfirmTarget?.email ?? '-'}</strong> ein.
             </DialogDescription>
           </DialogHeader>
           {roleConfirmTarget?.id === currentUserId ? (

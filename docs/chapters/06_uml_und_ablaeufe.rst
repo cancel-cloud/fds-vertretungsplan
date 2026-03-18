@@ -1,12 +1,8 @@
-06 UML-Diagramme und Abläufe
+UML-Diagramme und Abläufe
 =============================
 
-Einordnung
-----------
-
-Die Diagramme verdichten Kapitel 02 bis 05 in vier Perspektiven. Dadurch wird
-sichtbar, wie fachliche Anforderungen in konkrete technische Interaktionen
-überführt wurden.
+Die Diagramme zeigen das Projekt aus drei Perspektiven: Nutzung, Struktur und
+Laufzeit. [#s06_1]_
 
 Use-Case-Diagramm
 -----------------
@@ -20,33 +16,62 @@ WebUntis und PostHog.
 Klassendiagramm
 ---------------
 
-Das Klassendiagramm zeigt die wichtigsten Module und deren Abhängigkeiten,
-insbesondere die Kette UI -> Hook -> API -> Datenverarbeitung.
+Das Klassendiagramm zeigt die wichtigsten Module und vor allem ihre
+Kommunikation. Im Mittelpunkt stehen drei Wege:
+
+1. Die Seite bzw. das Dashboard initiiert Nutzeraktionen.
+2. Der Hook kapselt Client-Zustand, Cache und Datenabruf.
+3. API-Routen und Services sprechen mit WebUntis, Prisma oder dem Push-System.
+
+Die Schichten sind klar getrennt: UI-Komponenten sprechen nie direkt mit
+externen Systemen, sondern über Hooks, API-Routen und abgegrenzte Services.
 
 .. uml:: ../uml/classdiagram.puml
    :caption: Modulorientiertes Klassendiagramm
 
-Aktivitätsdiagramm
--------------------
+Objektdiagramm
+--------------
 
-Das Aktivitätsdiagramm stellt den Ablauf vom Nutzerereignis bis zur
-Ergebnisdarstellung dar, inklusive Cache-Treffern und Fehlerzweigen.
+Das Objektdiagramm zeigt eine konkrete Laufzeitsicht mit realen Instanzen.
+Anders als das Klassendiagramm beschreibt es keine allgemeinen Modultypen,
+sondern einen beispielhaften Betriebszustand.
 
-.. uml:: ../uml/activity.puml
-   :caption: Aktivitätsfluss des Datenabrufs
+.. mermaid::
 
-Sequenzdiagramm
----------------
+   flowchart LR
+       session["session: UserSession\nrole=USER"]
+       dashboard["dashboard: DashboardClient\nscope=personal"]
+       hook["hook: useSubstitutions\ncacheKey=20260313"]
+       subsApi["subsApi: /api/substitutions"]
+       untis["untis: WebUntis"]
+       settings["settings: UserSettingsPanel\npush=true"]
+       schedule["dispatchJob: QStash\ncron=15min"]
+       pushApi["pushApi: /api/internal/push/dispatch"]
 
-Das Sequenzdiagramm beschreibt die Reihenfolge der Nachrichten zwischen User,
-UI, Hook, API und Upstream.
+       session --> dashboard
+       dashboard --> hook
+       hook --> subsApi
+       subsApi --> untis
+       session --> settings
+       schedule --> pushApi
+       pushApi --> untis
 
-.. uml:: ../uml/sequence.puml
-   :caption: Sequenz vom UI-Event bis zur Antwort im Frontend
+Neben dem sichtbaren Dashboard existiert im Hintergrund ein zweiter Laufpfad
+über QStash und die Push-API.
 
-Bewertung der UML-Ergebnisse
-----------------------------
+Sequenzdiagramm: Push-Dispatch
+------------------------------
 
-- Die API-Route ist der zentrale Kontrollpunkt für Sicherheit und Robustheit.
-- Der Hook ist die Integrationsschicht zwischen UI-Zustand und Netzwerk.
-- Die UI bleibt schlank, weil sie keine Upstream-Sonderfälle direkt behandeln muss.
+Das Sequenzdiagramm zeigt den zentralen Hintergrundprozess: den
+Push-Dispatch-Zyklus, der alle 15 Minuten prüft, ob Nutzer über geänderte
+Vertretungen benachrichtigt werden müssen.
+
+.. uml:: ../uml/sequence_push.puml
+   :caption: Sequenzdiagramm des Push-Dispatch-Zyklus
+
+Der Ablauf zeigt die drei möglichen Ergebnisse der Delta-Logik: Senden bei
+neuem oder geändertem Fingerprint, Überspringen bei unverändertem Stand und
+Auflösen, wenn keine relevanten Vertretungen mehr vorliegen.
+
+.. [#s06_1] Vgl. Kleuker (2018), Kap. 3-5: UML-Notation für
+   Anwendungsfall-, Klassen- und Objektdiagramme.

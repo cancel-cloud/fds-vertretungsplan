@@ -1,0 +1,17 @@
+flowchart LR
+    session["session: UserSession\nrole=USER"]
+    dashboard["dashboard: DashboardClient\nscope=personal"]
+    hook["hook: useSubstitutions\ncacheKey=20260313"]
+    subsApi["subsApi: /api/substitutions"]
+    untis["untis: WebUntis"]
+    settings["settings: UserSettingsPanel\npush=true"]
+    schedule["dispatchJob: QStash\ncron=15min"]
+    pushApi["pushApi: /api/internal/push/dispatch"]
+
+    session --> dashboard
+    dashboard --> hook
+    hook --> subsApi
+    subsApi --> untis
+    session --> settings
+    schedule --> pushApi
+    pushApi --> untis

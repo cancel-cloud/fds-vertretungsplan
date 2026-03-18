@@ -1,0 +1,46 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+actor "QStash\n(Scheduler)" as QS
+participant "Dispatch-Route" as DR
+database "Prisma\n(PostgreSQL)" as DB
+participant "WebUntis" as WU
+participant "Schedule-\nMatching" as SM
+participant "Notification-\nState" as NS
+participant "Web Push\n(VAPID)" as WP
+participant "Service\nWorker" as SW
+
+QS -> DR : POST /api/internal/push/dispatch
+activate DR
+
+DR -> DR : Zeitfenster prüfen\n(Mo–Fr 06–20 Uhr)
+DR -> DB : Nutzer mit aktiven Push-\nAbonnements laden
+DB --> DR : Nutzerliste + Stundenpläne
+
+DR -> WU : Vertretungsdaten abrufen\n(pro Zieldatum)
+WU --> DR : Rohdaten
+
+loop Für jeden Nutzer
+    DR -> SM : findRelevantSubstitutions\n(Vertretungen, Stundenplan, Datum)
+    SM --> DR : Trefferliste
+
+    DR -> NS : Fingerprint berechnen\nund mit gespeichertem\nvergleichen
+    NS --> DR : Aktion: senden / überspringen / auflösen
+
+    alt Senden (neu oder geändert)
+        DR -> WP : Push-Nachricht senden
+        WP -> SW : Push-Event
+        SW -> SW : Notification anzeigen
+        DR -> DB : NotificationState aktualisieren\nNotificationFingerprint speichern
+    else Überspringen (unverändert)
+        DR -> DR : Kein Push
+    else Auflösen (keine Treffer mehr)
+        DR -> DB : NotificationState löschen
+    end
+end
+
+DR --> QS : Ergebnis-Zusammenfassung
+
+deactivate DR
+@enduml

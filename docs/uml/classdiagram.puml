@@ -1,49 +1,58 @@
 @startuml
 skinparam classAttributeIconSize 0
 
-class HomePage {
-  +render()
+class HomePage <<page>> {
+  +redirectByUserState()
 }
 
-class NewUiPage {
-  +render()
+class DashboardClient <<client>> {
+  +renderDashboard()
 }
 
-class useSubstitutions {
+class RegisterPage <<page>> {
+  +submitRegistration()
+}
+
+class AdminPanel <<client>> {
+  +manageTeachers()
+  +manageUsers()
+  +sendPushTest()
+}
+
+class useSubstitutions <<hook>> {
   +substitutions
   +isLoading
   +error
-  +metaResponse
   +refetch()
 }
 
-class SubstitutionRoute {
+class SubstitutionRoute <<api>> {
   +GET(req)
-  -checkRateLimit(ip)
-  -requestSubstitutionData(url,payload)
 }
 
-class DataProcessing {
+class PushDispatchRoute <<api>> {
+  +POST(req)
+}
+
+class DataProcessing <<service>> {
   +processApiResponse(rows)
-  +sortSubstitutions(items)
   +filterSubstitutions(items, filter)
 }
 
-class PostHogProvider {
-  +capture(event, props)
-  +isFeatureEnabled(key)
-}
+class Prisma <<infrastructure>>
+class QStashSchedule <<infrastructure>>
+class WebUntis <<external>>
 
-class AppShell
-class SubstitutionList
-
-HomePage --> PostHogProvider : nutzt Flags
-HomePage --> useSubstitutions : lädt Daten
-NewUiPage --> useSubstitutions : lädt Daten
-useSubstitutions --> SubstitutionRoute : fetch /api/substitutions
-useSubstitutions --> DataProcessing : transformiert Daten
-HomePage --> AppShell : layout
-HomePage --> SubstitutionList : rendert Ergebnis
-NewUiPage --> SubstitutionList : rendert Ergebnis
+HomePage --> DashboardClient : leitet weiter / startet UI
+RegisterPage --> HomePage : fuehrt nach Login in Nutzerfluss
+DashboardClient --> useSubstitutions : fordert Vertretungsdaten an
+DashboardClient --> AdminPanel : trennt Admin-Funktionen
+useSubstitutions --> SubstitutionRoute : ruft /api/substitutions auf
+SubstitutionRoute --> DataProcessing : normalisiert Rohdaten
+SubstitutionRoute --> WebUntis : laedt Vertretungsdaten
+AdminPanel --> Prisma : verwaltet Lehrer und Nutzer
+QStashSchedule --> PushDispatchRoute : triggert geplanten Dispatch
+PushDispatchRoute --> Prisma : laedt Nutzer, Stundenplaene, Subscriptions
+PushDispatchRoute --> WebUntis : vergleicht relevante Vertretungen
 
 @enduml
