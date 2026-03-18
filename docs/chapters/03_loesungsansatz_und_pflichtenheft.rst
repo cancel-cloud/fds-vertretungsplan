@@ -7,8 +7,9 @@ Architekturprinzip
 Die Architektur trennt vier Schichten: Die Benutzeroberfläche zeigt Daten an,
 eine Zwischenschicht verwaltet den lokalen Zustand, eine serverseitige
 API-Schicht bündelt Validierung und Fehlerbehandlung, und die externe
-Datenquelle (WebUntis) wird nur serverseitig kontaktiert. Dadurch bleibt der
-Browser leichtgewichtig, während sensible Logik serverseitig gebündelt wird.
+Datenquelle (WebUntis) wird nur serverseitig kontaktiert. [#s03_1]_ Dadurch
+bleibt der Browser leichtgewichtig, während sensible Logik serverseitig
+gebündelt wird.
 
 Hosting und Web-Bereitstellung
 ------------------------------
@@ -48,7 +49,7 @@ Rollen und Berechtigungen
 Die Anwendung kennt zwei Rollen: USER und ADMIN. Ein normaler Nutzer kann
 seinen Stundenplan pflegen, das Dashboard nutzen und Push-Benachrichtigungen
 aktivieren. Ein Administrator hat zusätzlich Zugriff auf die
-Lehrerkürzel-Verwaltung und die Nutzerverwaltung — er kann Rollen vergeben
+Lehrerkürzel-Verwaltung und die Nutzerverwaltung - er kann Rollen vergeben
 und Konten entfernen.
 
 Die erste Admin-Zuweisung erfolgt über eine Umgebungsvariable: Nur
@@ -57,7 +58,7 @@ Admin-Rechte. Dieser erste Administrator kann weitere Nutzer per
 Weboberfläche hochstufen. Das Hochstufen erfordert einen einfachen Klick;
 das Herabstufen eines Admins erfordert dagegen die Eingabe der E-Mail-Adresse
 des betroffenen Kontos in einem Bestätigungsdialog. Das System stellt
-außerdem sicher, dass immer mindestens ein Administrator vorhanden ist — der
+außerdem sicher, dass immer mindestens ein Administrator vorhanden ist - der
 letzte Admin kann nicht herabgestuft werden.
 
 Push-Notifications als Hintergrundprozess
@@ -73,19 +74,27 @@ umgesetzt. Stattdessen kombiniert die Anwendung mehrere Bausteine:
 - Delta-Logik, damit nur neue oder geänderte Treffer versendet werden.
 
 Ein externer Scheduler ist notwendig, weil eine Webanwendung von sich
-aus nicht aktiv wird — sie reagiert nur auf eingehende Anfragen. QStash
+aus nicht aktiv wird - sie reagiert nur auf eingehende Anfragen. QStash
 übernimmt die Rolle eines Weckers: Er sendet alle 15 Minuten eine
 Anfrage an die Anwendung und löst damit den Dispatch-Zyklus aus.
 
 Der Hintergrundprozess prüft für jeden Nutzer mit aktivierten
 Benachrichtigungen, ob relevante Vertretungen vorliegen. Nur bei neuen oder
 geänderten Treffern wird über das VAPID-Protokoll (RFC 8292) eine
-Push-Nachricht versendet.
+Push-Nachricht versendet. [#s03_2]_
+
+Die Push-Nachricht wird nicht direkt an die sichtbare Seite zugestellt,
+sondern an einen Service Worker. Ein Service Worker ist ein Hintergrundskript,
+das der Browser unabhängig von der geöffneten Seite ausführt. [#s03_3]_ Er
+empfängt die eingehende Push-Nachricht, erzeugt die sichtbare
+Benachrichtigung und reagiert auf Klicks - etwa durch Öffnen des Dashboards.
+Dadurch funktionieren Benachrichtigungen auch dann, wenn die Anwendung gerade
+nicht geöffnet ist.
 
 Die Logik funktioniert wie ein digitaler Fingerabdruck: Die Anwendung
 erstellt bei jedem Prüflauf einen Kurzwert über die relevanten
 Vertretungen des Nutzers. Stimmt er mit dem vorherigen überein, ist
-nichts Neues passiert — kein Push. Weicht er ab, wurde etwas geändert.
+nichts Neues passiert - kein Push. Weicht er ab, wurde etwas geändert.
 
 **Wie funktioniert die Delta-Logik?**
 Für jeden Nutzer wird bei jedem
@@ -119,15 +128,15 @@ Relevanzwert, der höher ist, wenn mehrere Kriterien übereinstimmen.
 **Caching-Strategie.** Die API nutzt einen serverseitigen Cache mit kurzer
 Gültigkeitsdauer. Bei Upstream-Fehlern werden zwischengespeicherte Daten
 weiterverwendet, damit Nutzer auch bei vorübergehenden Störungen stabile
-Ergebnisse erhalten.
+Ergebnisse erhalten. [#s03_4]_
 
 Datenschutz und Sicherheitsarchitektur
 --------------------------------------
 
 Passwörter werden gehasht gespeichert, Sitzungen laufen über verschlüsselte
 Tokens mit sicheren Cookies. Der Browser wird durch Sicherheitsrichtlinien
-(Content Security Policy) geschützt, Login-Versuche sind ratenbegrenzt.
-Klarnamen oder Schülerdaten werden nicht erfasst.
+(Content Security Policy) geschützt, [#s03_5]_ Login-Versuche sind
+ratenbegrenzt. Klarnamen oder Schülerdaten werden nicht erfasst. [#s03_6]_
 
 Die Datenbank speichert Nutzerkonten, persönliche Stundenpläne,
 Lehrerzuordnungen und Push-Subscriptions.
@@ -180,14 +189,14 @@ Push-Abonnements und Benachrichtigungszustände automatisch bereinigt.
 Grundlage für die Push-Logik: Der Dispatcher liest für jeden Nutzer seinen
 Stundenplan und gleicht ihn mit den Vertretungen des Tages ab. Nur Treffer
 aus diesem Abgleich fließen in die Benachrichtigungsentscheidung ein. Das
-Ergebnis — ein Prüfwert (Fingerprint) über die relevanten Treffer — wird in
+Ergebnis - ein Prüfwert (Fingerprint) über die relevanten Treffer - wird in
 NotificationState gespeichert.
 
 **Warum NotificationState und NotificationFingerprint getrennt sind.**
 NotificationState speichert genau eine Zeile pro Nutzer und Zieldatum: den
 zuletzt gesendeten Fingerprint. Er wird bei jedem Dispatch-Zyklus
 überschrieben und gelöscht, sobald keine Treffer mehr vorliegen.
-NotificationFingerprint hingegen wächst nur — jeder je gesendete Fingerprint
+NotificationFingerprint hingegen wächst nur - jeder je gesendete Fingerprint
 wird dauerhaft protokolliert. Diese Trennung ist bewusst: Der State steuert,
 ob eine Benachrichtigung gesendet wird; der Fingerprint dokumentiert, was ein
 Nutzer zu welchem Zeitpunkt gesehen hat. Würde man beide in einer Tabelle
@@ -196,7 +205,19 @@ zusammenfassen, ließe sich der Versandverlauf nicht mehr rekonstruieren.
 **Warum TimetablePreset neben TimetableEntry existiert.** Ein TimetableEntry
 repräsentiert eine konkrete Unterrichtsstunde mit Zeitdaten (Wochentag,
 Stunde, Wochenmodus). Ein TimetablePreset speichert nur die inhaltliche
-Kombination — Fach, Lehrkraft, Raum — ohne Zeitbezug. Er dient als
+Kombination - Fach, Lehrkraft, Raum - ohne Zeitbezug. Er dient als
 Autocomplete-Gedächtnis im Stundenplan-Editor: Die am häufigsten genutzten
 Kombinationen erscheinen als Schnellauswahl. Beide Entitäten haben
 orthogonale Zwecke und lassen sich nicht sinnvoll zusammenlegen.
+
+.. [#s03_1] Vgl. Sommerville (2015), Kap. 6: Architekturentwurf -
+   Schichtenarchitekturen als Mittel zur Trennung von Zuständigkeiten.
+.. [#s03_2] Vgl. RFC 8292: Voluntary Application Server Identification
+   (VAPID) for Web Push.
+.. [#s03_3] Vgl. W3C Service Workers,
+   https://www.w3.org/TR/service-workers/.
+.. [#s03_4] Vgl. RFC 5861: HTTP Cache-Control Extensions for Stale Content
+   (stale-while-revalidate, stale-if-error).
+.. [#s03_5] Vgl. W3C Content Security Policy Level 3,
+   https://www.w3.org/TR/CSP3/.
+.. [#s03_6] Vgl. OWASP Top 10 (2021), https://owasp.org/Top10/.

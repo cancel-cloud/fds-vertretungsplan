@@ -25,7 +25,7 @@ Dieses Wissen ist aus Interviews mit dem Autor destilliert und soll Erklärungen
 präziser machen:
 
 - **Ausgangsproblem**: Der WebUntis-Vertretungsplan der FDS lief automatisch
-  durch — keine Suche, kein Filter. Wer seinen Eintrag sehen wollte, musste
+  durch - keine Suche, kein Filter. Wer seinen Eintrag sehen wollte, musste
   warten, bis die eigene Klasse erschien.
 - **Rollen**: USER (Dashboard, Stundenplan, Push), ADMIN (zusätzlich
   Lehrerkürzel-Verwaltung und Nutzerverwaltung).
@@ -33,12 +33,12 @@ präziser machen:
   initialen Admin) und Web-Promotion (Admin kann andere per Klick hochstufen).
 - **Admin-Downgrade**: Modal mit E-Mail-Bestätigung des betroffenen Kontos;
   letzter Admin ist systemseitig gegen Herabstufung geschützt.
-- **NotificationState**: Steuerungsebene — genau 1 Zeile pro Nutzer+Tag,
+- **NotificationState**: Steuerungsebene - genau 1 Zeile pro Nutzer+Tag,
   wird upsertet und bei Trefferwegfall gelöscht.
-- **NotificationFingerprint**: Protokollebene — nur angehängt (nie geändert),
+- **NotificationFingerprint**: Protokollebene - nur angehängt (nie geändert),
   Audit-Log aller gesendeten Fingerprints.
 - **TimetablePreset**: Autocomplete-Gedächtnis ohne Zeitdaten (kein Wochentag,
-  keine Stunde) — orthogonal zu TimetableEntry, das die eigentliche
+  keine Stunde) - orthogonal zu TimetableEntry, das die eigentliche
   Stundenplan-Instanz mit Zeitbezug repräsentiert.
 
 ## Lehrer-Update Pflichtkriterien

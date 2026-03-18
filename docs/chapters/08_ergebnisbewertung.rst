@@ -1,7 +1,7 @@
 Ergebnisbewertung (Ziele erfüllt?)
 ======================================
 
-Die Bewertung orientiert sich an den SMART-Zielen aus Kapitel 02.
+Die Bewertung orientiert sich an den SMART-Zielen aus Kapitel 02. [#s08_1]_
 
 Soll-Ist-Abgleich zu den SMART-Zielen
 -------------------------------------
@@ -98,3 +98,6 @@ Entwicklungsroutine integriert. Zusätzlich wurde die Anwendung manuell im
 Echtbetrieb mit mehr als sieben Nutzern getestet: Login-Ablauf, Push auf
 verschiedenen Geräten (Chrome, Safari, Arc) und Admin-Verwaltung wurden dabei
 fortlaufend überprüft.
+
+.. [#s08_1] Vgl. Balzert (2009), Kap. 4: SMART-Kriterien als Grundlage
+   messbarer Zielformulierung und systematischer Ergebnisbewertung.

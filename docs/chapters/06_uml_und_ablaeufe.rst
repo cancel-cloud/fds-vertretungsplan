@@ -2,7 +2,7 @@ UML-Diagramme und Abläufe
 =============================
 
 Die Diagramme zeigen das Projekt aus drei Perspektiven: Nutzung, Struktur und
-Laufzeit.
+Laufzeit. [#s06_1]_
 
 Use-Case-Diagramm
 -----------------
@@ -72,3 +72,6 @@ Vertretungen benachrichtigt werden müssen.
 Der Ablauf zeigt die drei möglichen Ergebnisse der Delta-Logik: Senden bei
 neuem oder geändertem Fingerprint, Überspringen bei unverändertem Stand und
 Auflösen, wenn keine relevanten Vertretungen mehr vorliegen.
+
+.. [#s06_1] Vgl. Kleuker (2018), Kap. 3-5: UML-Notation für
+   Anwendungsfall-, Klassen- und Objektdiagramme.

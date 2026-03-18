@@ -10,7 +10,7 @@ nur umständlich nutzbar: lange Tabellen, wenig mobile Optimierung und fehlende
 Filter für konkrete Klassen oder Fächer.
 
 An der Friedrich-Dessauer-Schule Limburg war der Vertretungsplan als automatisch
-durchlaufende Ansicht in WebUntis verfügbar — ohne Suchfunktion und ohne
+durchlaufende Ansicht in WebUntis verfügbar - ohne Suchfunktion und ohne
 Möglichkeit, gezielt nach der eigenen Klasse oder einem Fach zu filtern. Wer
 seinen Eintrag finden wollte, musste warten, bis er erschien.
 

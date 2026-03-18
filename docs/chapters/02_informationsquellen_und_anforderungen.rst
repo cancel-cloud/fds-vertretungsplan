@@ -21,6 +21,9 @@ Zielgruppen und Beteiligte
 Funktionale Anforderungen
 -------------------------
 
+Die Unterteilung in funktionale und nicht-funktionale Anforderungen folgt
+der Standardgliederung der Anforderungsanalyse. [#s02_2]_
+
 1. Tagesbezogene Anzeige von Vertretungen.
 2. Such- und Filtermöglichkeiten für schnelle Orientierung.
 3. Verständliche Darstellung bei leerem Plan, Teildaten oder Fehlern.
@@ -51,6 +54,11 @@ Nicht-funktionale Anforderungen
 
 SMART-Ziele (S1 bis S5)
 -----------------------
+
+Die Zielformulierung orientiert sich am SMART-Prinzip: Jedes Ziel ist
+spezifisch, messbar, attraktiv, realistisch und terminiert. [#s02_1]_
+Dadurch lässt sich in Kapitel 8 ein nachvollziehbarer Soll-Ist-Abgleich
+durchführen.
 
 .. list-table:: SMART-Ziele mit messbaren Erfolgskriterien
    :header-rows: 1
@@ -125,3 +133,7 @@ eines Admins ist durch einen Bestätigungsdialog gesichert: Der Administrator
 muss die E-Mail-Adresse des betroffenen Kontos eingeben, bevor die Änderung
 durchgeführt wird. Das System verhindert außerdem, den letzten vorhandenen
 Administrator herabzustufen.
+
+.. [#s02_1] Vgl. Balzert (2009), Kap. 4: Anforderungsermittlung und
+   Zieldefinition.
+.. [#s02_2] Vgl. Sommerville (2015), Kap. 4: Requirements Engineering.

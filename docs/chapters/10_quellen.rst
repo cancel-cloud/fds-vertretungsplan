@@ -41,6 +41,12 @@ Fachliteratur Software Engineering
 
 - Sommerville, Ian: *Software Engineering*. 10. Auflage, Pearson, 2015.
   (Anforderungsanalyse, Lastenheft-/Pflichtenheft-Struktur, Schichtenarchitektur)
+- Balzert, Helmut: *Lehrbuch der Softwaretechnik: Basiskonzepte und
+  Requirements Engineering*. 3. Auflage, Spektrum Akademischer Verlag, 2009.
+  (Anforderungsermittlung, SMART-Methodik, Pflichtenheft-Abgrenzung)
+- Kleuker, Stephan: *Grundkurs Software-Engineering mit UML*. 5. Auflage,
+  Springer Vieweg, 2018.
+  (UML-Notation, Anwendungsfall- und Klassenmodellierung, Teststrategien)
 
 Rechtliche und organisatorische Quellen
 ---------------------------------------
