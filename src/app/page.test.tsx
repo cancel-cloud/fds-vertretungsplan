@@ -5,6 +5,7 @@ import HomePage from '@/app/page';
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
   teacherCount: vi.fn(),
+  adminCount: vi.fn(),
   isDemoMode: vi.fn(),
   redirect: vi.fn((path: string) => {
     throw new Error(`REDIRECT:${path}`);
@@ -24,6 +25,9 @@ vi.mock('@/lib/prisma', () => ({
     teacherDirectory: {
       count: mocks.teacherCount,
     },
+    user: {
+      count: mocks.adminCount,
+    },
   },
 }));
 
@@ -33,25 +37,6 @@ vi.mock('@/lib/demo-config', () => ({
 
 vi.mock('@/components/layout/landing-header', () => ({
   LandingHeader: () => <div data-testid="landing-header">Header</div>,
-}));
-
-vi.mock('@/components/newui/new-ui-client', () => ({
-  NewUiClient: ({
-    analyticsSource,
-    showLoginPromo,
-    isDemoMode,
-  }: {
-    analyticsSource: string;
-    showLoginPromo?: boolean;
-    isDemoMode?: boolean;
-  }) => (
-    <div
-      data-testid="newui-client"
-      data-analytics-source={analyticsSource}
-      data-show-login-promo={String(Boolean(showLoginPromo))}
-      data-demo-mode={String(Boolean(isDemoMode))}
-    />
-  ),
 }));
 
 vi.mock('@/components/stundenplan/dashboard-client', () => ({
@@ -78,20 +63,40 @@ describe('HomePage', () => {
     vi.clearAllMocks();
     mocks.getCurrentUser.mockResolvedValue(null);
     mocks.teacherCount.mockResolvedValue(1);
+    mocks.adminCount.mockResolvedValue(1);
     mocks.isDemoMode.mockReturnValue(false);
     mocks.redirect.mockImplementation((path: string) => {
       throw new Error(`REDIRECT:${path}`);
     });
   });
 
-  it('renders public homepage for guests with login promo', async () => {
+  it('renders shared dashboard for guests with public scope', async () => {
     const page = await HomePage({});
     render(page);
 
     expect(screen.getByTestId('landing-header')).toBeInTheDocument();
-    expect(screen.getByTestId('newui-client')).toHaveAttribute('data-analytics-source', 'home_default');
-    expect(screen.getByTestId('newui-client')).toHaveAttribute('data-show-login-promo', 'true');
-    expect(screen.queryByTestId('dashboard-client')).not.toBeInTheDocument();
+    expect(screen.getByTestId('dashboard-client')).toHaveAttribute('data-scope', 'all');
+    expect(screen.getByTestId('dashboard-client')).toHaveAttribute('data-authenticated', 'false');
+    expect(screen.getByTestId('dashboard-client')).toHaveAttribute('data-demo-mode', 'false');
+  });
+
+  it('keeps guests on public scope even when the root query requests personal', async () => {
+    const page = await HomePage({
+      searchParams: Promise.resolve({
+        scope: 'personal',
+      }),
+    });
+    render(page);
+
+    expect(screen.getByTestId('dashboard-client')).toHaveAttribute('data-scope', 'all');
+    expect(screen.getByTestId('dashboard-client')).toHaveAttribute('data-authenticated', 'false');
+  });
+
+  it('redirects guests to registration before the first admin exists', async () => {
+    mocks.adminCount.mockResolvedValue(0);
+
+    await expect(HomePage({})).rejects.toThrow('REDIRECT:/stundenplan/register');
+    expect(mocks.redirect).toHaveBeenCalledWith('/stundenplan/register');
   });
 
   it('renders dashboard for authenticated users with default personal scope', async () => {
@@ -107,7 +112,6 @@ describe('HomePage', () => {
 
     expect(screen.getByTestId('dashboard-client')).toHaveAttribute('data-scope', 'personal');
     expect(screen.getByTestId('dashboard-client')).toHaveAttribute('data-authenticated', 'true');
-    expect(screen.queryByTestId('newui-client')).not.toBeInTheDocument();
   });
 
   it('redirects admins without teachers to admin setup', async () => {

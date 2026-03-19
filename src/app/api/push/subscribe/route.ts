@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/guards';
-import { prisma } from '@/lib/prisma';
 import { getVapidPublicKey } from '@/lib/push';
 import { enforceSameOrigin } from '@/lib/security/request-integrity';
+import { savePushSubscription } from '@/lib/push-service';
 
 export async function GET() {
   const vapidPublicKey = getVapidPublicKey();
@@ -41,23 +41,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Ungültige Push-Subscription.' }, { status: 400 });
     }
 
-    await prisma.pushSubscription.upsert({
-      where: { endpoint },
-      create: {
-        endpoint,
-        p256dh,
-        auth: authKey,
-        userId: auth.user.id,
-        userAgent: req.headers.get('user-agent'),
-        lastSeenAt: new Date(),
-      },
-      update: {
-        p256dh,
-        auth: authKey,
-        userId: auth.user.id,
-        userAgent: req.headers.get('user-agent'),
-        lastSeenAt: new Date(),
-      },
+    await savePushSubscription({
+      userId: auth.user.id,
+      endpoint,
+      p256dh,
+      auth: authKey,
+      userAgent: req.headers.get('user-agent'),
     });
 
     return NextResponse.json({ ok: true });

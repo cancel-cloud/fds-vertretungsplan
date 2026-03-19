@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  ensureCurrentSubscription,
-  ensureNotificationPermission,
+  activatePushForCurrentDevice,
+  deactivatePushForCurrentDevice,
   getExistingPushSubscription,
   isPushSupported,
   persistPushSubscription,
+  setNotificationsEnabled,
 } from '@/lib/push-client';
 
 interface PushOptInCardProps {
@@ -50,11 +51,7 @@ export function PushOptInCard({
         if (!subscription) {
           setEnabled(false);
           if (initialEnabled) {
-            await fetch('/api/me', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ notificationsEnabled: false }),
-            });
+            await setNotificationsEnabled(false);
           }
           return;
         }
@@ -77,37 +74,8 @@ export function PushOptInCard({
     onEnableStart?.();
 
     try {
-      setMessage('Prüfe Browser-Permission …');
-      const permission = await ensureNotificationPermission();
-      if (!permission.ok) {
-        if (permission.reason === 'insecure_context') {
-          setMessage('Push benötigt HTTPS oder localhost. Die aktuelle Seite ist kein sicherer Kontext.');
-        } else if (permission.reason === 'notification_api_unavailable') {
-          setMessage('Dieser Browser unterstützt keine Benachrichtigungs-Permissions.');
-        } else if (permission.reason === 'permission_prompt_not_confirmed') {
-          setMessage(
-            'Chrome/Arc hat den Prompt nicht angezeigt (Quiet UI oder geschlossen). Bitte Website-Benachrichtigungen manuell auf "Zulassen" setzen.'
-          );
-        } else {
-          setMessage(
-            'Benachrichtigungen sind im Browser blockiert. In Chrome: Schloss-Symbol -> Website-Einstellungen -> Benachrichtigungen -> Zulassen.'
-          );
-        }
-        onEnableError?.('Benachrichtigungsberechtigung wurde nicht erteilt.');
-        return;
-      }
-
-      setMessage('Registriere Service Worker …');
-      const subscription = await ensureCurrentSubscription();
-
-      setMessage('Speichere Subscription …');
-      await persistPushSubscription(subscription);
-
-      await fetch('/api/me', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationsEnabled: true }),
-      });
+      setMessage('Aktiviere Push-Benachrichtigungen …');
+      await activatePushForCurrentDevice();
 
       setEnabled(true);
       setMessage('Push-Benachrichtigungen sind aktiv.');
@@ -127,23 +95,7 @@ export function PushOptInCard({
     setMessage(null);
 
     try {
-      const subscription = await getExistingPushSubscription();
-
-      if (subscription) {
-        await fetch('/api/push/unsubscribe', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint: subscription.endpoint }),
-        });
-        await subscription.unsubscribe();
-      }
-
-      await fetch('/api/me', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationsEnabled: false }),
-      });
-
+      await deactivatePushForCurrentDevice();
       setEnabled(false);
       setMessage('Push-Benachrichtigungen wurden deaktiviert.');
     } catch (error) {

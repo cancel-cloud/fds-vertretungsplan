@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/guards';
-import { prisma } from '@/lib/prisma';
 import { enforceSameOrigin } from '@/lib/security/request-integrity';
+import { removePushSubscriptionForUser } from '@/lib/push-service';
 
 export async function DELETE(req: NextRequest) {
   const invalidOriginResponse = enforceSameOrigin(req);
@@ -22,27 +22,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Endpoint fehlt.' }, { status: 400 });
     }
 
-    await prisma.pushSubscription.deleteMany({
-      where: {
-        endpoint,
-        userId: auth.user.id,
-      },
-    });
-
-    const count = await prisma.pushSubscription.count({
-      where: {
-        userId: auth.user.id,
-      },
-    });
-
-    if (count === 0) {
-      await prisma.user.update({
-        where: { id: auth.user.id },
-        data: {
-          notificationsEnabled: false,
-        },
-      });
-    }
+    await removePushSubscriptionForUser(auth.user.id, endpoint);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

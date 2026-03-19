@@ -1,26 +1,19 @@
-import { DefaultSession } from 'next-auth';
+import type { AuthSessionUser, AuthTokenClaims } from '@/types/user-system';
 import 'next-auth/jwt';
 
 declare module 'next-auth' {
   interface Session {
-    user: DefaultSession['user'] & {
-      id: string;
-      role: 'USER' | 'ADMIN';
-      onboardingCompletedAt: string | null;
-      onboardingSkippedAt: string | null;
-      notificationsEnabled: boolean;
-      notificationLookaheadSchoolDays: number;
-    };
+    user: AuthSessionUser;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
-    id?: string;
-    role?: 'USER' | 'ADMIN';
-    onboardingCompletedAt?: string | null;
-    onboardingSkippedAt?: string | null;
-    notificationsEnabled?: boolean;
-    notificationLookaheadSchoolDays?: number;
+    id?: AuthTokenClaims['id'];
+    role?: AuthTokenClaims['role'];
+    onboardingCompletedAt?: AuthTokenClaims['onboardingCompletedAt'];
+    onboardingSkippedAt?: AuthTokenClaims['onboardingSkippedAt'];
+    notificationsEnabled?: AuthTokenClaims['notificationsEnabled'];
+    notificationLookaheadSchoolDays?: AuthTokenClaims['notificationLookaheadSchoolDays'];
   }
 }

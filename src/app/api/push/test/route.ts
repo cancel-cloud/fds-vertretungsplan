@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import { requireUser } from '@/lib/auth/guards';
-import { prisma } from '@/lib/prisma';
-import { getPushAppName, sendPushMessage } from '@/lib/push';
+import { getPushAppName } from '@/lib/push';
 import { enforceSameOrigin } from '@/lib/security/request-integrity';
+import {
+  listPushDeliverySubscriptionsForUser,
+  removePushSubscriptionsForUser,
+  savePushSubscription,
+  sendPushBatch,
+} from '@/lib/push-service';
 
 export async function POST(req: Request) {
   const invalidOriginResponse = enforceSameOrigin(req);
@@ -56,23 +61,12 @@ export async function POST(req: Request) {
   }
 
   if (directSubscription) {
-    await prisma.pushSubscription.upsert({
-      where: { endpoint: directSubscription.endpoint },
-      create: {
-        endpoint: directSubscription.endpoint,
-        p256dh: directSubscription.keys.p256dh,
-        auth: directSubscription.keys.auth,
-        userId: auth.user.id,
-        userAgent: req.headers.get('user-agent'),
-        lastSeenAt: new Date(),
-      },
-      update: {
-        p256dh: directSubscription.keys.p256dh,
-        auth: directSubscription.keys.auth,
-        userId: auth.user.id,
-        userAgent: req.headers.get('user-agent'),
-        lastSeenAt: new Date(),
-      },
+    await savePushSubscription({
+      userId: auth.user.id,
+      endpoint: directSubscription.endpoint,
+      p256dh: directSubscription.keys.p256dh,
+      auth: directSubscription.keys.auth,
+      userAgent: req.headers.get('user-agent'),
     });
   }
 
@@ -84,14 +78,10 @@ export async function POST(req: Request) {
           auth: directSubscription.keys.auth,
         },
       ]
-    : await prisma.pushSubscription.findMany({
-    where: endpointFilter
-      ? {
-          userId: auth.user.id,
-          endpoint: endpointFilter,
-        }
-      : { userId: auth.user.id },
-  });
+    : await listPushDeliverySubscriptionsForUser(
+        auth.user.id,
+        endpointFilter ? { endpoint: endpointFilter } : undefined
+      );
 
   if (subscriptions.length === 0) {
     return NextResponse.json(
@@ -107,46 +97,17 @@ export async function POST(req: Request) {
   let sent = 0;
   const appName = getPushAppName();
   const traceId = crypto.randomUUID();
-  const removeEndpoints: string[] = [];
-  const failures: Array<{ endpoint: string; statusCode?: number; reason?: string }> = [];
+  const { sent: sentCount, removedEndpoints, failures } = await sendPushBatch(subscriptions, {
+    title: `${appName} · Test`,
+    body: 'Dies ist eine Test-Benachrichtigung.',
+    url: '/stundenplan/dashboard',
+    tag: `fds-test-${traceId}`,
+    traceId,
+  });
+  sent = sentCount;
 
-  for (const subscription of subscriptions) {
-    const result = await sendPushMessage(
-      {
-        endpoint: subscription.endpoint,
-        p256dh: subscription.p256dh,
-        auth: subscription.auth,
-      },
-      {
-        title: `${appName} · Test`,
-        body: 'Dies ist eine Test-Benachrichtigung.',
-        url: '/stundenplan/dashboard',
-        tag: `fds-test-${traceId}`,
-        traceId,
-      }
-    );
-
-    if (result.ok) {
-      sent += 1;
-    } else if (result.remove) {
-      removeEndpoints.push(subscription.endpoint);
-    } else {
-      failures.push({
-        endpoint: subscription.endpoint,
-        statusCode: result.statusCode,
-        reason: result.reason,
-      });
-    }
-  }
-
-  if (removeEndpoints.length > 0) {
-    await prisma.pushSubscription.deleteMany({
-      where: {
-        endpoint: {
-          in: removeEndpoints,
-        },
-      },
-    });
+  if (removedEndpoints.length > 0) {
+    await removePushSubscriptionsForUser(auth.user.id, removedEndpoints);
   }
 
   if (sent === 0 && failures.length > 0) {
@@ -154,7 +115,7 @@ export async function POST(req: Request) {
       {
         error: 'Push konnte nicht zugestellt werden. Bitte Browser-Subscription prüfen.',
         sent,
-        removed: removeEndpoints.length,
+        removed: removedEndpoints.length,
         traceId,
         failures,
       },
@@ -164,7 +125,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     sent,
-    removed: removeEndpoints.length,
+    removed: removedEndpoints.length,
     traceId,
     appName,
     failures,

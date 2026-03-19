@@ -1,3 +1,5 @@
+import type { DefaultSession } from 'next-auth';
+
 export type AuthRole = 'USER' | 'ADMIN';
 
 export type Weekday = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI';
@@ -15,9 +17,57 @@ export interface AuthUser {
   notificationLookaheadSchoolDays: number;
 }
 
+export type AuthSessionUser = NonNullable<DefaultSession['user']> & AuthUser;
+
+export interface AuthTokenClaims {
+  id: string;
+  role: AuthRole;
+  onboardingCompletedAt: string | null;
+  onboardingSkippedAt: string | null;
+  notificationsEnabled: boolean;
+  notificationLookaheadSchoolDays: number;
+}
+
 export interface UserSettingsDto {
   notificationsEnabled: boolean;
   notificationLookaheadSchoolDays: number;
+}
+
+export interface AdminUserNotificationStats {
+  totalFingerprints: number;
+  activeStates: number;
+  lastSentAt: string | null;
+  lastTargetDate: number | null;
+}
+
+export interface AdminUserSubscriptionStats {
+  lastSeenAt: string | null;
+  lastUpdatedAt: string | null;
+}
+
+export interface AdminUserListItem extends AuthUser {
+  notificationStats: AdminUserNotificationStats | null;
+  subscriptionStats: AdminUserSubscriptionStats | null;
+  timetableCount: number;
+  pushSubscriptionCount: number;
+  createdAt: string;
+}
+
+export interface AdminUsersPagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface AdminUsersResponse {
+  users: AdminUserListItem[];
+  pagination: AdminUsersPagination;
+}
+
+export interface AdminUserUpdateResponse {
+  selfDemoted: boolean;
+  user: AdminUserListItem;
 }
 
 export interface TeacherDto {
@@ -27,6 +77,19 @@ export interface TeacherDto {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TeacherDirectoryResponse {
+  teachers: TeacherDto[];
+  subjectCodes: string[];
+}
+
+export interface TeacherMutationResponse {
+  teacher: TeacherDto;
+}
+
+export interface TeacherDeleteResponse {
+  ok: true;
 }
 
 export interface TimetableEntryDto {
@@ -73,4 +136,16 @@ export interface PushSubscriptionDto {
     p256dh: string;
     auth: string;
   };
+}
+
+export interface PushDeviceDto {
+  id: string;
+  endpoint: string;
+  userAgent: string | null;
+  createdAt: string;
+  lastSeenAt: string;
+}
+
+export interface PushSubscriptionsResponse {
+  subscriptions: PushDeviceDto[];
 }

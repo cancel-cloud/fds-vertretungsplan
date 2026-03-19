@@ -290,6 +290,37 @@ describe('api/internal/push/dispatch route', () => {
     expect(notificationFingerprintCreateManyMock).not.toHaveBeenCalled();
   });
 
+  it('removes stale push subscriptions when a delivery endpoint is no longer valid', async () => {
+    userFindManyMock.mockResolvedValue([createUser({ includeDesktop: true })]);
+    fetchUntisRowsMock.mockImplementation(async (date: Date) => ({
+      date:
+        date.getFullYear() * 10000 +
+        (date.getMonth() + 1) * 100 +
+        date.getDate(),
+      rows: [],
+    }));
+    sendPushMessageMock.mockImplementation(async (subscription: { endpoint: string }) =>
+      subscription.endpoint.includes('desktop')
+        ? { ok: false, remove: true, statusCode: 410, reason: 'gone' }
+        : { ok: true }
+    );
+
+    const { POST } = await import('@/app/api/internal/push/dispatch/route');
+    const response = await POST(createRequest('?force=1&sendUnchanged=1&device=all'));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.notificationsSent).toBe(1);
+    expect(pushSubscriptionDeleteManyMock).toHaveBeenCalledWith({
+      where: {
+        endpoint: {
+          in: ['https://fcm.googleapis.com/fcm/send/desktop-1'],
+        },
+        userId: 'user-1',
+      },
+    });
+  });
+
   it('keeps delta mode behavior unchanged when sendUnchanged is not set', async () => {
     userFindManyMock.mockResolvedValue([createUser()]);
     fetchUntisRowsMock.mockImplementation(async (date: Date) => ({

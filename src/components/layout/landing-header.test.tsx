@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   getServerAuthSession: vi.fn(),
   captureClientEvent: vi.fn(),
   signOut: vi.fn(),
+  pathname: '/',
+  searchParams: new URLSearchParams(),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -36,6 +38,14 @@ vi.mock('@/lib/analytics/posthog-client', () => ({
   captureClientEvent: mocks.captureClientEvent,
 }));
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => mocks.pathname,
+  useSearchParams: () => ({
+    get: (key: string) => mocks.searchParams.get(key),
+    toString: () => mocks.searchParams.toString(),
+  }),
+}));
+
 vi.mock('next-auth/react', () => ({
   signOut: mocks.signOut,
 }));
@@ -43,17 +53,27 @@ vi.mock('next-auth/react', () => ({
 describe('LandingHeader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.pathname = '/';
+    mocks.searchParams = new URLSearchParams();
   });
 
-  it('links guests to login with next=/', async () => {
+  it('links guests to login with the current route and query', async () => {
     mocks.getServerAuthSession.mockResolvedValue(null);
+    mocks.pathname = '/stundenplan/dashboard';
+    mocks.searchParams = new URLSearchParams('date=20260218&search=Bio');
 
     render(await LandingHeader());
 
     const loginLinks = screen.getAllByRole('link', { name: 'Login' });
-    expect(loginLinks.some((link) => link.getAttribute('href') === '/stundenplan/login?next=/')).toBe(true);
-    expect(screen.getAllByRole('link', { name: 'Impressum' }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole('link', { name: 'Datenschutz' }).length).toBeGreaterThan(0);
+    expect(
+      loginLinks.every(
+        (link) =>
+          link.getAttribute('href') ===
+          '/stundenplan/login?next=%2Fstundenplan%2Fdashboard%3Fdate%3D20260218%26search%3DBio'
+      )
+    ).toBe(true);
+    expect(screen.queryByRole('link', { name: 'Impressum' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Datenschutz' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Menü öffnen' })).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
     expect(screen.queryByTestId('header-auth-actions')).not.toBeInTheDocument();
@@ -89,5 +109,28 @@ describe('LandingHeader', () => {
       open: true,
       header: 'landing',
     });
+  });
+
+  it('keeps the login target stable on the root route', async () => {
+    mocks.getServerAuthSession.mockResolvedValue(null);
+
+    render(await LandingHeader());
+
+    const loginLinks = screen.getAllByRole('link', { name: 'Login' });
+    expect(loginLinks.every((link) => link.getAttribute('href') === '/stundenplan/login?next=%2F')).toBe(true);
+  });
+
+  it('normalizes an explicit guest personal scope to all in login links', async () => {
+    mocks.getServerAuthSession.mockResolvedValue(null);
+    mocks.searchParams = new URLSearchParams('scope=personal&date=20260218');
+
+    render(await LandingHeader());
+
+    const loginLinks = screen.getAllByRole('link', { name: 'Login' });
+    expect(
+      loginLinks.every(
+        (link) => link.getAttribute('href') === '/stundenplan/login?next=%2F%3Fscope%3Dall%26date%3D20260218'
+      )
+    ).toBe(true);
   });
 });

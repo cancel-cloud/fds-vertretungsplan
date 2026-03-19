@@ -3,7 +3,6 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 interface MobileMenuProps {
@@ -74,24 +73,6 @@ export function MobileMenu({ isOpen, onClose, id, children }: MobileMenuProps) {
         {/* Mobile menu content */}
         <div className="flex flex-col gap-5 pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-4">
           {children}
-
-          {/* Legal links */}
-          <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-[rgb(var(--color-border)/0.2)]">
-            <Link
-              href="/impressum"
-              className="text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] transition-colors duration-150 py-1"
-              onClick={onClose}
-            >
-              Impressum
-            </Link>
-            <Link
-              href="/datenschutz"
-              className="text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] transition-colors duration-150 py-1"
-              onClick={onClose}
-            >
-              Datenschutz
-            </Link>
-          </div>
         </div>
       </div>
     </div>

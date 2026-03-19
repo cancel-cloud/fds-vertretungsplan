@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminPanel } from '@/components/stundenplan/admin-panel';
@@ -129,11 +129,10 @@ describe('AdminPanel role demotion confirmation', () => {
     const confirmButton = await screen.findByRole('button', { name: 'Herabstufen' });
     expect(confirmButton).toBeDisabled();
 
-    await user.type(screen.getByLabelText('E-Mail zur Bestätigung'), 'wrong@example.com');
+    fireEvent.change(screen.getByLabelText('E-Mail zur Bestätigung'), { target: { value: 'wrong@example.com' } });
     expect(confirmButton).toBeDisabled();
 
-    await user.clear(screen.getByLabelText('E-Mail zur Bestätigung'));
-    await user.type(screen.getByLabelText('E-Mail zur Bestätigung'), ' Admin2@Example.com ');
+    fireEvent.change(screen.getByLabelText('E-Mail zur Bestätigung'), { target: { value: ' Admin2@Example.com ' } });
     expect(confirmButton).toBeEnabled();
   });
 

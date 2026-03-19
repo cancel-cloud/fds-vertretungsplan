@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle, Calendar, CalendarDays, Loader2 } from 'lucide-react';
 import { formatDateForApi } from '@/lib/utils';
+import { addSchoolDays, formatChipDate, formatLongDate, isSameDay, normalizeToSchoolDay, parseDateParam, startOfLocalDay } from '@/lib/date-utils';
 import { useSubstitutions } from '@/hooks/use-substitutions';
 import { useSubstitutionPolling } from '@/hooks/use-substitution-polling';
 import { findRelevantSubstitutions, TimetableMatchEntry } from '@/lib/schedule-matching';
@@ -16,7 +17,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ApplePushPromoCard } from '@/components/stundenplan/apple-push-promo-card';
-import { DashboardScope, DASHBOARD_SCOPE_PARAM, parseDashboardScope } from '@/lib/dashboard-scope';
+import { GuestLoginPromoCard } from '@/components/stundenplan/guest-login-promo-card';
+import { DashboardScope, DASHBOARD_SCOPE_PARAM, resolveDashboardScope } from '@/lib/dashboard-scope';
+import { buildLoginHref, buildPathWithSearchParams } from '@/lib/login-target';
 import { LessonDuration, WeekMode, Weekday } from '@/types/user-system';
 import {
   DEMO_ANCHOR_DATE,
@@ -53,77 +56,6 @@ interface TimetableEntryResponse {
   weekMode: WeekMode;
 }
 
-const normalizeToDay = (date: Date): Date => new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-const isSchoolDay = (date: Date): boolean => {
-  const day = date.getDay();
-  return day >= 1 && day <= 5;
-};
-
-const normalizeToSchoolDay = (date: Date, direction: 1 | -1 = 1): Date => {
-  const normalized = normalizeToDay(date);
-  if (isSchoolDay(normalized)) {
-    return normalized;
-  }
-
-  while (!isSchoolDay(normalized)) {
-    normalized.setDate(normalized.getDate() + direction);
-  }
-
-  return normalized;
-};
-
-const addSchoolDays = (date: Date, offset: number): Date => {
-  const result = normalizeToDay(date);
-  const direction = offset >= 0 ? 1 : -1;
-  let remaining = Math.abs(offset);
-
-  while (remaining > 0) {
-    result.setDate(result.getDate() + direction);
-    if (isSchoolDay(result)) {
-      remaining -= 1;
-    }
-  }
-
-  return result;
-};
-
-const isSameDay = (a: Date, b: Date): boolean =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
-
-const formatChipDate = (date: Date): string =>
-  date.toLocaleDateString('de-DE', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  });
-
-const formatLongDate = (date: Date): string =>
-  date.toLocaleDateString('de-DE', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-
-const parseDateParam = (value: string | null): Date | null => {
-  if (!value || !/^\d{8}$/.test(value)) {
-    return null;
-  }
-
-  const year = Number.parseInt(value.slice(0, 4), 10);
-  const month = Number.parseInt(value.slice(4, 6), 10) - 1;
-  const day = Number.parseInt(value.slice(6, 8), 10);
-  const date = new Date(year, month, day);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date;
-};
-
 export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = false }: DashboardClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -135,12 +67,13 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
   const fromPush = searchParams.get('fromPush') === '1';
 
   const queryDate = useMemo(() => parseDateParam(queryDateParam), [queryDateParam]);
-  const queryScope = useMemo(() => parseDashboardScope(queryScopeParam), [queryScopeParam]);
+  const resolvedQueryScope = useMemo(() => resolveDashboardScope(queryScopeParam, initialScope), [initialScope, queryScopeParam]);
+  const effectiveQueryScope = isAuthenticated ? resolvedQueryScope : 'all';
   const demoAnchorDate = useMemo(() => new Date(DEMO_ANCHOR_DATE), []);
   const demoMinDate = useMemo(() => new Date(DEMO_RANGE_START_DATE), []);
   const demoMaxDate = useMemo(() => new Date(DEMO_RANGE_END_DATE), []);
 
-  const [scope, setScope] = useState<DashboardScope>(initialScope);
+  const [scope, setScope] = useState<DashboardScope>(isAuthenticated ? initialScope : 'all');
   const [searchQuery, setSearchQuery] = useState(querySearchParam);
   const [selectedDate, setSelectedDate] = useState<Date>(() =>
     isDemoMode ? demoAnchorDate : normalizeToSchoolDay(queryDate ?? new Date(), 1)
@@ -156,13 +89,35 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
 
   const { substitutions, isLoading, error, metaResponse, resolvedDateKey, refetch } = useSubstitutions(selectedDate);
 
+  const guestSafeSearchParamsString = useMemo(() => {
+    const params = new URLSearchParams(searchParamsString);
+    params.delete('fromPush');
+
+    if (!isAuthenticated && queryScopeParam != null && queryScopeParam !== 'all') {
+      params.set(DASHBOARD_SCOPE_PARAM, 'all');
+    }
+
+    return params.toString();
+  }, [isAuthenticated, queryScopeParam, searchParamsString]);
+  const guestLoginHref = useMemo(
+    () => buildLoginHref(pathname, guestSafeSearchParamsString),
+    [guestSafeSearchParamsString, pathname]
+  );
   const isPersonalScope = scope === 'personal';
 
   // Only sync scope FROM URL (browser back/forward, external link).
   // Exclude local `scope` from deps to avoid reverting during programmatic changes.
   useEffect(() => {
-    setScope(queryScope);
-  }, [queryScope]);
+    setScope(effectiveQueryScope);
+  }, [effectiveQueryScope]);
+
+  useEffect(() => {
+    if (isAuthenticated || queryScopeParam == null || queryScopeParam === 'all') {
+      return;
+    }
+
+    router.replace(buildPathWithSearchParams(pathname, guestSafeSearchParamsString), { scroll: false });
+  }, [guestSafeSearchParamsString, isAuthenticated, pathname, queryScopeParam, router]);
 
   // Only sync search FROM URL (browser back/forward, shared link).
   useEffect(() => {
@@ -177,7 +132,7 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
     const normalizedQueryDate = normalizeToSchoolDay(queryDate ?? fallbackDate, 1);
     const nextDate = isDemoMode ? clampToDemoDate(normalizedQueryDate) : normalizedQueryDate;
     setSelectedDate((previous) => {
-      const normalizedPrevious = normalizeToDay(previous);
+      const normalizedPrevious = startOfLocalDay(previous);
       if (normalizedPrevious.getTime() === nextDate.getTime()) {
         return previous;
       }
@@ -280,8 +235,7 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
 
         const [meResponse, timetableResponse] = await Promise.all([fetch('/api/me'), fetch('/api/timetable')]);
         if (meResponse.status === 401 || timetableResponse.status === 401) {
-          const nextPath = `${pathname}${searchParamsString ? `?${searchParamsString}` : ''}`;
-          router.replace(`/stundenplan/login?next=${encodeURIComponent(nextPath)}`);
+          router.replace(buildLoginHref(pathname, searchParamsString));
           return;
         }
 
@@ -351,7 +305,7 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
     // Debounce URL sync so typing stays responsive - filtering is already client-side.
     clearTimeout(searchUrlTimeoutRef.current);
     searchUrlTimeoutRef.current = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(guestSafeSearchParamsString);
       params.delete('fromPush');
 
       if (value.trim()) {
@@ -390,8 +344,7 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
       params.delete('fromPush');
       params.set('date', formatDateForApi(normalizeToSchoolDay(selectedDate, 1)));
       params.set(DASHBOARD_SCOPE_PARAM, 'personal');
-      const nextPath = `${pathname}?${params.toString()}`;
-      router.push(`/stundenplan/login?next=${encodeURIComponent(nextPath)}`);
+      router.push(buildLoginHref(pathname, params));
       return;
     }
 
@@ -498,51 +451,60 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
               />
             ) : null}
             {isPersonalScope && user ? <ApplePushPromoCard initialPushEnabled={user.notificationsEnabled} /> : null}
+            {!isAuthenticated ? <GuestLoginPromoCard loginHref={guestLoginHref} /> : null}
           </Card>
         </aside>
 
         <div className="motion-enter grid content-start gap-4" style={{ animationDelay: '250ms' }}>
-          <section className="motion-fade rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4 md:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="text-base font-semibold text-[rgb(var(--color-text))]">Ansicht</h2>
-                <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
-                  {isPersonalScope
-                    ? 'Nur Vertretungen passend zu deinem Stundenplan.'
-                    : 'Alle Vertretungen für den ausgewählten Tag.'}
-                </p>
+          {isAuthenticated ? (
+            <section className="motion-fade rounded-2xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-4 md:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold text-[rgb(var(--color-text))]">Ansicht</h2>
+                  <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+                    {isPersonalScope
+                      ? 'Nur Vertretungen passend zu deinem Stundenplan.'
+                      : 'Alle Vertretungen für den ausgewählten Tag.'}
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] p-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={scope === 'personal' ? 'default' : 'ghost'}
+                    className="h-8 touch-manipulation"
+                    onClick={() => setScopeAndSync('personal')}
+                    aria-pressed={scope === 'personal'}
+                  >
+                    Meine Vertretungen
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={scope === 'all' ? 'default' : 'ghost'}
+                    className="h-8 touch-manipulation"
+                    onClick={() => setScopeAndSync('all')}
+                    aria-pressed={scope === 'all'}
+                  >
+                    Alle Vertretungen
+                  </Button>
+                </div>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-background)/0.75)] p-1">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={scope === 'personal' ? 'default' : 'ghost'}
-                  className="h-8 touch-manipulation"
-                  onClick={() => setScopeAndSync('personal')}
-                  aria-pressed={scope === 'personal'}
-                >
-                  Meine Vertretungen
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={scope === 'all' ? 'default' : 'ghost'}
-                  className="h-8 touch-manipulation"
-                  onClick={() => setScopeAndSync('all')}
-                  aria-pressed={scope === 'all'}
-                >
-                  Alle Vertretungen
-                </Button>
-              </div>
-            </div>
-            <p className="mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
-              Diese Auswahl bleibt im Link erhalten und kann direkt geteilt werden.
-            </p>
-          </section>
+              <p className="mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
+                Diese Auswahl bleibt im Link erhalten und kann direkt geteilt werden.
+              </p>
+            </section>
+          ) : null}
 
           {isPersonalScope && user ? (
             <div className="motion-fade lg:hidden">
               <ApplePushPromoCard initialPushEnabled={user.notificationsEnabled} />
+            </div>
+          ) : null}
+
+          {!isAuthenticated ? (
+            <div className="motion-fade lg:hidden">
+              <GuestLoginPromoCard loginHref={guestLoginHref} />
             </div>
           ) : null}
 

@@ -5,21 +5,24 @@ import { DashboardClient } from '@/components/stundenplan/dashboard-client';
 const mocks = vi.hoisted(() => ({
   routerPush: vi.fn(),
   routerReplace: vi.fn(),
+  router: {
+    push: vi.fn(),
+    replace: vi.fn(),
+  },
   captureMock: vi.fn(),
   eligibleMock: vi.fn(() => true),
   standaloneMock: vi.fn(() => false),
   dismissedMock: vi.fn(() => false),
+  pathname: '/stundenplan/dashboard',
+  searchParams: new URLSearchParams(),
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mocks.routerPush,
-    replace: mocks.routerReplace,
-  }),
-  usePathname: () => '/stundenplan/dashboard',
+  useRouter: () => mocks.router,
+  usePathname: () => mocks.pathname,
   useSearchParams: () => ({
-    get: () => null,
-    toString: () => '',
+    get: (key: string) => mocks.searchParams.get(key),
+    toString: () => mocks.searchParams.toString(),
   }),
 }));
 
@@ -79,9 +82,13 @@ const createJsonResponse = (body: unknown, status = 200): Response =>
 describe('DashboardClient Apple push promo integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.router.push = mocks.routerPush;
+    mocks.router.replace = mocks.routerReplace;
     mocks.eligibleMock.mockReturnValue(true);
     mocks.standaloneMock.mockReturnValue(false);
     mocks.dismissedMock.mockReturnValue(false);
+    mocks.pathname = '/stundenplan/dashboard';
+    mocks.searchParams = new URLSearchParams();
   });
 
   const renderDashboard = (notificationsEnabled: boolean) => {
@@ -175,6 +182,52 @@ describe('DashboardClient Apple push promo integration', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  it('keeps guests out of the personal empty state and normalizes personal scope in the URL', async () => {
+    mocks.searchParams = new URLSearchParams('scope=personal');
+    const fetchMock = vi.fn(async () => createJsonResponse({}));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<DashboardClient initialScope="all" isAuthenticated={false} />);
+
+    await waitFor(() => {
+      expect(mocks.routerReplace).toHaveBeenCalledWith('/stundenplan/dashboard?scope=all', { scroll: false });
+    });
+
+    expect(screen.queryByText(/Kein Stundenplan hinterlegt/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Stundenplan bearbeiten' })).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('builds the guest login promo from the current route and query', () => {
+    mocks.searchParams = new URLSearchParams('date=20260218&search=Bio');
+    vi.stubGlobal('fetch', vi.fn(async () => createJsonResponse({})));
+
+    render(<DashboardClient initialScope="all" isAuthenticated={false} />);
+
+    const loginLinks = screen.getAllByRole('link', { name: 'Zum Login' });
+    expect(
+      loginLinks.every(
+        (link) =>
+          link.getAttribute('href') ===
+          '/stundenplan/login?next=%2Fstundenplan%2Fdashboard%3Fdate%3D20260218%26search%3DBio'
+      )
+    ).toBe(true);
+  });
+
+  it('keeps guest quick-date navigation on public scope after normalization', async () => {
+    mocks.searchParams = new URLSearchParams('scope=personal');
+    vi.stubGlobal('fetch', vi.fn(async () => createJsonResponse({})));
+
+    render(<DashboardClient initialScope="all" isAuthenticated={false} />);
+
+    const [chip] = await screen.findAllByRole('button', { name: /\d{2}\.\d{2}/ });
+    fireEvent.click(chip);
+
+    await waitFor(() => {
+      expect(mocks.routerReplace).toHaveBeenLastCalledWith(expect.stringContaining('scope=all'), { scroll: false });
     });
   });
 });

@@ -19,7 +19,7 @@ export function AppShell({
   sidebar,
   mobileMenuContent,
   mainClassName = 'p-6',
-  contentClassName = 'mx-auto flex max-w-7xl',
+  contentClassName = 'mx-auto flex w-full max-w-7xl flex-1',
 }: AppShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuId = 'app-shell-mobile-menu';
@@ -36,7 +36,7 @@ export function AppShell({
   };
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-background))]">
+    <div className="flex flex-1 flex-col bg-[rgb(var(--color-background))]">
       <Header onMenuToggle={toggleMobileMenu} isMenuOpen={isMobileMenuOpen} menuId={mobileMenuId} />
 
       <MobileMenu id={mobileMenuId} isOpen={isMobileMenuOpen} onClose={closeMobileMenu}>
@@ -47,7 +47,7 @@ export function AppShell({
         {sidebar ? (
           <aside
             aria-label="Seitenleiste"
-            className="hidden min-h-[calc(100vh-64px)] w-80 border-r border-[rgb(var(--color-border)/0.2)] p-6 md:block"
+            className="hidden w-80 shrink-0 border-r border-[rgb(var(--color-border)/0.2)] p-6 md:block"
           >
             <div className="sticky top-6 space-y-6">{sidebar}</div>
           </aside>

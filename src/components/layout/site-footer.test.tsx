@@ -7,7 +7,7 @@ describe('SiteFooter', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows measured initial load time, owner name, and animated mail link', () => {
+  it('shows measured initial load time, legal links, and contact link', () => {
     vi.spyOn(window.performance, 'getEntriesByType').mockReturnValue([
       { duration: 123.4 } as PerformanceNavigationTiming,
     ]);
@@ -15,9 +15,11 @@ describe('SiteFooter', () => {
     render(<SiteFooter />);
 
     expect(screen.getByText('Ladezeit: 123 ms')).toBeInTheDocument();
-    expect(screen.getByText('Lukas')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Impressum' })).toHaveAttribute('href', '/impressum');
+    expect(screen.getByRole('link', { name: 'Datenschutz' })).toHaveAttribute('href', '/datenschutz');
+    expect(screen.queryByText('Lukas')).not.toBeInTheDocument();
 
-    const emailLink = screen.getByRole('link', { name: 'Email me' });
+    const emailLink = screen.getByRole('link', { name: 'Kontakt' });
     expect(emailLink).toHaveAttribute('href', 'mailto:malven-02.taktik@icloud.com');
     expect(emailLink).toHaveClass('motion-link-underline');
     expect(emailLink).toHaveClass('motion-safe-base');
