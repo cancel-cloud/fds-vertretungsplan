@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 const isValidDuration = (value: unknown): value is number =>
@@ -91,15 +92,28 @@ export function SiteFooter() {
 
   return (
     <footer className="border-t border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))]">
-      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-sm text-[rgb(var(--color-text-secondary))] md:px-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm text-[rgb(var(--color-text-secondary))] md:px-6">
         <span>Ladezeit: {initialLoadDuration === null ? 'n/a' : `${initialLoadDuration} ms`}</span>
-        <span>Lukas</span>
-        <a
-          href="mailto:malven-02.taktik@icloud.com"
-          className="motion-link-underline motion-safe-base rounded-sm px-1 py-0.5 -mx-1 -my-0.5 hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
-        >
-          Email me
-        </a>
+        <nav aria-label="Rechtliches und Kontakt" className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+          <Link
+            href="/impressum"
+            className="motion-link-underline motion-safe-base rounded-sm px-1 py-0.5 -mx-1 -my-0.5 hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
+          >
+            Impressum
+          </Link>
+          <Link
+            href="/datenschutz"
+            className="motion-link-underline motion-safe-base rounded-sm px-1 py-0.5 -mx-1 -my-0.5 hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
+          >
+            Datenschutz
+          </Link>
+          <a
+            href="mailto:malven-02.taktik@icloud.com"
+            className="motion-link-underline motion-safe-base rounded-sm px-1 py-0.5 -mx-1 -my-0.5 hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
+          >
+            Kontakt
+          </a>
+        </nav>
       </div>
     </footer>
   );

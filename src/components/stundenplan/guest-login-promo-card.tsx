@@ -3,11 +3,12 @@ import { Card } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-interface LoginPromoCardProps {
+interface GuestLoginPromoCardProps {
   className?: string;
+  loginHref: string;
 }
 
-export function LoginPromoCard({ className }: LoginPromoCardProps) {
+export function GuestLoginPromoCard({ className, loginHref }: GuestLoginPromoCardProps) {
   return (
     <Card
       interactive
@@ -22,7 +23,7 @@ export function LoginPromoCard({ className }: LoginPromoCardProps) {
           Melde dich an, um deinen persönlichen Stundenplan zu verwalten und Push-Benachrichtigungen zu erhalten.
         </p>
       </div>
-      <Link href="/stundenplan/login?next=/" className={cn(buttonVariants({ size: 'sm' }), 'w-full')}>
+      <Link href={loginHref} className={cn(buttonVariants({ size: 'sm' }), 'w-full')}>
         Zum Login
       </Link>
     </Card>

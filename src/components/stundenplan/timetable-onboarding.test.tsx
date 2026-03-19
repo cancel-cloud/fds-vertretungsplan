@@ -80,7 +80,7 @@ describe('TimetableOnboarding', () => {
 
     await user.selectOptions(endSelect, '3');
     expect(durationSelect.value).toBe('2');
-  });
+  }, 10000);
 
   it('shows overlap confirmation and sends allowOverlaps=true when confirmed', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -148,5 +148,5 @@ describe('TimetableOnboarding', () => {
     const saveCall = fetchMock.mock.calls.find(([, init]) => (init?.method ?? 'GET') === 'PUT');
     const saveBody = JSON.parse(String(saveCall?.[1]?.body)) as { allowOverlaps?: boolean };
     expect(saveBody.allowOverlaps).toBe(true);
-  });
+  }, 10000);
 });

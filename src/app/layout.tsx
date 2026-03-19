@@ -46,8 +46,10 @@ export default function RootLayout({
         <AppErrorBoundary>
           <ThemeProvider>
             <PostHogProvider>
-              {children}
-              <SiteFooter />
+              <div className="flex min-h-screen flex-col">
+                <div className="flex flex-1 flex-col">{children}</div>
+                <SiteFooter />
+              </div>
               <GlobalCommandMenu isDemoMode={demoMode} />
               <Analytics />
               <SpeedInsights />

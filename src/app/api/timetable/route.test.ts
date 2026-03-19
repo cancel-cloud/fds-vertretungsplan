@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildJsonRequest } from '@/test/http';
 
 const requireUserMock = vi.fn();
 const teacherDirectoryFindManyMock = vi.fn();
@@ -33,13 +33,6 @@ vi.mock('@/lib/prisma', () => ({
     $transaction: transactionMock,
   },
 }));
-
-const buildPutRequest = (body: unknown) =>
-  new NextRequest('http://localhost/api/timetable', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
 
 describe('api/timetable PUT', () => {
   beforeEach(() => {
@@ -100,7 +93,7 @@ describe('api/timetable PUT', () => {
   it('rejects overlapping entries in strict mode', async () => {
     const { PUT } = await import('@/app/api/timetable/route');
     const response = await PUT(
-      buildPutRequest({
+      buildJsonRequest('http://localhost/api/timetable', {
         entries: [
           {
             weekday: 'MON',
@@ -121,7 +114,7 @@ describe('api/timetable PUT', () => {
             weekMode: 'ALL',
           },
         ],
-      })
+      }, { method: 'PUT' })
     );
     const body = await response.json();
 
@@ -133,7 +126,7 @@ describe('api/timetable PUT', () => {
   it('saves overlapping entries when allowOverlaps=true', async () => {
     const { PUT } = await import('@/app/api/timetable/route');
     const response = await PUT(
-      buildPutRequest({
+      buildJsonRequest('http://localhost/api/timetable', {
         allowOverlaps: true,
         entries: [
           {
@@ -155,7 +148,7 @@ describe('api/timetable PUT', () => {
             weekMode: 'ALL',
           },
         ],
-      })
+      }, { method: 'PUT' })
     );
 
     expect(response.status).toBe(200);

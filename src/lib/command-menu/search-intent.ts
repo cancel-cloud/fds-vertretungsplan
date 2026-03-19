@@ -1,4 +1,5 @@
 import { formatDateForApi } from '@/lib/utils';
+import { addSchoolDays, normalizeToSchoolDay } from '@/lib/date-utils';
 
 export type CommandSearchDayIntent = 'today' | 'tomorrow' | 'day_after_tomorrow' | null;
 
@@ -19,39 +20,6 @@ const TOMORROW_PATTERN = /(?<!\p{L})(?:tomorrow|morgen)(?!\p{L})/iu;
 const TODAY_PATTERN = /(?<!\p{L})(?:today|heute)(?!\p{L})/iu;
 const REMOVABLE_DAY_KEYWORDS_PATTERN =
   /(?<!\p{L})day\s+after\s+tomorrow(?!\p{L})|(?<!\p{L})(?:übermorgen|uebermorgen|tomorrow|morgen|today|heute)(?!\p{L})/giu;
-
-const normalizeToSchoolDay = (date: Date): Date => {
-  const normalized = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const day = normalized.getDay();
-
-  if (day === 0) {
-    normalized.setDate(normalized.getDate() + 1);
-    return normalized;
-  }
-
-  if (day === 6) {
-    normalized.setDate(normalized.getDate() + 2);
-    return normalized;
-  }
-
-  return normalized;
-};
-
-const addSchoolDays = (date: Date, offset: number): Date => {
-  const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  let remaining = Math.abs(offset);
-  const direction = offset >= 0 ? 1 : -1;
-
-  while (remaining > 0) {
-    result.setDate(result.getDate() + direction);
-    const day = result.getDay();
-    if (day >= 1 && day <= 5) {
-      remaining -= 1;
-    }
-  }
-
-  return result;
-};
 
 const detectDayIntent = (query: string): CommandSearchDayIntent => {
   if (DAY_AFTER_TOMORROW_PATTERN.test(query)) {

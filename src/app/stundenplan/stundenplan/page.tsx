@@ -1,21 +1,9 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/guards';
-import { prisma } from '@/lib/prisma';
 import { TimetableOnboarding } from '@/components/stundenplan/timetable-onboarding';
+import { redirectIfAdminSetupRequired, requireSignedInUser } from '@/lib/stundenplan-page-guards';
 
 export default async function StundenplanEditPage() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect('/stundenplan/login');
-  }
-
-  if (user.role === 'ADMIN') {
-    const teacherCount = await prisma.teacherDirectory.count();
-    if (teacherCount === 0) {
-      redirect('/stundenplan/admin-setup');
-    }
-  }
+  const user = await requireSignedInUser();
+  await redirectIfAdminSetupRequired(user);
 
   return (
     <main id="main-content" className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6">

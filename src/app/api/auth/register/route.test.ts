@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { NextRequest } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { __resetRateLimitStoreForTests } from '@/lib/security/rate-limit';
+import { buildJsonRequest } from '@/test/http';
+import { createUserRecord } from '@/test/factories/user-system';
 
 const userFindUniqueMock = vi.fn();
 const userCountMock = vi.fn();
@@ -17,26 +18,6 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-const buildRequest = (body: unknown) =>
-  new NextRequest('http://localhost/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-const createUser = (overrides: Partial<{ email: string; role: 'USER' | 'ADMIN' }> = {}) => ({
-  id: 'user-1',
-  email: overrides.email ?? 'bootstrap@example.com',
-  passwordHash: 'hashed-password',
-  role: overrides.role ?? 'ADMIN',
-  onboardingCompletedAt: null,
-  onboardingSkippedAt: null,
-  notificationsEnabled: false,
-  notificationLookaheadSchoolDays: 1,
-  createdAt: new Date('2026-02-18T10:00:00.000Z'),
-  updatedAt: new Date('2026-02-18T10:00:00.000Z'),
-});
-
 describe('api/auth/register POST', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -47,13 +28,13 @@ describe('api/auth/register POST', () => {
 
     userFindUniqueMock.mockResolvedValue(null);
     userCountMock.mockResolvedValue(0);
-    userCreateMock.mockResolvedValue(createUser());
+    userCreateMock.mockResolvedValue(createUserRecord({ role: 'ADMIN' }));
   });
 
   it('allows first registration only for the bootstrap admin email', async () => {
     const { POST } = await import('@/app/api/auth/register/route');
     const response = await POST(
-      buildRequest({
+      buildJsonRequest('http://localhost/api/auth/register', {
         email: 'bootstrap@example.com',
         password: 'very-secure-password',
       })
@@ -77,7 +58,7 @@ describe('api/auth/register POST', () => {
 
     const { POST } = await import('@/app/api/auth/register/route');
     const response = await POST(
-      buildRequest({
+      buildJsonRequest('http://localhost/api/auth/register', {
         email: 'first@example.com',
         password: 'very-secure-password',
       })
@@ -92,7 +73,7 @@ describe('api/auth/register POST', () => {
   it('rejects first registration for non-bootstrap email', async () => {
     const { POST } = await import('@/app/api/auth/register/route');
     const response = await POST(
-      buildRequest({
+      buildJsonRequest('http://localhost/api/auth/register', {
         email: 'other@example.com',
         password: 'very-secure-password',
       })
@@ -106,11 +87,13 @@ describe('api/auth/register POST', () => {
 
   it('keeps signup open after at least one admin exists', async () => {
     userCountMock.mockResolvedValue(1);
-    userCreateMock.mockResolvedValue(createUser({ email: 'new-user@example.com', role: 'USER' }));
+    userCreateMock.mockResolvedValue(
+      createUserRecord({ email: 'new-user@example.com', role: 'USER', passwordHash: 'hashed-password' })
+    );
 
     const { POST } = await import('@/app/api/auth/register/route');
     const response = await POST(
-      buildRequest({
+      buildJsonRequest('http://localhost/api/auth/register', {
         email: 'new-user@example.com',
         password: 'very-secure-password',
       })
@@ -123,12 +106,14 @@ describe('api/auth/register POST', () => {
 
   it('enforces registration throttling with 429 and Retry-After', async () => {
     userCountMock.mockResolvedValue(1);
-    userCreateMock.mockResolvedValue(createUser({ email: 'new-user@example.com', role: 'USER' }));
+    userCreateMock.mockResolvedValue(
+      createUserRecord({ email: 'new-user@example.com', role: 'USER', passwordHash: 'hashed-password' })
+    );
     const { POST } = await import('@/app/api/auth/register/route');
 
     for (let index = 0; index < 5; index += 1) {
       const response = await POST(
-        buildRequest({
+        buildJsonRequest('http://localhost/api/auth/register', {
           email: 'new-user@example.com',
           password: 'very-secure-password',
         })
@@ -137,7 +122,7 @@ describe('api/auth/register POST', () => {
     }
 
     const throttled = await POST(
-      buildRequest({
+      buildJsonRequest('http://localhost/api/auth/register', {
         email: 'new-user@example.com',
         password: 'very-secure-password',
       })

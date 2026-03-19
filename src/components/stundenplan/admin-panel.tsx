@@ -12,43 +12,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-
-interface TeacherItem {
-  id: string;
-  code: string;
-  fullName: string;
-  isActive: boolean;
-}
-
-interface AdminUserItem {
-  id: string;
-  email: string;
-  role: 'USER' | 'ADMIN';
-  onboardingCompletedAt: string | null;
-  onboardingSkippedAt: string | null;
-  notificationsEnabled: boolean;
-  notificationLookaheadSchoolDays: number;
-  timetableCount: number;
-  pushSubscriptionCount: number;
-  createdAt: string;
-  notificationStats: {
-    totalFingerprints: number;
-    activeStates: number;
-    lastSentAt: string | null;
-    lastTargetDate: number | null;
-  } | null;
-  subscriptionStats: {
-    lastSeenAt: string | null;
-    lastUpdatedAt: string | null;
-  } | null;
-}
-
-interface UsersPagination {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-}
+import { createTeacher, deleteTeacher, fetchTeacherDirectory, updateTeacher } from '@/lib/teacher-directory-client';
+import type { AdminUserListItem, AdminUsersPagination, AdminUsersResponse, TeacherDto } from '@/types/user-system';
 
 const USERS_PAGE_SIZE = 20;
 
@@ -83,13 +48,13 @@ interface UserUpdateOptions {
 }
 
 export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProps) {
-  const [teachers, setTeachers] = useState<TeacherItem[]>([]);
-  const [users, setUsers] = useState<AdminUserItem[]>([]);
+  const [teachers, setTeachers] = useState<TeacherDto[]>([]);
+  const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [subjectCodes, setSubjectCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [usersPage, setUsersPage] = useState(1);
-  const [usersPagination, setUsersPagination] = useState<UsersPagination>({
+  const [usersPagination, setUsersPagination] = useState<AdminUsersPagination>({
     page: 1,
     pageSize: USERS_PAGE_SIZE,
     total: 0,
@@ -122,24 +87,12 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     setError(null);
 
     try {
-      const [teachersResponse, usersResponse] = await Promise.all([
-        fetch('/api/admin/teachers'),
+      const [teacherDirectory, usersResponse] = await Promise.all([
+        fetchTeacherDirectory(),
         fetch(`/api/admin/users?page=${targetUsersPage}&pageSize=${USERS_PAGE_SIZE}`),
       ]);
 
-      const teachersData = (await teachersResponse.json()) as {
-        teachers?: TeacherItem[];
-        subjectCodes?: string[];
-        error?: string;
-      };
-
-      if (!teachersResponse.ok) {
-        throw new Error(teachersData.error ?? 'Lehrer-Daten konnten nicht geladen werden.');
-      }
-
-      const usersData = (await usersResponse.json()) as {
-        users?: AdminUserItem[];
-        pagination?: UsersPagination;
+      const usersData = (await usersResponse.json()) as Partial<AdminUsersResponse> & {
         error?: string;
       };
 
@@ -147,8 +100,8 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
         throw new Error(usersData.error ?? 'User-Daten konnten nicht geladen werden.');
       }
 
-      setTeachers(teachersData.teachers ?? []);
-      setSubjectCodes(teachersData.subjectCodes ?? []);
+      setTeachers(teacherDirectory.teachers);
+      setSubjectCodes(teacherDirectory.subjectCodes);
       setUsers(usersData.users ?? []);
       setUsersPagination(
         usersData.pagination ?? {
@@ -176,22 +129,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/teachers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: newCode,
-          fullName: newFullName,
-        }),
-      });
-      const data = (await response.json()) as { error?: string };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Lehrer konnte nicht erstellt werden.');
-      }
-
+      await createTeacher({ code: newCode, fullName: newFullName });
       setNewCode('');
       setNewFullName('');
       await load(usersPage);
@@ -202,7 +140,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     }
   };
 
-  const startTeacherEdit = (teacher: TeacherItem) => {
+  const startTeacherEdit = (teacher: TeacherDto) => {
     setEditingTeacherId(teacher.id);
     setEditingTeacherCode(teacher.code);
     setEditingTeacherName(teacher.fullName);
@@ -219,23 +157,11 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/teachers', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: teacherId,
-          code: editingTeacherCode,
-          fullName: editingTeacherName,
-        }),
+      await updateTeacher({
+        id: teacherId,
+        code: editingTeacherCode,
+        fullName: editingTeacherName,
       });
-
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Lehrer konnte nicht aktualisiert werden.');
-      }
-
       cancelTeacherEdit();
       await load(usersPage);
     } catch (updateError) {
@@ -245,27 +171,12 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     }
   };
 
-  const toggleTeacher = async (teacher: TeacherItem) => {
+  const toggleTeacher = async (teacher: TeacherDto) => {
     setSaving(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/teachers', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: teacher.id,
-          isActive: !teacher.isActive,
-        }),
-      });
-
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Lehrer konnte nicht geändert werden.');
-      }
-
+      await updateTeacher({ id: teacher.id, isActive: !teacher.isActive });
       await load(usersPage);
     } catch (toggleError) {
       setError(toggleError instanceof Error ? toggleError.message : 'Lehrer konnte nicht geändert werden.');
@@ -274,7 +185,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     }
   };
 
-  const deleteTeacher = async (id: string) => {
+  const deleteTeacherById = async (id: string) => {
     const confirmed = window.confirm('Lehrer wirklich löschen?');
     if (!confirmed) {
       return;
@@ -284,19 +195,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/teachers', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id }),
-      });
-
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Lehrer konnte nicht gelöscht werden.');
-      }
-
+      await deleteTeacher(id);
       await load(usersPage);
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : 'Lehrer konnte nicht gelöscht werden.');
@@ -354,7 +253,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     setRoleConfirmBusy(false);
   };
 
-  const openRoleConfirm = (user: AdminUserItem) => {
+  const openRoleConfirm = (user: AdminUserListItem) => {
     setRoleConfirmTarget({ id: user.id, email: user.email, currentRole: user.role });
     setRoleConfirmEmailInput('');
     setRoleConfirmError(null);
@@ -362,7 +261,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     setRoleConfirmOpen(true);
   };
 
-  const handleRoleAction = (user: AdminUserItem) => {
+  const handleRoleAction = (user: AdminUserListItem) => {
     if (user.role === 'ADMIN') {
       openRoleConfirm(user);
       return;
@@ -406,7 +305,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     resetRoleConfirm();
   };
 
-  const onboardingState = (user: AdminUserItem): string => {
+  const onboardingState = (user: AdminUserListItem): string => {
     if (user.onboardingCompletedAt) {
       return 'Abgeschlossen';
     }
@@ -452,7 +351,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
     }
   };
 
-  const generateDemoDataForUser = async (user: AdminUserItem) => {
+  const generateDemoDataForUser = async (user: AdminUserListItem) => {
     setDemoDataBusyUserId(user.id);
     setDemoDataMessage(null);
     setError(null);
@@ -612,7 +511,7 @@ export function AdminPanel({ currentUserId, isDemoMode = false }: AdminPanelProp
                             <Button type="button" size="sm" variant="outline" onClick={() => toggleTeacher(teacher)} loading={saving}>
                               {teacher.isActive ? 'Deaktivieren' : 'Aktivieren'}
                             </Button>
-                            <Button type="button" size="sm" variant="ghost" onClick={() => deleteTeacher(teacher.id)} loading={saving}>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => deleteTeacherById(teacher.id)} loading={saving}>
                               Löschen
                             </Button>
                           </>

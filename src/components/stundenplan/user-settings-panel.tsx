@@ -4,24 +4,17 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  ensureCurrentSubscription,
-  ensureNotificationPermission,
+  activatePushForCurrentDevice,
+  fetchPushDevices,
   getExistingPushEndpoint,
   isPushSupported,
-  persistPushSubscription,
+  removePushDeviceRegistration,
 } from '@/lib/push-client';
+import type { PushDeviceDto } from '@/types/user-system';
 
 interface MeResponseUser {
   notificationsEnabled: boolean;
   notificationLookaheadSchoolDays: number;
-}
-
-interface PushDevice {
-  id: string;
-  endpoint: string;
-  userAgent: string | null;
-  createdAt: string;
-  lastSeenAt: string;
 }
 
 const LOOKAHEAD_OPTIONS = [1, 2, 3, 4, 5];
@@ -106,7 +99,7 @@ export function UserSettingsPanel() {
   const [currentDeviceMessage, setCurrentDeviceMessage] = useState<string | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [lookaheadDays, setLookaheadDays] = useState(1);
-  const [devices, setDevices] = useState<PushDevice[]>([]);
+  const [devices, setDevices] = useState<PushDeviceDto[]>([]);
   const [devicesError, setDevicesError] = useState<string | null>(null);
   const [devicesMessage, setDevicesMessage] = useState<string | null>(null);
   const [removingDeviceId, setRemovingDeviceId] = useState<string | null>(null);
@@ -114,82 +107,97 @@ export function UserSettingsPanel() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+
     const load = async () => {
       try {
         setLoading(true);
         setDevicesLoading(true);
+        setCurrentDeviceChecking(true);
         setError(null);
         setDevicesError(null);
         setDevicesMessage(null);
-        const [response, devicesResponse] = await Promise.all([fetch('/api/me'), fetch('/api/push/subscriptions')]);
-        const data = (await response.json()) as { user?: MeResponseUser; error?: string };
+        const [response, devicesResult] = await Promise.allSettled([fetch('/api/me'), fetchPushDevices()]);
+        if (response.status !== 'fulfilled') {
+          throw response.reason;
+        }
+        const data = (await response.value.json()) as { user?: MeResponseUser; error?: string };
 
-        if (!response.ok || !data.user) {
+        if (!response.value.ok || !data.user) {
           throw new Error(data.error ?? 'Einstellungen konnten nicht geladen werden.');
         }
 
         setNotificationsEnabled(data.user.notificationsEnabled);
         setLookaheadDays(data.user.notificationLookaheadSchoolDays);
 
-        if (devicesResponse.ok) {
-          const devicesData = (await devicesResponse.json()) as { subscriptions?: PushDevice[] };
-          setDevices(Array.isArray(devicesData.subscriptions) ? devicesData.subscriptions : []);
+        let nextDevices: PushDeviceDto[] = [];
+        if (devicesResult.status === 'fulfilled') {
+          nextDevices = devicesResult.value;
+          setDevices(nextDevices);
         } else {
-          const devicesData = (await devicesResponse.json()) as { error?: string };
           setDevices([]);
-          setDevicesError(devicesData.error ?? 'Push-Geräte konnten nicht geladen werden.');
+          setDevicesError(
+            devicesResult.reason instanceof Error ? devicesResult.reason.message : 'Push-Geräte konnten nicht geladen werden.'
+          );
+        }
+
+        const supported = isPushSupported();
+        if (!supported) {
+          if (!active) {
+            return;
+          }
+
+          setCurrentDeviceSupported(false);
+          setCurrentDeviceEndpoint(null);
+          setCurrentDeviceIsRegistered(false);
+          return;
+        }
+
+        try {
+          const endpoint = await getExistingPushEndpoint();
+          if (!active) {
+            return;
+          }
+
+          setCurrentDeviceSupported(true);
+          setCurrentDeviceEndpoint(endpoint);
+          setCurrentDeviceIsRegistered(endpoint ? nextDevices.some((device) => device.endpoint === endpoint) : false);
+        } catch {
+          if (!active) {
+            return;
+          }
+
+          setCurrentDeviceSupported(true);
+          setCurrentDeviceEndpoint(null);
+          setCurrentDeviceIsRegistered(false);
         }
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'Einstellungen konnten nicht geladen werden.');
-      } finally {
-        setLoading(false);
-        setDevicesLoading(false);
-      }
-    };
-
-    void load();
-  }, []);
-
-  useEffect(() => {
-    if (loading || devicesLoading) {
-      return;
-    }
-
-    let active = true;
-
-    const checkCurrentDevice = async () => {
-      setCurrentDeviceChecking(true);
-
-      const supported = isPushSupported();
-      if (!supported) {
         if (!active) {
           return;
         }
 
-        setCurrentDeviceSupported(false);
-        setCurrentDeviceEndpoint(null);
-        setCurrentDeviceIsRegistered(false);
+        setError(loadError instanceof Error ? loadError.message : 'Einstellungen konnten nicht geladen werden.');
+      } finally {
+        if (!active) {
+          return;
+        }
+
+        setLoading(false);
+        setDevicesLoading(false);
         setCurrentDeviceChecking(false);
-        return;
       }
-
-      const endpoint = await getExistingPushEndpoint();
-      if (!active) {
-        return;
-      }
-
-      setCurrentDeviceSupported(true);
-      setCurrentDeviceEndpoint(endpoint);
-      setCurrentDeviceIsRegistered(endpoint ? devices.some((device) => device.endpoint === endpoint) : false);
-      setCurrentDeviceChecking(false);
     };
 
-    void checkCurrentDevice();
+    void load();
 
     return () => {
       active = false;
     };
-  }, [devices, devicesLoading, loading]);
+  }, []);
+
+  useEffect(() => {
+    setCurrentDeviceIsRegistered(currentDeviceEndpoint ? devices.some((device) => device.endpoint === currentDeviceEndpoint) : false);
+  }, [currentDeviceEndpoint, devices]);
 
   const activateCurrentDevice = async () => {
     try {
@@ -197,38 +205,9 @@ export function UserSettingsPanel() {
       setCurrentDeviceMessage(null);
       setDevicesError(null);
 
-      const permission = await ensureNotificationPermission();
-      if (!permission.ok) {
-        if (permission.reason === 'insecure_context') {
-          throw new Error('Push benötigt HTTPS oder localhost. Die aktuelle Seite ist kein sicherer Kontext.');
-        }
-        if (permission.reason === 'notification_api_unavailable') {
-          throw new Error('Dieser Browser unterstützt keine Benachrichtigungs-Permissions.');
-        }
-        if (permission.reason === 'permission_prompt_not_confirmed') {
-          throw new Error('Benachrichtigungsabfrage wurde nicht bestätigt.');
-        }
-        throw new Error('Benachrichtigungen sind im Browser blockiert.');
-      }
-
-      const subscription = await ensureCurrentSubscription();
-      await persistPushSubscription(subscription);
-
-      await fetch('/api/me', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationsEnabled: true }),
-      });
+      const subscription = await activatePushForCurrentDevice();
       setNotificationsEnabled(true);
-
-      const devicesResponse = await fetch('/api/push/subscriptions');
-      const devicesData = (await devicesResponse.json()) as { subscriptions?: PushDevice[]; error?: string };
-
-      if (!devicesResponse.ok) {
-        throw new Error(devicesData.error ?? 'Push-Geräte konnten nicht geladen werden.');
-      }
-
-      const nextDevices = Array.isArray(devicesData.subscriptions) ? devicesData.subscriptions : [];
+      const nextDevices = await fetchPushDevices();
       setDevices(nextDevices);
       setCurrentDeviceEndpoint(subscription.endpoint);
       setCurrentDeviceIsRegistered(nextDevices.some((device) => device.endpoint === subscription.endpoint));
@@ -242,24 +221,13 @@ export function UserSettingsPanel() {
     }
   };
 
-  const removeDevice = async (device: PushDevice) => {
+  const removeDevice = async (device: PushDeviceDto) => {
     try {
       setRemovingDeviceId(device.id);
       setDevicesError(null);
       setDevicesMessage(null);
 
-      const response = await fetch('/api/push/unsubscribe', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ endpoint: device.endpoint }),
-      });
-      const data = (await response.json()) as { error?: string };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Gerät konnte nicht abgemeldet werden.');
-      }
+      await removePushDeviceRegistration(device.endpoint);
 
       setDevices((current) => {
         const next = current.filter((entry) => entry.id !== device.id);

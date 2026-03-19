@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/guards';
-import { prisma } from '@/lib/prisma';
+import { listPushSubscriptionsForUser } from '@/lib/push-service';
 
 export async function GET() {
   const auth = await requireUser();
@@ -9,21 +9,7 @@ export async function GET() {
   }
 
   try {
-    const subscriptions = await prisma.pushSubscription.findMany({
-      where: {
-        userId: auth.user.id,
-      },
-      select: {
-        id: true,
-        endpoint: true,
-        userAgent: true,
-        createdAt: true,
-        lastSeenAt: true,
-      },
-      orderBy: {
-        lastSeenAt: 'desc',
-      },
-    });
+    const subscriptions = await listPushSubscriptionsForUser(auth.user.id);
 
     return NextResponse.json({ subscriptions });
   } catch (error) {

@@ -1,16 +1,12 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/guards';
 import { AdminPanel } from '@/components/stundenplan/admin-panel';
 import { isDemoMode } from '@/lib/demo-config';
+import { requireSignedInUser } from '@/lib/stundenplan-page-guards';
 
 export default async function StundenplanAdminPage() {
-  const user = await getCurrentUser();
+  const user = await requireSignedInUser();
   const demoMode = isDemoMode();
-
-  if (!user) {
-    redirect('/stundenplan/login');
-  }
 
   if (user.role !== 'ADMIN') {
     redirect('/stundenplan/dashboard');

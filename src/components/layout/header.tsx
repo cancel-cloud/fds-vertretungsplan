@@ -51,23 +51,6 @@ export function Header({ onMenuToggle, isMenuOpen, menuId }: HeaderProps) {
         </Link>
 
         <div className="flex items-center gap-4">
-          {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center gap-4">
-            <Link
-              href="/impressum"
-              className="motion-link-underline motion-safe-base text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] rounded-sm px-2 py-1 -mx-2 -my-1 hover:bg-[rgb(var(--color-secondary)/0.12)] focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-offset-2"
-            >
-              Impressum
-            </Link>
-            <Link
-              href="/datenschutz"
-              className="motion-link-underline motion-safe-base text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-primary))] rounded-sm px-2 py-1 -mx-2 -my-1 hover:bg-[rgb(var(--color-secondary)/0.12)] focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-offset-2"
-            >
-              Datenschutz
-            </Link>
-          </nav>
-
-          {/* Theme toggle */}
           <ThemeToggle />
         </div>
       </div>

@@ -4,12 +4,15 @@ import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { HeaderAuthActions } from '@/components/layout/header-auth-actions';
 import { MobileMenu } from '@/components/layout/mobile-menu';
 import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 import { captureClientEvent } from '@/lib/analytics/posthog-client';
+import { DASHBOARD_SCOPE_PARAM } from '@/lib/dashboard-scope';
+import { buildLoginHref } from '@/lib/login-target';
 import { cn } from '@/lib/utils';
 
 interface LandingHeaderClientProps {
@@ -19,7 +22,14 @@ interface LandingHeaderClientProps {
 
 export function LandingHeaderClient({ hasSession, userRole }: LandingHeaderClientProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const mobileMenuId = 'landing-mobile-menu';
+  const scopeOverride =
+    !hasSession && searchParams.get(DASHBOARD_SCOPE_PARAM) != null && searchParams.get(DASHBOARD_SCOPE_PARAM) !== 'all'
+      ? 'all'
+      : undefined;
+  const loginHref = buildLoginHref(pathname, searchParams.toString(), { scopeOverride });
 
   const toggleMobileMenu = () => {
     const next = !isMobileMenuOpen;
@@ -49,21 +59,9 @@ export function LandingHeaderClient({ hasSession, userRole }: LandingHeaderClien
 
           <div className="flex items-center justify-end gap-2">
             <div className="hidden md:flex md:flex-wrap md:items-center md:justify-end md:gap-2">
-              <Link
-                href="/impressum"
-                className="motion-link-underline motion-safe-base rounded-sm px-2 py-1 text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-secondary)/0.12)] hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
-              >
-                Impressum
-              </Link>
-              <Link
-                href="/datenschutz"
-                className="motion-link-underline motion-safe-base rounded-sm px-2 py-1 text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-secondary)/0.12)] hover:text-[rgb(var(--color-primary))] focus-visible:outline-2 focus-visible:outline-[rgb(var(--color-primary))] focus-visible:outline-offset-2"
-              >
-                Datenschutz
-              </Link>
               {hasSession ? <HeaderAuthActions role={userRole} /> : null}
               {!hasSession ? (
-                <Link href="/stundenplan/login?next=/" className={buttonVariants({ size: 'sm' })}>
+                <Link href={loginHref} className={buttonVariants({ size: 'sm' })}>
                   Login
                 </Link>
               ) : null}
@@ -141,7 +139,7 @@ export function LandingHeaderClient({ hasSession, userRole }: LandingHeaderClien
         ) : (
           <div className="md:hidden">
             <Link
-              href="/stundenplan/login?next=/"
+              href={loginHref}
               className={cn(buttonVariants({ size: 'sm' }), 'w-full justify-center')}
               onClick={closeMobileMenu}
             >

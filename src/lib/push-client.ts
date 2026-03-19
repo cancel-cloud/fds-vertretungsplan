@@ -1,3 +1,5 @@
+import type { PushDeviceDto, PushSubscriptionsResponse } from '@/types/user-system';
+
 const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -121,6 +123,86 @@ export const persistPushSubscription = async (subscription: PushSubscription): P
         : `Push konnte nicht aktiviert werden (HTTP ${subscribeResponse.status}).`;
     throw new Error(errorMessage);
   }
+};
+
+export const setNotificationsEnabled = async (enabled: boolean): Promise<void> => {
+  const response = await fetch('/api/me', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ notificationsEnabled: enabled }),
+  });
+
+  const data = await parseJsonSafe(response);
+  if (!response.ok) {
+    const errorMessage =
+      typeof data.error === 'string' && data.error.length > 0
+        ? data.error
+        : `Benachrichtigungseinstellungen konnten nicht gespeichert werden (HTTP ${response.status}).`;
+    throw new Error(errorMessage);
+  }
+};
+
+export const fetchPushDevices = async (): Promise<PushDeviceDto[]> => {
+  const response = await fetch('/api/push/subscriptions');
+  const data = await parseJsonSafe(response);
+
+  if (!response.ok) {
+    throw new Error(
+      typeof data.error === 'string' && data.error.length > 0 ? data.error : 'Push-Geräte konnten nicht geladen werden.'
+    );
+  }
+
+  return Array.isArray(data.subscriptions) ? (data.subscriptions as PushSubscriptionsResponse['subscriptions']) : [];
+};
+
+export const removePushDeviceRegistration = async (endpoint: string): Promise<void> => {
+  const response = await fetch('/api/push/unsubscribe', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint }),
+  });
+
+  const data = await parseJsonSafe(response);
+  if (!response.ok) {
+    throw new Error(typeof data.error === 'string' && data.error.length > 0 ? data.error : 'Push konnte nicht deaktiviert werden.');
+  }
+};
+
+export const activatePushForCurrentDevice = async (): Promise<PushSubscription> => {
+  const permission = await ensureNotificationPermission();
+  if (!permission.ok) {
+    if (permission.reason === 'insecure_context') {
+      throw new Error('Push benötigt HTTPS oder localhost. Die aktuelle Seite ist kein sicherer Kontext.');
+    }
+    if (permission.reason === 'notification_api_unavailable') {
+      throw new Error('Dieser Browser unterstützt keine Benachrichtigungs-Permissions.');
+    }
+    if (permission.reason === 'permission_prompt_not_confirmed') {
+      throw new Error(
+        'Chrome/Arc hat den Prompt nicht angezeigt (Quiet UI oder geschlossen). Bitte Website-Benachrichtigungen manuell auf "Zulassen" setzen.'
+      );
+    }
+    throw new Error(
+      'Benachrichtigungen sind im Browser blockiert. In Chrome: Schloss-Symbol -> Website-Einstellungen -> Benachrichtigungen -> Zulassen.'
+    );
+  }
+
+  const subscription = await ensureCurrentSubscription();
+  await persistPushSubscription(subscription);
+  await setNotificationsEnabled(true);
+  return subscription;
+};
+
+export const deactivatePushForCurrentDevice = async (): Promise<string | null> => {
+  const subscription = await getExistingPushSubscription();
+
+  if (subscription) {
+    await removePushDeviceRegistration(subscription.endpoint);
+    await subscription.unsubscribe();
+  }
+
+  await setNotificationsEnabled(false);
+  return subscription?.endpoint ?? null;
 };
 
 export const ensureNotificationPermission = async (): Promise<{ ok: boolean; reason?: string }> => {

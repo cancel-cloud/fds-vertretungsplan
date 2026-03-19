@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { NextRequest } from 'next/server';
+import { buildJsonRequest } from '@/test/http';
+import { createUserRecord } from '@/test/factories/user-system';
 
 const requireUserMock = vi.fn();
 const userUpdateMock = vi.fn();
@@ -21,37 +22,17 @@ vi.mock('@/lib/security/request-integrity', () => ({
   enforceSameOrigin: enforceSameOriginMock,
 }));
 
-const createAuthUser = () => ({
-  id: 'user-1',
-  email: 'lukas@devbrew.dev',
-  passwordHash: 'hash',
-  role: 'USER' as const,
-  onboardingCompletedAt: null,
-  onboardingSkippedAt: null,
-  notificationsEnabled: true,
-  notificationLookaheadSchoolDays: 1,
-  createdAt: new Date('2026-02-11T12:00:00.000Z'),
-  updatedAt: new Date('2026-02-11T12:00:00.000Z'),
-});
-
 describe('api/me PUT', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     enforceSameOriginMock.mockReturnValue(null);
-    requireUserMock.mockResolvedValue({ user: createAuthUser(), response: null });
-    userUpdateMock.mockResolvedValue({
-      ...createAuthUser(),
-      notificationLookaheadSchoolDays: 3,
-    });
+    requireUserMock.mockResolvedValue({ user: createUserRecord(), response: null });
+    userUpdateMock.mockResolvedValue(createUserRecord({ notificationLookaheadSchoolDays: 3 }));
   });
 
   it('updates lookahead in valid range', async () => {
     const { PUT } = await import('@/app/api/me/route');
-    const request = new NextRequest('http://localhost/api/me', {
-      method: 'PUT',
-      body: JSON.stringify({ notificationLookaheadSchoolDays: 3 }),
-      headers: { 'Content-Type': 'application/json' },
-    });
+    const request = buildJsonRequest('http://localhost/api/me', { notificationLookaheadSchoolDays: 3 }, { method: 'PUT' });
 
     const response = await PUT(request);
     const body = await response.json();
@@ -68,11 +49,7 @@ describe('api/me PUT', () => {
 
   it('rejects lookahead outside range', async () => {
     const { PUT } = await import('@/app/api/me/route');
-    const request = new NextRequest('http://localhost/api/me', {
-      method: 'PUT',
-      body: JSON.stringify({ notificationLookaheadSchoolDays: 0 }),
-      headers: { 'Content-Type': 'application/json' },
-    });
+    const request = buildJsonRequest('http://localhost/api/me', { notificationLookaheadSchoolDays: 0 }, { method: 'PUT' });
 
     const response = await PUT(request);
     const body = await response.json();
@@ -86,11 +63,7 @@ describe('api/me PUT', () => {
     enforceSameOriginMock.mockReturnValueOnce(new Response(JSON.stringify({ error: 'Ungültige Request-Herkunft.' }), { status: 403 }));
 
     const { PUT } = await import('@/app/api/me/route');
-    const request = new NextRequest('https://app.example/api/me', {
-      method: 'PUT',
-      body: JSON.stringify({ notificationLookaheadSchoolDays: 3 }),
-      headers: { 'Content-Type': 'application/json' },
-    });
+    const request = buildJsonRequest('https://app.example/api/me', { notificationLookaheadSchoolDays: 3 }, { method: 'PUT' });
 
     const response = await PUT(request);
     const body = await response.json();
