@@ -15,32 +15,53 @@ QS -> DR : POST /api/internal/push/dispatch
 activate DR
 
 DR -> DR : Zeitfenster prüfen\n(Mo–Fr 06–20 Uhr)
+
 DR -> DB : Nutzer mit aktiven Push-\nAbonnements laden
+activate DB
 DB --> DR : Nutzerliste + Stundenpläne
+deactivate DB
 
 DR -> WU : Vertretungsdaten abrufen\n(pro Zieldatum)
+activate WU
 WU --> DR : Rohdaten
+deactivate WU
 
 loop Für jeden Nutzer
     DR -> SM : findRelevantSubstitutions\n(Vertretungen, Stundenplan, Datum)
+    activate SM
     SM --> DR : Trefferliste
+    deactivate SM
 
     DR -> NS : Fingerprint berechnen\nund mit gespeichertem\nvergleichen
+    activate NS
     NS --> DR : Aktion: senden / überspringen / auflösen
+    deactivate NS
 
     alt Senden (neu oder geändert)
         DR -> WP : Push-Nachricht senden
+        activate WP
         WP -> SW : Push-Event
+        activate SW
         SW -> SW : Notification anzeigen
+        deactivate SW
+        deactivate WP
+
         DR -> DB : NotificationState aktualisieren\nNotificationFingerprint speichern
+        activate DB
+        DB --> DR
+        deactivate DB
+
     else Überspringen (unverändert)
         DR -> DR : Kein Push
+
     else Auflösen (keine Treffer mehr)
         DR -> DB : NotificationState löschen
+        activate DB
+        DB --> DR
+        deactivate DB
     end
 end
 
 DR --> QS : Ergebnis-Zusammenfassung
-
 deactivate DR
 @enduml
