@@ -1,0 +1,91 @@
+7 Technische Umsetzung und Schwierigkeiten
+7.1 Aufbau des Repositories
+
+Das Repository ist nach Verantwortlichkeiten gegliedert. Diese Struktur war notwendig, um
+aus den frühen, eher unübersichtlichen Prototypen eine langfristig wartbare Anwendung zu
+entwickeln. Oberfläche, Hooks, API-Routen, Datenverarbeitung, Typdefinitionen, Provider
+und Datenbankmodell sind getrennt abgelegt. Dadurch wird schneller sichtbar, an welcher
+Stelle eine Änderung sinnvoll ist und welche Bereiche davon betroffen sind.
+
+7.2 Zentrale Module und ihre Aufgaben
+
+ Datei / Ordner               Aufgabe im Gesamtsystem
+
+ src/app/page.tsx             Auth-bewusste Hauptseite; öffentlicher Einstieg für Gäste und
+                              Weiterleitung für eingeloggte Nutzer.
+
+
+ src/app/api/substitutions/   API-Proxy mit Rate-Limit, Server-Cache und
+ route.ts                     Fehlernormalisierung.
+
+
+ src/app/api/substitutions/   Hilfsfunktionen für Datum, URL-Bildung und sichere
+ route-utils.ts               Endpunktprüfung.
+
+
+ src/components/stundenp      Verbindet Datumsauswahl, Filter, Ergebnisanzeige und
+ lan/dashboard-client.tsx     persönliche Nutzung im Dashboard.
+
+
+ src/hooks/use-substitution Kapselt Datenabruf, lokalen Cache, Abort-Logik und
+ s.ts                         Fehlerzustände im Browser.
+
+
+ src/lib/data-processing.ts   Normalisiert Rohdaten und enthält Sortier- und Filterlogik.
+
+
+ src/middleware.ts            Schützt kritische Pfade und setzt sicherheitsrelevante Header.
+
+
+ prisma/schema.prisma         Definiert das relationale Datenmodell für Nutzer,
+                              Stundenpläne, Subscriptions und Zustände.
+
+
+
+
+                                             29
+     Datei / Ordner                           Aufgabe im Gesamtsystem
+
+     src/data/sample-data.ts                  Stellt statische Beispieleinträge für Vertretungen sowie die
+                                              vollständige Kategorienliste mit Prioritäten und Farbcodes
+                                              bereit; wird für Tests, UI-Vorschauen und die Initialisierung
+                                              der Filterlogik verwendet.
+
+
+
+
+7.3 Datenverarbeitung und Filterlogik
+
+Eine zentrale Aufgabe der Anwendung besteht darin, die Rohdaten aus WebUntis in eine
+Form zu überführen, die für Nutzer sinnvoll lesbar ist. Dazu gehört die Einordnung des
+Vertretungstyps, das Sortieren nach sinnvollen Kriterien und das Filtern nach Suchbegriffen
+oder Kategorien. Gerade hier zeigte sich, dass die eigentliche Schwierigkeit oft nicht im
+Abruf selbst liegt, sondern in der fachlich sauberen Verarbeitung und Darstellung.
+
+Zusätzlich spielt die Filterlogik eine Rolle für personalisierte Treffer. Erst wenn der eigene
+Stundenplan mit dem Tagesplan abgeglichen wird, kann die Anwendung unterscheiden,
+welche Vertretung nur allgemein vorhanden ist und welche für einen bestimmten Nutzer
+tatsächlich relevant ist.
+
+7.4 Nutzerfluss und Bedienbarkeit
+
+Ein wiederkehrendes Problem in den frühen Versionen war die fehlende Führung im
+Nutzerfluss. Technisch ließen sich einzelne Funktionen zwar ausführen, aber der Weg dorthin
+war nicht immer klar. Erst mit dem geführten Ablauf aus Registrierung, Admin-Setup,
+Onboarding und Dashboard entstand eine Nutzung, die auch für andere Personen unmittelbar
+verständlich war.
+
+Diese Erfahrung war für mich besonders wichtig: Gute Bedienbarkeit entsteht nicht
+automatisch als Nebenprodukt funktionierenden Codes.13 Sie ist selbst ein technisches
+Qualitätsmerkmal, weil sie Zustände, Rechte, Weiterleitungen und Fehlersituationen
+strukturiert ordnet.
+
+7.5 Sicherheit, Datenschutz und Betrieb
+
+Sicherheit war im Projekt kein eigener Zusatzblock am Ende, sondern ein durchgängiges
+Querschnittsthema. Geschützte Bereiche dürfen nur nach Authentifizierung erreichbar sein.
+13
+     Vgl. Krug (2014), Kap. 7: Gute Navigation und klare Einstiegspunkte als Grundvoraussetzung nutzbarer Webanwendungen.
+
+                                                                  30
+
