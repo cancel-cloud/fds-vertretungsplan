@@ -1,0 +1,285 @@
+Diese Zugriffskontrolle wird durch eine zentrale Middleware umgesetzt, die bei jedem
+Request prüft, ob der Pfad eine Authentifizierung erfordert, und unauthentifizierte Nutzer zur
+Anmeldeseite weiterleitet. Gleichzeitig setzt sie sicherheitsrelevante HTTP-Header wie
+Content Security Policy. Sensible Prüfungen laufen serverseitig, mutierende Requests werden
+abgesichert und die Auslieferung im Browser wird über Sicherheitsheader gehärtet. Zusätzlich
+war HTTPS für den produktiven Betrieb unverzichtbar, nicht nur wegen QStash, sondern auch
+wegen der generell sicheren Übertragung.
+
+Im Datenschutz blieb das Projekt bewusst auf einer technischen Ebene. Umgesetzt wurden
+etwa minimale Datenhaltung, Hashing sensibler Informationen, klare Rollentrennung und
+Pflichtseiten wie Impressum und Datenschutz. Ein formales juristisches DSGVO-Audit lag
+jedoch außerhalb des Projektumfangs.
+
+7.6 Typische Schwierigkeiten und dessen Lösungen
+
+1. Der Produktumfang war anfangs zu breit gedacht. Erst die frühen Versionen machten
+   sichtbar, welche Funktionen wirklich zum Kernnutzen gehören. Die Lösung bestand in
+   einer bewussten Rückführung auf den Nutzerkern: Datum, Vertretungen, Filter,
+   persönlicher Bezug.
+
+2. Der Nutzerfluss zwischen Registrierung, Rollenvergabe und persönlicher Nutzung war
+   zunächst nicht konsistent. Mehrere Überarbeitungen waren nötig, bis der Ablauf technisch
+   korrekt und gleichzeitig verständlich war.
+
+3. Push-Benachrichtigungen erwiesen sich als deutlich komplexer als zunächst erwartet.
+   Ohne Delta-Vergleich hätte das System dieselben Informationen immer wieder gesendet.
+   Gelöst wurde das Problem durch Fingerprints, gespeicherte Zustände und einen
+   periodischen Dispatcher.
+
+4. Die responsiven Oberflächen verhielten sich auf unterschiedlichen Smartphones zunächst
+   nicht stabil. Abgeschnittene Bereiche und verschobene Elemente wurden erst durch
+   Rückmeldungen im Testbetrieb sichtbar und anschließend gezielt behoben.
+
+7.7 Lessons Learned
+
+Erstens habe ich gelernt, dass Produktqualität mehr ist als korrekte Logik. Eine gute
+Anwendung braucht klar definierte Zustände, sinnvolle Weiterleitungen und eine Oberfläche,
+die den Nutzer an den richtigen Stellen führt.
+
+
+
+                                                 31
+Zweitens wurde deutlich, dass vermeintlich attraktive Ziele wie Echtzeit nicht automatisch die
+bessere technische Lösung sind. Für dieses Projekt war Verlässlichkeit wichtiger als maximale
+Aktualisierungsfrequenz.
+
+Drittens habe ich gelernt, dass Hintergrundprozesse in Webanwendungen fast immer
+zusätzlichen Zustand erfordern. Push-Benachrichtigungen werden erst dann wirklich nützlich,
+wenn sie nicht jeden Polling-Durchlauf ungefiltert nach außen weiterreichen.
+
+Viertens zeigte sich, dass Hosting und öffentlicher Betrieb die Qualität einer Lösung sichtbar
+machen. Erst im produktiven Kontext werden Themen wie SSL, externe Scheduler,
+Browserberechtigungen und stabile Fehlerpfade wirklich relevant.
+
+Schließlich war das Projekt auch eine Lektion in Gestaltungsdisziplin. Gute UI entsteht nicht
+durch frühes Design, sondern durch inhaltliche Klarheit. Erst nachdem Anforderungen und
+Nutzerfluss sauber standen, ließ sich die Oberfläche zielgerichtet verfeinern.14
+
+
+
+
+8 Test und Ergebnisbewertung
+8.1 Teststrategie
+
+Die Qualitätssicherung stützt sich auf mehrere Ebenen. Automatisierte Tests prüfen die
+Kernlogik in Unit-, Integrations- und Komponententests.15 Zusätzlich wurde die Anwendung
+im echten Gebrauch mit mehreren Personen und auf verschiedenen Geräten ausprobiert.
+Gerade diese Kombination war wichtig: Automatisierte Tests sichern die Logik, reale
+Nutzung deckt Probleme in Darstellung, Timing und Bedienbarkeit auf.
+
+Zum Zeitpunkt dieser Dokumentation umfasst das Projekt 34 Testdateien mit insgesamt 134
+Testfällen. Diese Tests gehören fest zur Entwicklungsroutine und werden nicht nur einmalig
+vor der Abgabe ausgeführt.
+
+
+
+
+14
+   Vgl. Nielsen (1994), Heuristik 2 „Match between system and the real world" und Heuristik 8 „Aesthetic and minimalist design":
+Gestaltung folgt dem Verständnis der Nutzerbedürfnisse, nicht umgekehrt.
+15
+   Vgl. Spillner/Linz (2019), Kap. 2–3: Teststufen (Unit, Integration, Komponente) und ihre Abgrenzung im Testprozess.
+
+                                                                  32
+8.2 Ausgewählte Testfälle
+
+Testziel               Typ           Vorgehen               Ergebnis
+
+Vertretungstyp-Erken Unit            CSS-Klassen und        Korrekte Klassifizierung für
+nung                                 Textmuster an die      Entfall, Vertretung und
+                                     Verarbeitungsfunktio   Verlegung.
+                                     n übergeben.
+
+
+Rate-Limiting der      Integration   61 Anfragen an         Ab Anfrage 61 erfolgt 429
+API                                  /api/substitutions     mit Retry-After-Header.
+                                     senden.
+
+
+Retry bei              Integration   503-Antwort der        Mehrere
+Upstream-Fehler                      Datenquelle            Wiederholungsversuche mit
+                                     simulieren.            Backoff werden korrekt
+                                                            ausgelöst.
+
+
+Delta-Logik für Push   Unit          Identische und         Aktion "skip" bei
+                                     geänderte              unverändertem, "send" bei
+                                     Fingerprints           geändertem Stand.
+                                     vergleichen.
+
+
+Bootstrap-Admin        Integration   Ersten Nutzer mit und Nur erlaubte E-Mail erhält
+                                     ohne konfigurierte     Admin-Rolle;
+                                     ADMIN_EMAILS           Schutzmechanismen
+                                     registrieren.          greifen.
+
+
+Stundenplan-Überlap Integration      Überlappende           Ablehnung im strikten
+pung                                 Einträge in die        Modus, kontrollierte
+                                     Stundenplan-Route      Akzeptanz mit Flag.
+                                     senden.
+
+
+
+
+                                          33
+ Testziel                Typ              Vorgehen                   Ergebnis
+
+ Dashboard-Datumsdi Komponente            Datumsauswahl in           Anzeige aktualisiert sich auf
+ alog                                     der Oberfläche             das neue Datum.
+                                          auslösen.
+
+
+
+
+8.3 Soll-Ist-Abgleich der SMART-Ziele
+
+ ID     Status         Soll                           Ist-Nachweis
+
+ S1     Erfüllt        Vertretungsinfos in            Datumsauswahl und Ergebnisanzeige
+                       maximal drei                   gelingen ohne zusätzlichen Seitenwechsel;
+                       Interaktionen.                 praktisch meist in zwei Klicks.
+
+
+ S2     Erfüllt        Kombinierte Suche und          Filter- und Suchlogik sind in der
+                       Kategorienfilter stabil        Datenverarbeitung umgesetzt und im
+                       nutzbar.                       Frontend eingebunden.
+
+
+ S3     Erfüllt        API robust bei Last und        Rate-Limit, Retry-Logik, Server-Cache
+                       Upstream-Fehlern.              und definierte Fehlerantworten sind
+                                                      implementiert und getestet.
+
+
+ S4     Erfüllt        Sicherheits- und               Geschützte Bereiche, Sicherheitsheader
+                       Datenschutzbasis aktiv.        und Pflichtseiten sind vorhanden.
+
+
+ S5     Weitgehend     Wartbarkeit und                Tests für Kernpfade und dokumentierte
+        erfüllt        Nachvollziehbarkeit            Struktur vorhanden; zusätzliche
+                       absichern.                     UI-Randfälle bleiben als Ausbaupotenzial.
+
+
+
+Insgesamt sind die Kernziele S1 bis S4 erreicht. Das Ziel S5 ist in weiten Teilen umgesetzt,
+bleibt aber bewusst offen für weitere Verfeinerung - etwa durch zusätzliche Tests für seltene
+Randfälle, weitere Dokumentation einzelner UI-Zustände und einen noch breiteren Praxistest.
+
+
+
+
+                                                 34
+8.4 Grenzen der Lösung
+
+Trotz des positiven Ergebnisses hat die Anwendung klare Grenzen. Sie ist auf die
+Friedrich-Dessauer-Schule und deren konkrete Datenquelle zugeschnitten. Ein
+Mehrschulbetrieb wäre nur mit separater Konfiguration und zusätzlicher Administrationslogik
+sinnvoll. Außerdem handelt es sich um eine Webanwendung und nicht um eine native App.
+Das ist für den Einsatzzweck passend, setzt aber Browserunterstützung und
+Web-Push-Fähigkeit voraus.
+
+Auch im Datenschutz bleibt die Lösung technisch und nicht juristisch bewertet. Die
+wichtigsten technischen Schutzmaßnahmen sind vorhanden, aber eine formale rechtliche
+Prüfung wurde im Rahmen dieser BLL nicht durchgeführt.
+
+
+
+
+9 Fazit und Ausblick
+9.1 Zusammenfassung
+
+Das Projekt hat sein zentrales Ziel erreicht: Aus einer schwer nutzbaren Ausgangsanzeige ist
+eine eigene Webanwendung entstanden, die Vertretungsdaten schneller, verständlicher und in
+personalisierter Form bereitstellt. Die Arbeit zeigt dabei nicht nur das Endergebnis, sondern
+vor allem die technische Entwicklung vom frühen Prototyp bis zum stabilen Webprodukt.
+
+Besonders wichtig ist aus meiner Sicht, dass die Eigenleistung nicht in einzelnen
+Framework-Entscheidungen liegt, sondern in der Kombination mehrerer selbst entwickelter
+Bausteine: der Analyse der Datenquelle, dem API-Proxy mit Cache und Fehlerpfaden, dem
+Stundenplanabgleich und der Delta-basierten Push-Logik. Erst dieses Zusammenspiel macht
+den Unterschied zwischen einer bloßen Oberfläche und einer echten Anwendung.
+
+9.2 Weiterentwicklung
+
+Der nächste sinnvolle Schritt wäre ein längerer Praxistest mit einer größeren und
+heterogeneren Nutzergruppe. Dadurch ließen sich Rückmeldungen nicht nur vereinzelt,
+sondern systematisch erfassen. Auf dieser Basis wären feinere Personalisierungen, eine
+bessere Priorisierung wichtiger Änderungen und zusätzliche Auswertungen zum Erfolg oder
+Misserfolg von Push-Benachrichtigungen denkbar.
+
+Auch im Administrationsbereich bestehen Ausbauoptionen. Dazu gehören eine noch
+einfachere Pflege von Lehrerkürzeln, verbesserte Nutzerverwaltung und eine klarere
+                                              35
+Trennung zwischen produktiven Einstellungen und Testfunktionen. Denkbar wäre langfristig
+außerdem eine noch stärkere Entkopplung zwischen externer Datenquelle und eigener
+Verarbeitung, sofern sich verlässlichere oder dokumentierte Zugriffswege ergeben.
+
+9.3 Persönlicher Lerngewinn
+
+Der größte Lerngewinn lag für mich nicht in einem einzelnen Feature, sondern im
+Zusammenspiel von Produktdenken und technischer Umsetzung. Ich habe gelernt, dass gute
+Software nicht nur aus funktionierendem Code besteht, sondern aus klaren Anforderungen,
+sauberer Struktur, geeigneten Sicherheitsmaßnahmen, nachvollziehbaren Tests und ehrlicher
+Reflexion über Grenzen.
+
+Gerade für eine Besondere Lernleistung ist das ein wichtiger Punkt: Informatik zeigt sich hier
+nicht in theoretischen Definitionen allein, sondern in begründeten Entscheidungen unter
+realen Randbedingungen. Genau diesen Prozess wollte ich mit der vorliegenden Ausarbeitung
+sichtbar machen.
+
+
+
+
+                                              36
+10 Quellenverzeichnis
+10.1 Projektinterne Quellen
+
+• Repository des Projekts fds-vertretungsplan (Code, Tests, Konfiguration,
+  Dokumentationsentwürfe).
+
+• Eigene Browser-Netzwerkanalyse der WebUntis-Vertretungsanzeige der
+  Friedrich-Dessauer-Schule.
+
+• Projektgespräche und Rückmeldungen mit den betreuenden Lehrkräften sowie Testfeedback
+  aus dem Informatik-Kurs.
+
+10.2 Technische Dokumentationen
+
+   -​ Next.js - https://nextjs.org/docs
+
+   -​ React - https://react.dev
+
+   -​ TypeScript - https://www.typescriptlang.org/docs/
+
+   -​ Prisma - https://www.prisma.io/docs
+
+   -​ Vitest - https://vitest.dev/
+
+   -​ PostHog - https://posthog.com/docs
+
+   -​ Upstash QStash - https://upstash.com/docs/qstash
+
+10.3 Webstandards und Sicherheitsquellen
+
+   -​ RFC 8292 - Voluntary Application Server Identification (VAPID) for Web Push
+
+   -​ RFC 5861 - HTTP Cache-Control Extensions for Stale Content
+
+   -​ W3C Push API
+
+   -​ W3C Service Workers
+
+   -​ W3C Content Security Policy Level 3
+
+   -​ OWASP Top 10 (2021)
+
+10.4 Fachliteratur
+
+   -​ Sommerville, Ian: Software Engineering. 10. Auflage, Pearson, 2015.
+
+
+
+
+                                             37
+

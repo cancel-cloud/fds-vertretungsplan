@@ -61,7 +61,7 @@ export default function StundenplanRegisterPage() {
   };
 
   return (
-    <main id="main-content" className="mx-auto flex min-h-screen w-full max-w-md items-center px-4 py-10">
+    <main id="main-content" className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-10">
       <section className="w-full rounded-3xl border border-[rgb(var(--color-border)/0.2)] bg-[rgb(var(--color-surface))] p-6 shadow-sm">
         <h1 className="text-2xl font-semibold text-[rgb(var(--color-text))]">Registrieren</h1>
         <p className="mt-1 text-sm text-[rgb(var(--color-text-secondary))]">Erstelle einen eigenen Account mit persönlichem Stundenplan.</p>

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { NextRequest } from 'next/server';
+import { buildJsonRequest } from '@/test/http';
+import { createAdminUserRecord, createAuthUser } from '@/test/factories/user-system';
 
 const requireAdminMock = vi.fn();
 const transactionMock = vi.fn();
@@ -17,39 +18,12 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-const createAuthAdmin = (id = 'admin-actor') => ({
-  id,
-  role: 'ADMIN' as const,
-});
-
-const createUpdatedUser = (overrides: Partial<{ id: string; email: string; role: 'USER' | 'ADMIN' }> = {}) => ({
-  id: overrides.id ?? 'target-user',
-  email: overrides.email ?? 'target@example.com',
-  role: overrides.role ?? 'USER',
-  onboardingCompletedAt: null,
-  onboardingSkippedAt: null,
-  notificationsEnabled: false,
-  notificationLookaheadSchoolDays: 1,
-  createdAt: new Date('2026-02-16T10:00:00.000Z'),
-  _count: {
-    timetableEntries: 0,
-    pushSubscriptions: 0,
-  },
-});
-
-const buildPatchRequest = (body: unknown) =>
-  new NextRequest('http://localhost/api/admin/users', {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
 describe('api/admin/users PATCH', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
     requireAdminMock.mockResolvedValue({
-      user: createAuthAdmin(),
+      user: createAuthUser({ id: 'admin-actor', role: 'ADMIN' }),
       response: null,
     });
 
@@ -68,12 +42,12 @@ describe('api/admin/users PATCH', () => {
       email: 'target@example.com',
     });
     txUserCountMock.mockResolvedValue(2);
-    txUserUpdateMock.mockResolvedValue(createUpdatedUser());
+    txUserUpdateMock.mockResolvedValue(createAdminUserRecord({ id: 'target-user', email: 'target@example.com', role: 'USER' }));
   });
 
   it('returns 400 for ADMIN -> USER without confirmationEmail', async () => {
     const { PATCH } = await import('@/app/api/admin/users/route');
-    const response = await PATCH(buildPatchRequest({ id: 'target-user', role: 'USER' }));
+    const response = await PATCH(buildJsonRequest('http://localhost/api/admin/users', { id: 'target-user', role: 'USER' }, { method: 'PATCH' }));
     const body = await response.json();
 
     expect(response.status).toBe(400);
@@ -84,7 +58,7 @@ describe('api/admin/users PATCH', () => {
   it('returns 400 for ADMIN -> USER with wrong confirmationEmail', async () => {
     const { PATCH } = await import('@/app/api/admin/users/route');
     const response = await PATCH(
-      buildPatchRequest({ id: 'target-user', role: 'USER', confirmationEmail: 'wrong@example.com' })
+      buildJsonRequest('http://localhost/api/admin/users', { id: 'target-user', role: 'USER', confirmationEmail: 'wrong@example.com' }, { method: 'PATCH' })
     );
     const body = await response.json();
 
@@ -96,7 +70,7 @@ describe('api/admin/users PATCH', () => {
   it('updates ADMIN -> USER with matching confirmationEmail', async () => {
     const { PATCH } = await import('@/app/api/admin/users/route');
     const response = await PATCH(
-      buildPatchRequest({ id: 'target-user', role: 'USER', confirmationEmail: ' Target@Example.com ' })
+      buildJsonRequest('http://localhost/api/admin/users', { id: 'target-user', role: 'USER', confirmationEmail: ' Target@Example.com ' }, { method: 'PATCH' })
     );
     const body = await response.json();
 
@@ -108,14 +82,14 @@ describe('api/admin/users PATCH', () => {
 
   it('returns selfDemoted=true for self ADMIN -> USER', async () => {
     requireAdminMock.mockResolvedValue({
-      user: createAuthAdmin('target-user'),
+      user: createAuthUser({ id: 'target-user', role: 'ADMIN' }),
       response: null,
     });
-    txUserUpdateMock.mockResolvedValue(createUpdatedUser({ id: 'target-user', role: 'USER' }));
+    txUserUpdateMock.mockResolvedValue(createAdminUserRecord({ id: 'target-user', email: 'target@example.com', role: 'USER' }));
 
     const { PATCH } = await import('@/app/api/admin/users/route');
     const response = await PATCH(
-      buildPatchRequest({ id: 'target-user', role: 'USER', confirmationEmail: 'target@example.com' })
+      buildJsonRequest('http://localhost/api/admin/users', { id: 'target-user', role: 'USER', confirmationEmail: 'target@example.com' }, { method: 'PATCH' })
     );
     const body = await response.json();
 
@@ -128,7 +102,7 @@ describe('api/admin/users PATCH', () => {
 
     const { PATCH } = await import('@/app/api/admin/users/route');
     const response = await PATCH(
-      buildPatchRequest({ id: 'target-user', role: 'USER', confirmationEmail: 'target@example.com' })
+      buildJsonRequest('http://localhost/api/admin/users', { id: 'target-user', role: 'USER', confirmationEmail: 'target@example.com' }, { method: 'PATCH' })
     );
     const body = await response.json();
 
@@ -142,10 +116,12 @@ describe('api/admin/users PATCH', () => {
       role: 'USER',
       email: 'target@example.com',
     });
-    txUserUpdateMock.mockResolvedValue(createUpdatedUser({ role: 'ADMIN' }));
+    txUserUpdateMock.mockResolvedValue(createAdminUserRecord({ id: 'target-user', email: 'target@example.com', role: 'ADMIN' }));
 
     const { PATCH } = await import('@/app/api/admin/users/route');
-    const response = await PATCH(buildPatchRequest({ id: 'target-user', role: 'ADMIN' }));
+    const response = await PATCH(
+      buildJsonRequest('http://localhost/api/admin/users', { id: 'target-user', role: 'ADMIN' }, { method: 'PATCH' })
+    );
     const body = await response.json();
 
     expect(response.status).toBe(200);

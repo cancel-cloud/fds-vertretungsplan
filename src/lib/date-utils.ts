@@ -6,6 +6,8 @@ export const isWeekend = (date: Date): boolean => {
   return day === 0 || day === 6;
 };
 
+export const isSchoolDay = (date: Date): boolean => !isWeekend(date);
+
 export const adjustWeekendToMonday = (date: Date): Date => {
   const normalizedDate = startOfLocalDay(date);
   const day = normalizedDate.getDay();
@@ -17,6 +19,19 @@ export const adjustWeekendToMonday = (date: Date): Date => {
   }
 
   return normalizedDate;
+};
+
+export const normalizeToSchoolDay = (date: Date, direction: 1 | -1 = 1): Date => {
+  const normalized = startOfLocalDay(date);
+  if (isSchoolDay(normalized)) {
+    return normalized;
+  }
+
+  while (!isSchoolDay(normalized)) {
+    normalized.setDate(normalized.getDate() + direction);
+  }
+
+  return normalized;
 };
 
 export const addSchoolDays = (date: Date, offset: number): Date => {
@@ -60,3 +75,24 @@ export const formatLongDate = (date: Date): string =>
     month: 'long',
     year: 'numeric',
   });
+
+export const parseDateParam = (value: string | null): Date | null => {
+  if (!value || !/^\d{8}$/.test(value)) {
+    return null;
+  }
+
+  const year = Number.parseInt(value.slice(0, 4), 10);
+  const month = Number.parseInt(value.slice(4, 6), 10) - 1;
+  const day = Number.parseInt(value.slice(6, 8), 10);
+  const date = new Date(year, month, day);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
+    return null;
+  }
+
+  return date;
+};

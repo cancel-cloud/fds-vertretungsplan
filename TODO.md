@@ -222,4 +222,16 @@
 - [ ] Make seach item smart searchable so that i can search for exaple 10AKF and get all the information shown for the class 10A KF so simularity search
 
 # Docs
-- [ ] 
+
+
+FDS-Subs:
+- Check darkmode respekt system settings
+- Welche methoden habe ich genommen?
+- Spiralmethode wie ich die App aufgebaut habe (also von wie bekomme ich die Daten, kann ich sie darstellen?)
+- Gantt Chart implementieren!
+- Netzplan einfügen
+- Warum habe ich ein Framework genomme und warum nicht html css (was sind die Vorteile?)
+- Was sind meine Module? Untis für Datensätze, meine Datenbank nutzer, mein Frontend, meine Upstash Schedule
+- objektdiagramm ist wichtig
+- Ziele Sollten dem SMART modell folgen
+- meilensteine sollten im gannchart drinnen sein

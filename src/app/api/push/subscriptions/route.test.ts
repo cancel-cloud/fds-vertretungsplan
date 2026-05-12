@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextResponse } from 'next/server';
+import { createPushDeviceRecord } from '@/test/factories/user-system';
 
 const requireUserMock = vi.fn();
 const pushSubscriptionFindManyMock = vi.fn();
@@ -42,13 +43,13 @@ describe('api/push/subscriptions GET', () => {
       response: null,
     });
     pushSubscriptionFindManyMock.mockResolvedValue([
-      {
+      createPushDeviceRecord({
         id: 'sub-1',
         endpoint: 'https://web.push.apple.com/example',
         userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X)',
         createdAt: new Date('2026-02-14T08:00:00.000Z'),
         lastSeenAt: new Date('2026-02-16T07:30:00.000Z'),
-      },
+      }),
     ]);
 
     const { GET } = await import('@/app/api/push/subscriptions/route');

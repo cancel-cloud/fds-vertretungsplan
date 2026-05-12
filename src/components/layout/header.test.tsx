@@ -25,6 +25,8 @@ describe('Header', () => {
     expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
     expect(toggleButton).toHaveAttribute('aria-controls', 'app-shell-mobile-menu');
     expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Impressum' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Datenschutz' })).not.toBeInTheDocument();
 
     fireEvent.click(toggleButton);
     expect(onMenuToggle).toHaveBeenCalledTimes(1);

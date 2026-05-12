@@ -4,17 +4,12 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-interface TeacherItem {
-  id: string;
-  code: string;
-  fullName: string;
-  isActive: boolean;
-}
+import { createTeacher, deleteTeacher, fetchTeacherDirectory } from '@/lib/teacher-directory-client';
+import type { TeacherDto } from '@/types/user-system';
 
 export function AdminSetup() {
   const router = useRouter();
-  const [teachers, setTeachers] = useState<TeacherItem[]>([]);
+  const [teachers, setTeachers] = useState<TeacherDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,14 +22,8 @@ export function AdminSetup() {
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/teachers');
-      const data = (await response.json()) as { teachers?: TeacherItem[]; error?: string };
-
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Lehrer konnten nicht geladen werden.');
-      }
-
-      setTeachers(data.teachers ?? []);
+      const { teachers } = await fetchTeacherDirectory();
+      setTeachers(teachers);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Lehrer konnten nicht geladen werden.');
     } finally {
@@ -52,22 +41,7 @@ export function AdminSetup() {
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/teachers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: newCode,
-          fullName: newFullName,
-        }),
-      });
-
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Lehrer konnte nicht angelegt werden.');
-      }
-
+      await createTeacher({ code: newCode, fullName: newFullName });
       setNewCode('');
       setNewFullName('');
       await load();
@@ -85,19 +59,10 @@ export function AdminSetup() {
     }
 
     try {
-      const response = await fetch('/api/admin/teachers', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-
-      if (response.ok) {
-        await load();
-      } else {
-        setError('Lehrer konnte nicht gelöscht werden.');
-      }
-    } catch {
-      setError('Lehrer konnte nicht gelöscht werden.');
+      await deleteTeacher(id);
+      await load();
+    } catch (removeError) {
+      setError(removeError instanceof Error ? removeError.message : 'Lehrer konnte nicht gelöscht werden.');
     }
   };
 
@@ -160,7 +125,7 @@ export function AdminSetup() {
               </Button>
             </div>
           ))}
-          {!loading && teachers.length === 0 ? (
+          {!loading && !error && teachers.length === 0 ? (
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">Noch keine Lehrer hinterlegt.</p>
           ) : null}
         </div>

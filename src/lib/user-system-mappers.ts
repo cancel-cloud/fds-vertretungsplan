@@ -1,5 +1,16 @@
 import { TeacherDirectory, TimetableEntry, TimetablePreset, User } from '@prisma/client';
-import { AuthUser, LessonDuration, TeacherDto, TimetableEntryDto, TimetablePresetDto } from '@/types/user-system';
+import {
+  AdminUserListItem,
+  AdminUserNotificationStats,
+  AdminUserSubscriptionStats,
+  AuthRole,
+  AuthUser,
+  LessonDuration,
+  PushDeviceDto,
+  TeacherDto,
+  TimetableEntryDto,
+  TimetablePresetDto,
+} from '@/types/user-system';
 
 export const toAuthUserDto = (user: User): AuthUser => ({
   id: user.id,
@@ -9,6 +20,36 @@ export const toAuthUserDto = (user: User): AuthUser => ({
   onboardingSkippedAt: user.onboardingSkippedAt?.toISOString() ?? null,
   notificationsEnabled: user.notificationsEnabled,
   notificationLookaheadSchoolDays: user.notificationLookaheadSchoolDays,
+});
+
+interface ToAdminUserListItemInput {
+  id: string;
+  email: string;
+  role: AuthRole;
+  onboardingCompletedAt: Date | null;
+  onboardingSkippedAt: Date | null;
+  notificationsEnabled: boolean;
+  notificationLookaheadSchoolDays: number;
+  timetableCount: number;
+  pushSubscriptionCount: number;
+  createdAt: Date;
+  notificationStats: AdminUserNotificationStats | null;
+  subscriptionStats: AdminUserSubscriptionStats | null;
+}
+
+export const toAdminUserListItem = (user: ToAdminUserListItemInput): AdminUserListItem => ({
+  id: user.id,
+  email: user.email,
+  role: user.role,
+  onboardingCompletedAt: user.onboardingCompletedAt?.toISOString() ?? null,
+  onboardingSkippedAt: user.onboardingSkippedAt?.toISOString() ?? null,
+  notificationsEnabled: user.notificationsEnabled,
+  notificationLookaheadSchoolDays: user.notificationLookaheadSchoolDays,
+  notificationStats: user.notificationStats,
+  subscriptionStats: user.subscriptionStats,
+  timetableCount: user.timetableCount,
+  pushSubscriptionCount: user.pushSubscriptionCount,
+  createdAt: user.createdAt.toISOString(),
 });
 
 export const toTeacherDto = (teacher: TeacherDirectory): TeacherDto => ({
@@ -48,4 +89,20 @@ export const toTimetablePresetDto = (preset: TimetablePreset): TimetablePresetDt
   lastUsedAt: preset.lastUsedAt.toISOString(),
   createdAt: preset.createdAt.toISOString(),
   updatedAt: preset.updatedAt.toISOString(),
+});
+
+interface ToPushDeviceDtoInput {
+  id: string;
+  endpoint: string;
+  userAgent: string | null;
+  createdAt: Date;
+  lastSeenAt: Date;
+}
+
+export const toPushDeviceDto = (subscription: ToPushDeviceDtoInput): PushDeviceDto => ({
+  id: subscription.id,
+  endpoint: subscription.endpoint,
+  userAgent: subscription.userAgent,
+  createdAt: subscription.createdAt.toISOString(),
+  lastSeenAt: subscription.lastSeenAt.toISOString(),
 });

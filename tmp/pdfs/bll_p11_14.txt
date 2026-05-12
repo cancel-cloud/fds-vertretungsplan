@@ -1,0 +1,171 @@
+2.6 SMART-Ziele5
+
+    ID       Spezifisch                   Messbar                                   Relevant              Terminiert
+
+    S1       Vertretungsinfos            Datum wählen, laden,                       Spart Zeit im         30.11.2025
+             für ein Datum in            Ergebnis sichtbar; kein                    Schulalltag.
+             höchstens drei              zusätzlicher Seitenwechsel.
+             Interaktionen
+             erreichen.
+
+
+    S2       Such- und                   Textsuche plus                             Erhöht die            15.12.2025
+             Filterfunktionen            Kategorienfilter                           Orientierung bei
+             für Klassen,                funktionieren stabil.                      vielen Einträgen.
+             Fächer und Typen
+             bereitstellen.
+
+
+    S3       Robuste                     Rate-Limit, Retry-Logik                    Verringert Ausfälle   22.12.2025
+             API-Nutzung mit             und definierte                             und Frust.
+             klaren                      Fehlerantworten sind
+             Fehlerpfaden                implementiert und getestet.
+             sicherstellen.
+
+
+    S4       Sicherheits- und            CSP aktiv, geschützte                      Erfüllt Web- und      10.01.2026
+             Datenschutzbasis            Bereiche abgesichert,                      Schulgrundanforde
+             für den                     Pflichtseiten erreichbar.                  rungen.
+             Browserbetrieb
+             schaffen.
+
+
+    S5       Wartbarkeit und             Kernrouten, Hook und                       Erleichtert spätere   31.01.2026
+             Nachvollziehbark            zentrale Logik sind                        Änderungen.
+             eit der Lösung              dokumentiert und getestet.
+             absichern.
+
+
+
+
+5
+    Vgl. Sommerville (2015), Kap. 4: SMART-Kriterien als Grundlage messbarer Zielformulierung.
+
+                                                                  11
+2.7 Zentrale Anwendungsfälle
+
+1. Ein Gast ruft die Startseite auf, wählt ein Datum und erhält direkt den Vertretungsplan für
+   diesen Tag. Suche und Kategorienfilter können die Liste weiter eingrenzen. Für diesen
+   Kernfall ist kein Login notwendig.
+
+2. Ein neuer Nutzer registriert sich mit E-Mail-Adresse und Passwort. Danach folgt einmalig
+   das Onboarding: Der persönliche Stundenplan wird eingetragen, damit das Dashboard
+   später relevante Vertretungen erkennen kann.
+
+3. Ein angemeldeter Nutzer öffnet das Dashboard und sieht dort die Vertretungen des
+   gewählten Tages bereits im Bezug zum eigenen Stundenplan. Relevante Einträge können
+   dadurch schneller erkannt werden.
+
+4. Ein Nutzer mit aktiven Push-Benachrichtigungen erhält nur dann eine Nachricht, wenn
+   sich relevante Vertretungen neu ergeben oder geändert haben. Unveränderte Daten sollen
+   bewusst keine zusätzliche Nachricht auslösen.
+
+5. Ein Administrator pflegt Lehrerkürzel, verwaltet Rollen und schützt administrative
+   Änderungen durch geeignete Bestätigungen. Damit wird aus einer reinen Anzeige ein
+   betreibbares Webprodukt.
+
+
+
+
+3 Lösungsansatz und Pflichtenheft
+3.1 Grundidee der Lösung
+
+Die Grundidee des Projekts besteht darin, zwischen Nutzer und Datenquelle eine eigene
+Anwendungsschicht zu setzen. Diese neue Schicht soll drei Dinge leisten: erstens die
+vorhandenen Vertretungsdaten verständlicher aufbereiten, zweitens persönliche Relevanz
+abbilden und drittens Fehler, Lastspitzen und technische Sonderfälle kontrolliert behandeln.
+Das Ziel ist also nicht, WebUntis zu ersetzen, sondern die Nutzung der vorhandenen Daten für
+den Alltag der Schule deutlich zu verbessern.
+
+3.2 Architekturprinzip
+
+Die finale Architektur trennt vier Ebenen. Auf der ersten Ebene steht die Benutzeroberfläche
+mit Startseite, Dashboard und Einstellungen. Die zweite Ebene bildet der Client-Zustand im
+
+                                                12
+Browser, insbesondere der Hook für den Datenabruf. Die dritte Ebene ist die serverseitige
+API-Schicht, die Eingaben validiert, Fehlerbehandlung bündelt, Rate-Limits schützt und den
+Server-Cache verwaltet. Die vierte Ebene ist die externe Datenquelle WebUntis.6
+
+Diese Trennung war für die Wartbarkeit entscheidend. In den frühen Versionen war zu viel
+Logik direkt in der Oberfläche untergebracht. Erst mit einer sauberen Aufteilung ließ sich
+erreichen, dass neue Funktionen - etwa Push-Benachrichtigungen oder Rollenlogik - nicht
+ständig an mehreren Stellen gleichzeitig nachgerüstet werden mussten.
+
+3.3 Öffentliche Nutzung, Registrierung und Dashboard
+
+Die Anwendung ist bewusst zweistufig angelegt. Der erste Zugriff funktioniert öffentlich,
+weil die Grundfunktion - Vertretungen ansehen - möglichst niedrigschwellig sein soll. Die
+personalisierten Funktionen wie Stundenplanabgleich oder Push-Benachrichtigungen setzen
+dagegen einen Login voraus. Dadurch bleibt die Anwendung für spontane Nutzung offen,
+ohne auf erweiterte Funktionen verzichten zu müssen.
+
+Nach der Registrierung folgt deshalb ein geführter Ablauf: zunächst der Login, danach die
+einmalige Einrichtung persönlicher Daten und erst dann der Übergang ins Dashboard. Für
+Administratoren kommt zusätzlich ein Setup-Pfad hinzu, damit Lehrerkürzel und Rollen nicht
+manuell im Code verändert werden müssen. Dieses Onboarding war ein zentraler Teil des
+Pflichtenhefts, weil es die technische Lösung erst alltagstauglich macht.
+
+3.4 Rollen und Berechtigungen
+
+Das Rollenkonzept ist bewusst klein gehalten. Es gibt normale Nutzer mit Zugriff auf
+persönliche Funktionen sowie Administratoren mit erweiterten Rechten für Lehrerkürzel,
+Rollenverwaltung und betreiberspezifische Einstellungen. Der erste Administrator wird über
+eine Umgebungsvariable definiert. Danach können weitere Rollen in der Weboberfläche
+vergeben werden. Das Herabstufen eines Administrators ist zusätzlich abgesichert, damit
+nicht versehentlich der letzte vorhandene Administrator entfernt wird.
+
+3.5 Datenmodell und Entitäten
+
+Das relationale Datenmodell bildet die Grundlage für alle personalisierten Funktionen der
+Anwendung. Im Zentrum steht der Nutzer mit seiner Rolle und seinen Zugangsdaten. Jeder
+angemeldete Nutzer kann Stundenplaneinträge anlegen, die Wochentag, Stunde, Fach,
+Lehrkraft und Wochenmodus enthalten. Diese Einträge sind die Basis für den personalisierten
+
+6
+    Vgl. Sommerville (2015), Kap. 6: Schichtenarchitektur als Mittel zur Trennung von Zuständigkeiten in Softwaresystemen
+
+                                                                 13
+Abgleich: Beim Push-Dispatch werden die aktuellen Vertretungsdaten mit dem hinterlegten
+Stundenplan verglichen.
+
+Zur Unterstützung der Eingabe merkt sich das System häufig verwendete
+Fach-Lehrkraft-Kombinationen als Vorschläge. Diese sogenannten Stundenplan-Presets
+besitzen bewusst keinen Zeitbezug und sind damit unabhängig vom eigentlichen
+Stundenplaneintrag.
+
+Für die Benachrichtigungslogik existieren zwei getrennte Tabellen: Der
+Benachrichtigungszustand speichert pro Nutzer und Tag genau einen Fingerprint und wird bei
+jeder Prüfung aktualisiert oder gelöscht. Der Benachrichtigungsabdruck protokolliert dagegen
+jeden gesendeten Fingerprint als unveränderliches Audit-Log. Diese Trennung ermöglicht
+sowohl die Delta-Entscheidung (senden, überspringen oder auflösen) als auch die
+Nachvollziehbarkeit vergangener Benachrichtigungen.
+
+Ergänzend verwaltet das Lehrerverzeichnis die Zuordnung von Kürzeln zu Klarnamen, und
+die Anwendungseinstellungen steuern betreiberspezifische Konfiguration wie erlaubte
+E-Mail-Domänen.
+
+3.6 Datenbeschaffung über WebUntis
+
+Für die Datenbeschaffung musste zunächst verstanden werden, wie die bestehende
+WebUntis-Ansicht ihre Informationen lädt. Da keine fertige öffentliche Dokumentation für
+diesen Anwendungsfall vorlag, wurde die Schnittstelle durch Browser-Netzwerkanalyse
+erschlossen. Ich habe untersucht, welche Requests bei der Anzeige ausgelöst werden, wie
+Datumswerte codiert sind und welche Antwortstrukturen zurückkommen.
+
+Dieses Vorgehen war eine typische informatische Analyseaufgabe: Hypothesen bilden,
+Parameter variieren, Antworten prüfen und daraus ein belastbares Modell ableiten. Die
+Anwendung spricht WebUntis deshalb nicht direkt aus dem Browser an, sondern immer über
+die eigene Server-Schicht. Dadurch bleiben Validierung, Fehlerbehandlung und Begrenzung
+der Last in meiner Kontrolle.
+
+3.7 API-Proxy, Caching und Fehlerpfade
+
+Der API-Proxy ist einer der wichtigsten Bausteine des Projekts. Er nimmt Requests aus dem
+Frontend entgegen, validiert die Datumsangaben, begrenzt die Request-Frequenz und kapselt
+den Zugriff auf WebUntis. Wenn ein Nutzer oder mehrere Nutzer in kurzer Zeit dieselben
+
+
+
+                                             14
+

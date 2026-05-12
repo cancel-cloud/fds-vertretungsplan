@@ -1,0 +1,196 @@
+Abgleich: Beim Push-Dispatch werden die aktuellen Vertretungsdaten mit dem hinterlegten
+Stundenplan verglichen.
+
+Zur Unterstützung der Eingabe merkt sich das System häufig verwendete
+Fach-Lehrkraft-Kombinationen als Vorschläge. Diese sogenannten Stundenplan-Presets
+besitzen bewusst keinen Zeitbezug und sind damit unabhängig vom eigentlichen
+Stundenplaneintrag.
+
+Für die Benachrichtigungslogik existieren zwei getrennte Tabellen: Der
+Benachrichtigungszustand speichert pro Nutzer und Tag genau einen Fingerprint und wird bei
+jeder Prüfung aktualisiert oder gelöscht. Der Benachrichtigungsabdruck protokolliert dagegen
+jeden gesendeten Fingerprint als unveränderliches Audit-Log. Diese Trennung ermöglicht
+sowohl die Delta-Entscheidung (senden, überspringen oder auflösen) als auch die
+Nachvollziehbarkeit vergangener Benachrichtigungen.
+
+Ergänzend verwaltet das Lehrerverzeichnis die Zuordnung von Kürzeln zu Klarnamen, und
+die Anwendungseinstellungen steuern betreiberspezifische Konfiguration wie erlaubte
+E-Mail-Domänen.
+
+3.6 Datenbeschaffung über WebUntis
+
+Für die Datenbeschaffung musste zunächst verstanden werden, wie die bestehende
+WebUntis-Ansicht ihre Informationen lädt. Da keine fertige öffentliche Dokumentation für
+diesen Anwendungsfall vorlag, wurde die Schnittstelle durch Browser-Netzwerkanalyse
+erschlossen. Ich habe untersucht, welche Requests bei der Anzeige ausgelöst werden, wie
+Datumswerte codiert sind und welche Antwortstrukturen zurückkommen.
+
+Dieses Vorgehen war eine typische informatische Analyseaufgabe: Hypothesen bilden,
+Parameter variieren, Antworten prüfen und daraus ein belastbares Modell ableiten. Die
+Anwendung spricht WebUntis deshalb nicht direkt aus dem Browser an, sondern immer über
+die eigene Server-Schicht. Dadurch bleiben Validierung, Fehlerbehandlung und Begrenzung
+der Last in meiner Kontrolle.
+
+3.7 API-Proxy, Caching und Fehlerpfade
+
+Der API-Proxy ist einer der wichtigsten Bausteine des Projekts. Er nimmt Requests aus dem
+Frontend entgegen, validiert die Datumsangaben, begrenzt die Request-Frequenz und kapselt
+den Zugriff auf WebUntis. Wenn ein Nutzer oder mehrere Nutzer in kurzer Zeit dieselben
+
+
+
+                                             14
+Daten abfragen, sollen nicht jedes Mal neue Upstream-Requests entstehen. Deshalb gibt es
+einen Server-Cache, ergänzt durch einen Client-Cache im Hook.7
+
+Ebenso wichtig ist die Unterscheidung verschiedener Antworttypen. Es muss einen klaren
+Unterschied geben zwischen einem Tag ohne Vertretungen, einer Antwort mit unvollständigen
+Metadaten und einem echten Fehlerfall. Nur so kann die Oberfläche sinnvoll auf die jeweilige
+Situation reagieren. Gerade diese Fehlerpfade waren notwendig, um aus einer reinen Demo
+ein belastbares Webprodukt zu machen.
+
+3.8 Push-Benachrichtigungen und Delta-Logik
+
+Push-Benachrichtigungen wurden nicht als einfache 'Sende immer den aktuellen
+Stand'-Funktion umgesetzt. Eine solche Lösung wäre zwar technisch leicht, hätte im Alltag
+aber kaum Nutzen, weil Nutzer bei jedem Abgleich erneut dieselben Informationen bekämen.
+Stattdessen wird bei jedem Prüflauf ein Fingerprint über die relevanten Vertretungen eines
+Nutzers gebildet.
+
+Nur wenn sich dieser Fingerprint im Vergleich zum letzten gespeicherten Zustand verändert,
+wird eine neue Push-Nachricht gesendet. Dadurch wird das System sparsamer, relevanter und
+benutzerfreundlicher. Gleichzeitig bleibt nachvollziehbar, welche Benachrichtigungen neu,
+unverändert oder aufzulösen sind.8
+
+Für die Zustellung im Browser ist ein Service Worker registriert. Er empfängt Push-Events
+auch bei geschlossenem Tab und zeigt die Benachrichtigung über die Notification API des
+Browsers an. Zusätzlich behandelt er Klick-Events auf die Benachrichtigung, um den Nutzer
+direkt zur relevanten Tagesansicht zu führen.9
+
+
+
+
+7
+ Vgl. RFC 5861 – HTTP Cache-Control Extensions for Stale Content: Grundlage für das stale- while-revalidate-Muster, das hier adaptiert
+wurde.
+8
+ Die technische Grundlage für Web Push bildet RFC 8292 – Voluntary Application Server Identification (VAPID), das die
+Authentifizierung des Push-Servers gegenüber dem Browser regelt.
+9
+    Vgl. W3C Service Workers Spezifikation.
+
+                                                                 15
+3.9 Warum 15-Minuten-Polling statt Echtzeit?
+
+Die Entscheidung für ein 15-Minuten-Intervall ist kein zufälliger Kompromiss, sondern das
+Ergebnis mehrerer Abwägungen. WebUntis stellt keinen dauerhaften Event-Stream bereit, an
+den sich die Anwendung anhängen könnte. Echte Sekunden-Echtzeit würde deshalb häufiges
+Polling bedeuten. Das würde sowohl die externe Datenquelle stärker belasten als auch die
+Fehleranfälligkeit erhöhen.
+
+Für den Schulalltag bringt Sekunden-Echtzeit außerdem nur einen geringen Mehrwert.
+Entscheidend ist nicht, ob eine Vertretung nach drei oder nach dreißig Sekunden sichtbar
+wird, sondern ob Änderungen verlässlich, geordnet und ohne Benachrichtigungslärm
+ankommen. Unter diesen Bedingungen ist ein Intervall von 15 Minuten die vernünftige
+technische und praktische Lösung.
+
+3.10 Hosting und Bereitstellung
+
+Damit die Anwendung nicht nur lokal funktioniert, sondern als echtes Webprodukt nutzbar
+ist, muss sie unter einer öffentlichen HTTPS-Adresse erreichbar sein. Das ist insbesondere für
+den externen Scheduler QStash relevant, weil dieser keine lokalen Endpunkte aufrufen kann.
+Gleichzeitig setzt der produktive Betrieb korrekt konfigurierte Umgebungsvariablen,
+abgesicherte Routen und einen reproduzierbaren Deploy-Prozess voraus.
+
+Die Hosting-Entscheidung gehört deshalb fachlich zum Pflichtenheft dazu. Erst durch den
+öffentlichen Betrieb werden Themen wie SSL, Secrets, Scheduler, Browserrechte und
+Push-Zustellung praktisch relevant. Das Projekt endet also nicht beim funktionierenden
+lokalen Code, sondern erst beim belastbaren Betrieb im Web.
+
+
+
+4 Projektmanagement und Zeitplanung
+4.1 Iteratives Vorgehen statt starrem Vorgehensmodell
+
+Für dieses Projekt war kein klassisches Wasserfallmodell sinnvoll. Zu Beginn stand zwar die
+Grundidee fest, aber viele Details - etwa Rollenmodell, Push-Strategie oder die genaue
+Trennung zwischen öffentlicher Nutzung und persönlichem Dashboard - waren noch nicht
+vollständig geklärt. Deshalb wurde iterativ gearbeitet: ausprobieren, testen, Schwächen
+erkennen, Architektur verbessern und den nächsten Meilenstein ableiten.10
+
+10
+     Vgl. Sommerville (2015), Kap. 2: Iterative und inkrementelle Entwicklung als Alternative zu plangetriebenen Modellen.
+
+                                                                    16
+Dieses Vorgehen war nicht Ausdruck von Planlosigkeit, sondern eine passende Methode für
+ein Einzelprojekt mit realem Produktbezug. Gerade weil die Anwendung im Schulalltag
+erprobt werden konnte, war es sinnvoll, mehrere Zwischenstände zu entwickeln und anhand
+echter Rückmeldungen weiterzuarbeiten.
+
+4.2 Entwicklungsversionen
+
+Die formale Themeneinreichung erfolgte am 31. Januar 2025. Die eigentliche technische
+Umsetzung begann im August 2025 mit einer sehr einfachen ersten Version. Diese frühe
+Fassung war eine statische Website ohne Backend. Die Datumsauswahl wurde über
+URL-Parameter gesteuert, die Daten kamen direkt im Browser von der
+WebUntis-Schnittstelle. Diese Version zeigte schnell ihre Grenzen: Alle Vertretungen wurden
+ungefiltert angezeigt, eine Personalisierung war damit nicht möglich.
+
+Die zweite Version setzte bereits auf Next.js, blieb aber noch eine überwiegend
+frontendlastige Anwendung ohne saubere API-Schicht und ohne Authentifizierung. Mit
+wachsendem Umfang wurde deutlich, dass dieser Ansatz nicht stabil weitergeführt werden
+kann. Neue Anforderungen destabilisierten vorhandenen Code zu leicht, und die Trennung
+von Darstellung, Datenverarbeitung und Zustandslogik war nicht klar genug.
+
+Die dritte Version war deshalb ein bewusster Neustart. Erst wurde das Datenmodell sauber
+gedacht, dann die API-Schicht aufgebaut und erst danach die Oberfläche darauf abgestimmt.
+Authentifizierung, Rollen, Caching und Push-Benachrichtigungen wurden von Beginn an als
+Systembestandteile mitgeplant. Diese Version ist die Grundlage der vorliegenden schriftlichen
+Ausarbeitung und der produktiv genutzten Anwendung.
+
+
+
+
+                                             17
+4.3 Gantt-Plan mit Meilensteinen
+
+    M    Fokus                     Ausgangsproblem              Ergebnis
+
+    M1   Grundidee und MVP         Die Problemstellung war      Öffentliche Startseite,
+                                   klar, aber der Mehrwert      Datumswahl und erster
+                                   gegenüber der                funktionsfähiger Prototyp.
+                                   Ausgangsanzeige musste
+                                   erst sichtbar werden.
+
+
+    M2   API und                   Der Abruf externer Daten     API-Proxy, Validierung,
+         Datenrobustheit           musste trotz                 Retry-Logik, Rate-Limit und
+                                   Upstream-Schwankungen definierte Fehlerpfade.
+                                   verlässlich funktionieren.
+
+
+    M3   Web-Bereitstellung und Aus einer Anzeige               Registrierung, Admin-Setup,
+         Nutzerfluss               musste ein nutzbares         Onboarding und persönliches
+                                   Produkt mit Konto,           Dashboard.
+                                   Rollen und Dashboard
+                                   werden.
+
+
+    M4   Push-Benachrichtigung     Relevante Änderungen         QStash-Dispatch, Delta-Logik
+         en                        sollten gemeldet werden,     und Push-Tests auf mehreren
+                                   ohne Nutzer zu               Geräten.
+                                   spammen.
+
+
+    M5   Dokumentation und         Der Projektstand musste      Kapitelstruktur, Diagramme,
+         Abgabe                    formal sauber und            Zeitplan, Testnachweise und
+                                   nachvollziehbar              Ergebnisbewertung.
+                                   beschrieben werden.
+
+​
+Der zeitliche Verlauf des Projekts lässt sich in einem Gantt-Plan besonders gut darstellen.
+Sichtbar wird dabei, dass nicht alle Themen parallel bearbeitet werden konnten. Vor allem
+Push-Benachrichtigungen und produktives Hosting wurden erst sinnvoll, nachdem
+API-Stabilität und Nutzerfluss bereits gelöst waren.
+                                              18
+

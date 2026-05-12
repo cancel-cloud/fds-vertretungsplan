@@ -41,6 +41,7 @@ const buildCsp = () => {
 };
 
 const STUNDENPLAN_PUBLIC_PATHS = new Set(['/stundenplan/login', '/stundenplan/register']);
+const STUNDENPLAN_GUEST_ALLOWED_PATHS = new Set(['/stundenplan/dashboard']);
 const normalizePathname = (pathname: string): string => {
   if (pathname.length > 1 && pathname.endsWith('/')) {
     return pathname.slice(0, -1);
@@ -60,8 +61,9 @@ export async function middleware(req: NextRequest) {
     });
     const isAuthenticated = Boolean(token);
     const isPublicStundenplanPath = STUNDENPLAN_PUBLIC_PATHS.has(normalizedPathname);
+    const isGuestAllowedStundenplanPath = STUNDENPLAN_GUEST_ALLOWED_PATHS.has(normalizedPathname);
 
-    if (!isAuthenticated && !isPublicStundenplanPath) {
+    if (!isAuthenticated && !isPublicStundenplanPath && !isGuestAllowedStundenplanPath) {
       const url = req.nextUrl.clone();
       url.pathname = '/stundenplan/login';
       url.searchParams.set('next', normalizedPathname);

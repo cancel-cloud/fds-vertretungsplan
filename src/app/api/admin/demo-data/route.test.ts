@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { NextRequest } from 'next/server';
+import { buildJsonRequest } from '@/test/http';
 
 const requireAdminMock = vi.fn();
 const isDemoModeMock = vi.fn();
@@ -34,13 +34,6 @@ vi.mock('@/lib/demo-substitutions', () => {
     generateDemoDatasetForUser: generateDemoDatasetForUserMock,
   };
 });
-
-const createRequest = (body: unknown) =>
-  new NextRequest('http://localhost/api/admin/demo-data', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
 
 describe('api/admin/demo-data POST', () => {
   beforeEach(() => {
@@ -97,7 +90,7 @@ describe('api/admin/demo-data POST', () => {
     isDemoModeMock.mockReturnValue(false);
 
     const { POST } = await import('@/app/api/admin/demo-data/route');
-    const response = await POST(createRequest({ userId: 'user-1' }));
+    const response = await POST(buildJsonRequest('http://localhost/api/admin/demo-data', { userId: 'user-1' }, { method: 'POST' }));
     const body = await response.json();
 
     expect(response.status).toBe(400);
@@ -108,7 +101,7 @@ describe('api/admin/demo-data POST', () => {
     userFindUniqueMock.mockResolvedValue(null);
 
     const { POST } = await import('@/app/api/admin/demo-data/route');
-    const response = await POST(createRequest({ userId: 'missing' }));
+    const response = await POST(buildJsonRequest('http://localhost/api/admin/demo-data', { userId: 'missing' }, { method: 'POST' }));
     const body = await response.json();
 
     expect(response.status).toBe(404);
@@ -123,7 +116,7 @@ describe('api/admin/demo-data POST', () => {
     });
 
     const { POST } = await import('@/app/api/admin/demo-data/route');
-    const response = await POST(createRequest({ userId: 'user-1' }));
+    const response = await POST(buildJsonRequest('http://localhost/api/admin/demo-data', { userId: 'user-1' }, { method: 'POST' }));
     const body = await response.json();
 
     expect(response.status).toBe(400);
@@ -132,7 +125,7 @@ describe('api/admin/demo-data POST', () => {
 
   it('stores generated demo dataset and returns summary', async () => {
     const { POST } = await import('@/app/api/admin/demo-data/route');
-    const response = await POST(createRequest({ userId: 'user-1' }));
+    const response = await POST(buildJsonRequest('http://localhost/api/admin/demo-data', { userId: 'user-1' }, { method: 'POST' }));
     const body = await response.json();
 
     expect(response.status).toBe(200);

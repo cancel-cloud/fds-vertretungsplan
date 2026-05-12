@@ -13,6 +13,7 @@ import {
 import { fetchUntisRows, toUntisDateNumber } from '@/lib/substitution-fetcher';
 import { verifyQstashSignature } from '@/lib/qstash';
 import { isDemoMode, resolveDemoAwareEnv } from '@/lib/demo-config';
+import { removePushSubscriptionsForUser } from '@/lib/push-service';
 import { LessonDuration } from '@/types/user-system';
 
 const TIMEZONE = process.env.APP_TIMEZONE ?? 'Europe/Berlin';
@@ -282,14 +283,7 @@ async function runDispatch(req: NextRequest) {
       }
 
       if (staleEndpoints.length > 0) {
-        await prisma.pushSubscription.deleteMany({
-          where: {
-            endpoint: {
-              in: staleEndpoints,
-            },
-            userId: user.id,
-          },
-        });
+        await removePushSubscriptionsForUser(user.id, staleEndpoints);
       }
 
       if (sentForUser > 0) {
@@ -419,14 +413,7 @@ async function runDispatch(req: NextRequest) {
       }
 
       if (staleEndpoints.length > 0) {
-        await prisma.pushSubscription.deleteMany({
-          where: {
-            endpoint: {
-              in: staleEndpoints,
-            },
-            userId: user.id,
-          },
-        });
+        await removePushSubscriptionsForUser(user.id, staleEndpoints);
       }
 
       if (sentForThisFingerprint > 0) {

@@ -12,6 +12,11 @@ Configuration files are at the repo root (`next.config.ts`, `vitest.config.ts`, 
 
 ## Build, Test, and Development Commands
 - `npm run dev`: start local development server with Turbopack on `http://localhost:3000`.
+<<<<<<< ours
+- `npm run prebuild`: runs `prisma generate` automatically before `npm run build`.
+=======
+- `npm run prebuild`: generate Prisma client before build (runs automatically with `npm run build`).
+>>>>>>> theirs
 - `npm run build`: create a production build.
 - `npm run start`: run the production server from the build output.
 - `npm run lint`: run ESLint (Next.js core-web-vitals + TypeScript rules).
@@ -20,10 +25,12 @@ Configuration files are at the repo root (`next.config.ts`, `vitest.config.ts`, 
 - `npm run test:coverage`: run tests with coverage reporting.
 
 ## Operational Workflows & Scripts
-- `npm run prisma:generate`: generate Prisma client using `.env.local` (preferred over raw `prisma ...`).
-- `npm run prisma:push`: push Prisma schema to the configured database from `.env.local`.
-- `npm run qstash:schedule`: (re)create the Upstash QStash dispatch schedule after first deploy or config changes.
-- `npm run demo:scheduler:start` / `npm run demo:scheduler:stop`: start/stop the demo mode dispatch scheduler (requires `APP_MODE=demo` and demo env vars).
+- `npm run prisma:generate`: generate Prisma client using `.env.local` (preferred over raw `prisma ...`); when `APP_MODE=demo`, the wrapper uses `DEMO_DATABASE_URL` as `DATABASE_URL`.
+- `npm run prisma:push`: push Prisma schema to the configured database from `.env.local`; uses the same demo-aware `DEMO_DATABASE_URL` fallback behavior as `prisma:generate` when `APP_MODE=demo`.
+- `npm run qstash:schedule`: (re)create the Upstash QStash dispatch schedule after first deploy or config changes (uses demo-aware `DEMO_*` fallbacks in demo mode).
+- `npm run demo:scheduler:start` / `npm run demo:scheduler:stop`: start/stop the demo dispatch scheduler; `start` also sends a delayed kickoff dispatch and both commands accept `DEMO_*` env vars with base-var fallback.
+- QStash scheduler defaults: production `QSTASH_CRON` defaults to `*/15 * * * *`; demo defaults to `* * * * *` unless overridden.
+- QStash auth/env requirements: provide `APP_BASE_URL`, `QSTASH_TOKEN`, and `PUSH_CRON_SECRET` (or `CRON_SECRET`) plus demo equivalents (`DEMO_*`) when running in demo mode.
 
 ## Coding Style & Naming Conventions
 - Language: TypeScript (`.ts`/`.tsx`) with 2-space indentation and semicolons.
@@ -49,4 +56,5 @@ Configuration files are at the repo root (`next.config.ts`, `vitest.config.ts`, 
 
 ## Security & Configuration Tips
 - Keep secrets only in `.env.local`; never commit API keys or school credentials.
+- Prefer the provided wrapper scripts (`npm run prisma:*`, `npm run qstash:schedule`, `npm run demo:scheduler:*`) over raw CLI commands so demo/prod env resolution stays consistent.
 - When touching `src/app/api/substitutions/route.ts` or analytics code, preserve existing validation and CSP-related protections.

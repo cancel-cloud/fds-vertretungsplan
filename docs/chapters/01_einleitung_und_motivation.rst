@@ -1,4 +1,4 @@
-01 Einleitung und Motivation
+Einleitung und Motivation
 ============================
 
 Ausgangssituation
@@ -9,13 +9,19 @@ Schulen liegen diese Informationen zwar digital vor, sind für Lernende aber oft
 nur umständlich nutzbar: lange Tabellen, wenig mobile Optimierung und fehlende
 Filter für konkrete Klassen oder Fächer.
 
+An der Friedrich-Dessauer-Schule Limburg war der Vertretungsplan als automatisch
+durchlaufende Ansicht in WebUntis verfügbar - ohne Suchfunktion und ohne
+Möglichkeit, gezielt nach der eigenen Klasse oder einem Fach zu filtern. Wer
+seinen Eintrag finden wollte, musste warten, bis er erschien.
+
 Motivation des Projekts
 -----------------------
 
-Das Projekt ``fds-vertretungsplan`` adressiert genau diese Lücke. Ziel ist keine
-neue Datenquelle, sondern eine deutlich bessere Darstellung und Nutzbarkeit der
-vorhandenen Vertretungsdaten. Damit rückt die Software vom reinen "Anzeigen von
-Listen" zu einem alltagsnahen Informationswerkzeug.
+Das Projekt fds-vertretungsplan adressiert genau diese Lücke. Ziel ist
+keine neue Datenquelle, sondern eine deutlich bessere Darstellung und
+Nutzbarkeit der vorhandenen Vertretungsdaten. Damit rückt die Software vom
+reinen Anzeigen langer Listen zu einem alltagsnahen Werkzeug für den
+Schulalltag.
 
 Warum Web statt nativer App?
 ----------------------------
@@ -25,7 +31,6 @@ Die Entscheidung für eine Webanwendung ist fachlich sinnvoll:
 - Keine Installation auf Endgeräten notwendig.
 - Sofort nutzbar auf Smartphone, Tablet und Desktop.
 - Zentrale Updates ohne App-Store-Prozess.
-- Leichte Verlinkung mit rechtlichen Seiten und Schulkontext.
 
 Projektziele im BLL-Kontext
 ---------------------------
@@ -35,18 +40,36 @@ Projektziele im BLL-Kontext
 3. Datenschutz und Sicherheit systematisch berücksichtigen.
 4. Eine wartbare Struktur für spätere Erweiterungen schaffen.
 
-Einstiegspunkt und Produktidee im Code
---------------------------------------
+Einordnung als Informatik-BLL
+------------------------------
 
-Die Startseite (``src/app/page.tsx``) zeigt den Produktansatz sehr klar:
-Feature-Flags steuern, welche UI genutzt wird, während die Datenlogik in einem
-wiederverwendbaren Hook gekapselt bleibt. Das ist relevant, weil damit
-gleichzeitig Weiterentwicklung (New UI) und Betriebssicherheit (Legacy UI)
-möglich sind.
+Dieses Projekt ist eine Informatik-BLL, weil es über eine reine Webseite
+hinausgeht. Im Mittelpunkt stehen Systementwurf, Algorithmen und technische
+Abwägungen - nicht visuelle Gestaltung.
 
-Relevanz für die Dokumentation
--------------------------------
+Bedienung der Anwendung
+-----------------------
 
-Dieses Kapitel begründet das "Warum" des Projekts. Die technischen Details folgen
-bewusst erst in Kapitel 03 (Pflichtenheft), damit Motivation und Umsetzung nicht
-vermengt werden.
+Der typische Nutzungsablauf ist bewusst kurz gehalten:
+
+1. Öffentliche Nutzer rufen die Startseite auf und können den Vertretungsplan
+   direkt ansehen.
+2. Wer persönliche Funktionen nutzen will, registriert sich und meldet sich an.
+3. Danach führt die Anwendung zur Eingabe des persönlichen Stundenplans.
+4. Im Dashboard werden passende Vertretungen, Filter und später auch
+   Benachrichtigungen gebündelt angezeigt.
+
+Damit ist die Bedienung im Alltag auf wenige Schritte reduziert: aufrufen,
+Datum wählen, Ergebnisse lesen und bei Bedarf den eigenen Stundenplan pflegen.
+
+Aufbau der Arbeit
+-----------------
+
+Die Dokumentation gliedert sich in zehn Abschnitte. Nach dieser Einleitung
+beschreibt Kapitel 2 die Anforderungen aus Nutzersicht (Lastenheft). Kapitel 3
+erläutert den technischen Lösungsansatz (Pflichtenheft), gefolgt von
+Projektverlauf und Zeitplanung in Kapitel 4. Kapitel 5 ordnet den verwendeten
+Tech Stack ein. Kapitel 6 zeigt die Systemstruktur anhand von
+UML-Diagrammen. Kapitel 7 dokumentiert Umsetzungserfahrungen und Lessons
+Learned. Kapitel 8 bewertet die Ergebnisse gegen die definierten SMART-Ziele.
+Kapitel 9 gibt einen Ausblick, und Kapitel 10 listet die verwendeten Quellen.

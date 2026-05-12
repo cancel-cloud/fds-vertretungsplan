@@ -1,10 +1,14 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/guards';
 import { DashboardClient } from '@/components/stundenplan/dashboard-client';
 import { LandingHeader } from '@/components/layout/landing-header';
-import { prisma } from '@/lib/prisma';
 import { DASHBOARD_SCOPE_PARAM, parseDashboardScope } from '@/lib/dashboard-scope';
 import { isDemoMode } from '@/lib/demo-config';
+import { buildPathWithSearchParams } from '@/lib/login-target';
+import {
+  getOptionalSignedInUser,
+  redirectIfBootstrapAdminRegistrationRequired,
+  redirectIfAdminSetupRequired,
+} from '@/lib/stundenplan-page-guards';
 
 interface DashboardPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -35,24 +39,24 @@ export default async function StundenplanDashboardPage({ searchParams }: Dashboa
   const scopeCandidate = Array.isArray(resolvedSearchParams[DASHBOARD_SCOPE_PARAM])
     ? resolvedSearchParams[DASHBOARD_SCOPE_PARAM][0]
     : resolvedSearchParams[DASHBOARD_SCOPE_PARAM];
-  const scope = parseDashboardScope(scopeCandidate);
-  const user = await getCurrentUser();
+  const user = await getOptionalSignedInUser();
+  const scope = user ? parseDashboardScope(scopeCandidate) : scopeCandidate === 'personal' ? 'personal' : 'all';
+
+  if (!user && !demoMode) {
+    await redirectIfBootstrapAdminRegistrationRequired();
+  }
 
   if (scope === 'personal' && !user) {
     const queryString = toQueryString(resolvedSearchParams);
-    const nextPath = `/stundenplan/dashboard${queryString ? `?${queryString}` : ''}`;
-    redirect(`/stundenplan/login?next=${encodeURIComponent(nextPath)}`);
+    redirect(buildPathWithSearchParams('/', queryString, { scopeOverride: 'all' }));
   }
 
-  if (scope === 'personal' && user?.role === 'ADMIN') {
-    const teacherCount = await prisma.teacherDirectory.count();
-    if (teacherCount === 0) {
-      redirect('/stundenplan/admin-setup');
-    }
+  if (scope === 'personal' && user) {
+    await redirectIfAdminSetupRequired(user);
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(var(--color-background))]">
+    <div className="bg-[rgb(var(--color-background))]">
       <LandingHeader />
       <main id="main-content" className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6">
         <DashboardClient initialScope={scope} isAuthenticated={Boolean(user)} isDemoMode={demoMode} />

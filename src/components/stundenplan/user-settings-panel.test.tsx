@@ -7,9 +7,9 @@ const mocks = vi.hoisted(() => ({
   routerPush: vi.fn(),
   isPushSupportedMock: vi.fn(() => true),
   getExistingPushEndpointMock: vi.fn<() => Promise<string | null>>(),
-  ensureNotificationPermissionMock: vi.fn<() => Promise<{ ok: boolean; reason?: string }>>(),
-  ensureCurrentSubscriptionMock: vi.fn<() => Promise<{ endpoint: string }>>(),
-  persistPushSubscriptionMock: vi.fn<() => Promise<void>>(),
+  activatePushForCurrentDeviceMock: vi.fn<() => Promise<{ endpoint: string }>>(),
+  fetchPushDevicesMock: vi.fn<() => Promise<Array<{ id: string; endpoint: string; userAgent: string | null; createdAt: string; lastSeenAt: string }>>>(),
+  removePushDeviceRegistrationMock: vi.fn<() => Promise<void>>(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -19,11 +19,11 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/lib/push-client', () => ({
+  activatePushForCurrentDevice: mocks.activatePushForCurrentDeviceMock,
+  fetchPushDevices: mocks.fetchPushDevicesMock,
   isPushSupported: mocks.isPushSupportedMock,
   getExistingPushEndpoint: mocks.getExistingPushEndpointMock,
-  ensureNotificationPermission: mocks.ensureNotificationPermissionMock,
-  ensureCurrentSubscription: mocks.ensureCurrentSubscriptionMock,
-  persistPushSubscription: mocks.persistPushSubscriptionMock,
+  removePushDeviceRegistration: mocks.removePushDeviceRegistrationMock,
 }));
 
 const createJsonResponse = (body: unknown, status = 200): Response =>
@@ -42,9 +42,9 @@ describe('UserSettingsPanel current-device push control', () => {
     vi.clearAllMocks();
     mocks.isPushSupportedMock.mockReturnValue(true);
     mocks.getExistingPushEndpointMock.mockResolvedValue(null);
-    mocks.ensureNotificationPermissionMock.mockResolvedValue({ ok: true });
-    mocks.ensureCurrentSubscriptionMock.mockResolvedValue({ endpoint: 'https://push.example/current' });
-    mocks.persistPushSubscriptionMock.mockResolvedValue(undefined);
+    mocks.activatePushForCurrentDeviceMock.mockResolvedValue({ endpoint: 'https://push.example/current' });
+    mocks.fetchPushDevicesMock.mockResolvedValue([]);
+    mocks.removePushDeviceRegistrationMock.mockResolvedValue(undefined);
   });
 
   it('shows "Aktiv (dieses Gerät)" when current endpoint is already registered', async () => {
@@ -56,21 +56,20 @@ describe('UserSettingsPanel current-device push control', () => {
         return createJsonResponse({ user: meUser });
       }
       if (url.includes('/api/push/subscriptions')) {
-        return createJsonResponse({
-          subscriptions: [
-            {
-              id: 'device-1',
-              endpoint: 'https://push.example/current',
-              userAgent: 'Mozilla/5.0',
-              createdAt: '2026-02-16T10:00:00.000Z',
-              lastSeenAt: '2026-02-16T10:15:00.000Z',
-            },
-          ],
-        });
+        return createJsonResponse({ subscriptions: [] });
       }
       return createJsonResponse({});
     });
     vi.stubGlobal('fetch', fetchMock);
+    mocks.fetchPushDevicesMock.mockResolvedValue([
+      {
+        id: 'device-1',
+        endpoint: 'https://push.example/current',
+        userAgent: 'Mozilla/5.0',
+        createdAt: '2026-02-16T10:00:00.000Z',
+        lastSeenAt: '2026-02-16T10:15:00.000Z',
+      },
+    ]);
 
     render(<UserSettingsPanel />);
 
@@ -98,17 +97,10 @@ describe('UserSettingsPanel current-device push control', () => {
   });
 
   it('activates current device and flips to active status', async () => {
-    mocks.getExistingPushEndpointMock
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce('https://push.example/current');
-
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.includes('/api/me') && (!init || init.method === 'GET')) {
         return createJsonResponse({ user: meUser });
-      }
-      if (url.includes('/api/me') && init?.method === 'PUT') {
-        return createJsonResponse({ user: { ...meUser, notificationsEnabled: true } });
       }
       if (url.includes('/api/push/subscriptions')) {
         return createJsonResponse({
@@ -126,6 +118,15 @@ describe('UserSettingsPanel current-device push control', () => {
       return createJsonResponse({});
     });
     vi.stubGlobal('fetch', fetchMock);
+    mocks.fetchPushDevicesMock.mockResolvedValue([
+      {
+        id: 'device-1',
+        endpoint: 'https://push.example/current',
+        userAgent: 'Mozilla/5.0',
+        createdAt: '2026-02-16T10:00:00.000Z',
+        lastSeenAt: '2026-02-16T10:15:00.000Z',
+      },
+    ]);
 
     const user = userEvent.setup();
     render(<UserSettingsPanel />);
@@ -133,9 +134,7 @@ describe('UserSettingsPanel current-device push control', () => {
     await user.click(await screen.findByRole('button', { name: 'Aktivieren (dieses Gerät)' }));
 
     await waitFor(() => {
-      expect(mocks.ensureNotificationPermissionMock).toHaveBeenCalledTimes(1);
-      expect(mocks.ensureCurrentSubscriptionMock).toHaveBeenCalledTimes(1);
-      expect(mocks.persistPushSubscriptionMock).toHaveBeenCalledTimes(1);
+      expect(mocks.activatePushForCurrentDeviceMock).toHaveBeenCalledTimes(1);
     });
 
     expect(await screen.findByRole('button', { name: 'Aktiv (dieses Gerät)' })).toBeDisabled();
@@ -165,36 +164,36 @@ describe('UserSettingsPanel current-device push control', () => {
   it('switches back to activate when current device is deactivated in list', async () => {
     mocks.getExistingPushEndpointMock.mockResolvedValue('https://push.example/current');
 
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes('/api/me')) {
         return createJsonResponse({ user: meUser });
       }
       if (url.includes('/api/push/subscriptions')) {
-        return createJsonResponse({
-          subscriptions: [
-            {
-              id: 'device-1',
-              endpoint: 'https://push.example/current',
-              userAgent: 'Mozilla/5.0',
-              createdAt: '2026-02-16T10:00:00.000Z',
-              lastSeenAt: '2026-02-16T10:15:00.000Z',
-            },
-          ],
-        });
-      }
-      if (url.includes('/api/push/unsubscribe') && init?.method === 'DELETE') {
-        return createJsonResponse({ ok: true });
+        return createJsonResponse({ subscriptions: [] });
       }
       return createJsonResponse({});
     });
     vi.stubGlobal('fetch', fetchMock);
+    mocks.fetchPushDevicesMock.mockResolvedValue([
+      {
+        id: 'device-1',
+        endpoint: 'https://push.example/current',
+        userAgent: 'Mozilla/5.0',
+        createdAt: '2026-02-16T10:00:00.000Z',
+        lastSeenAt: '2026-02-16T10:15:00.000Z',
+      },
+    ]);
 
     const user = userEvent.setup();
     render(<UserSettingsPanel />);
 
     expect(await screen.findByRole('button', { name: 'Aktiv (dieses Gerät)' })).toBeDisabled();
     await user.click(await screen.findByRole('button', { name: 'Deaktivieren' }));
+
+    await waitFor(() => {
+      expect(mocks.removePushDeviceRegistrationMock).toHaveBeenCalledWith('https://push.example/current');
+    });
 
     expect(await screen.findByRole('button', { name: 'Aktivieren (dieses Gerät)' })).toBeEnabled();
   });

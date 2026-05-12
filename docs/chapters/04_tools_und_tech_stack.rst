@@ -1,12 +1,23 @@
-04 Tools und Tech Stack
+Tools und Tech Stack
 =======================
 
 Ziel der Toolauswahl
 --------------------
 
-Der Stack wurde nicht nach "neuester Trend" ausgewählt, sondern nach
+Der Stack wurde nicht nach "neuester Trend" gewählt, sondern nach
 Projektanforderung: schnelle Iteration, stabile Auslieferung und gute
-Wartbarkeit für ein Schulprojekt mit professionellem Anspruch.
+Wartbarkeit für ein Schulprojekt mit professionellem Anspruch. Dabei spielte
+auch Vorerfahrung eine Rolle - Next.js und React waren aus früheren Arbeiten
+bereits vertraut, ebenso wie Upstash als Anbieter für serverlose
+Hintergrunddienste.
+
+Warum Framework statt reinem HTML/CSS (kurz)
+--------------------------------------------
+
+Ein Framework wie Next.js ist sinnvoller als reines HTML, weil Routing,
+Datenabruf, Authentifizierung und Sicherheit einheitlich gelöst werden
+müssen. Ohne Framework müssten diese Querschnittsthemen einzeln und
+fehleranfällig zusammengesetzt werden.
 
 Kernstack
 ---------
@@ -16,33 +27,3 @@ Kernstack
 - Tailwind + Komponentenlayer für konsistente UI.
 - Vitest + Testing Library für schnelle Regressionstests.
 - ESLint für frühe Qualitätskontrolle.
-
-Projekt-Skripte und Laufwege
-----------------------------
-
-Dieser Ausschnitt belegt die zentralen Arbeitsabläufe: Entwicklung, Build,
-Linting und Testausführung.
-
-.. literalinclude:: ../../package.json
-   :language: json
-   :lines: 5-13
-
-Warum dieser Ausschnitt wichtig ist:
-
-- Er zeigt reproduzierbare Kommandos für Betrieb und Qualität.
-- Er dient als technische Grundlage für Kapitel 08 (Ergebnisbewertung).
-- Er stützt dieses Kapitel, weil die Toolkette konkret nachprüfbar wird.
-
-Sicherheits- und Integrationskonfiguration
-------------------------------------------
-
-Die Next.js-Konfiguration (``next.config.ts``) zeigt, dass Security-Header und
-externe Analytics-Routen bewusst zentral gepflegt werden. Diese Trennung von
-Produktlogik und Infrastrukturkonfiguration ist für Wartbarkeit und Sicherheit
-entscheidend.
-
-Einordnung
-----------
-
-Die Toolkombination ist für die BLL sinnvoll: fachlich gut erklärbar,
-technisch belastbar und für spätere Erweiterungen offen.
