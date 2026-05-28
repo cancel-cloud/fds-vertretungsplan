@@ -230,4 +230,20 @@ describe('DashboardClient Apple push promo integration', () => {
       expect(mocks.routerReplace).toHaveBeenLastCalledWith(expect.stringContaining('scope=all'), { scroll: false });
     });
   });
+
+  it('does not roll back active typing when a stale search URL update arrives', () => {
+    mocks.searchParams = new URLSearchParams('search=Bio');
+    vi.stubGlobal('fetch', vi.fn(async () => createJsonResponse({})));
+
+    const { rerender } = render(<DashboardClient initialScope="all" isAuthenticated={false} />);
+    const searchInput = screen.getByPlaceholderText('Klasse, Fach, Raum oder Lehrer suchen...');
+
+    fireEvent.change(searchInput, { target: { value: 'Biology' } });
+    expect(searchInput).toHaveValue('Biology');
+
+    mocks.searchParams = new URLSearchParams('search=Biol');
+    rerender(<DashboardClient initialScope="all" isAuthenticated={false} />);
+
+    expect(searchInput).toHaveValue('Biology');
+  });
 });

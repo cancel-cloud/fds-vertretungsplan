@@ -1,0 +1,72 @@
+erDiagram
+    User ||--o{ TimetableEntry : has
+    User ||--o{ PushSubscription : has
+    User ||--o{ NotificationState : has
+    User ||--o{ NotificationFingerprint : has
+    TeacherDirectory ||--o{ TimetableEntry : optional_reference
+
+    User {
+        String id PK
+        String email UK
+        String passwordHash
+        UserRole role
+        DateTime onboardingCompletedAt
+        DateTime onboardingSkippedAt
+        Boolean notificationsEnabled
+        Int notificationLookaheadSchoolDays
+    }
+
+    TimetableEntry {
+        String id PK
+        String userId FK
+        Weekday weekday
+        Int startPeriod
+        Int duration
+        String subjectCode
+        String teacherCode
+        String room
+        WeekMode weekMode
+        String teacherId FK
+    }
+
+    TeacherDirectory {
+        String id PK
+        String code UK
+        String fullName
+        Boolean isActive
+    }
+
+    PushSubscription {
+        String id PK
+        String userId FK
+        String endpoint UK
+        String p256dh
+        String auth
+        String userAgent
+        DateTime lastSeenAt
+    }
+
+    NotificationState {
+        String id PK
+        String userId FK
+        Int targetDate
+        String lastFingerprint
+        Int lastMatchCount
+        DateTime lastSentAt
+    }
+
+    NotificationFingerprint {
+        String id PK
+        String userId FK
+        Int targetDate
+        String fingerprint
+        DateTime sentAt
+    }
+
+    AppSettings {
+        Int id PK
+        StringArray allowedEmailDomains
+        Json demoDataset
+        String demoDatasetUserId
+        DateTime demoDatasetGeneratedAt
+    }
