@@ -1,0 +1,29 @@
+flowchart LR
+    browser["Browser\nDashboard, Einstellungen, Admin"]
+    sw["Service Worker\npublic/sw.js"]
+    next["Next.js App Router\nSeiten + API Routes"]
+    substitutions["/api/substitutions\nWebUntis Proxy, Cache, Rate Limit"]
+    timetable["/api/timetable\nStundenplan CRUD"]
+    pushDispatch["/api/internal/push/dispatch\nDelta Push Dispatch"]
+    prisma["Prisma Client"]
+    postgres[("PostgreSQL")]
+    untis["WebUntis\nVertretungsdaten"]
+    qstash["Upstash QStash\nScheduler"]
+    webpush["Web Push Gateway\nVAPID"]
+
+    browser --> next
+    browser --> substitutions
+    browser --> timetable
+    browser --> sw
+
+    next --> prisma
+    timetable --> prisma
+    pushDispatch --> prisma
+    prisma --> postgres
+
+    substitutions --> untis
+    pushDispatch --> untis
+    qstash --> pushDispatch
+    pushDispatch --> webpush
+    webpush --> sw
+    sw --> browser

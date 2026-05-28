@@ -86,6 +86,8 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
   const [isInitialDateResolved, setIsInitialDateResolved] = useState(
     () => !(initialScope === 'personal' && isAuthenticated && fromPush && !queryDate)
   );
+  const searchQueryRef = useRef(querySearchParam);
+  const pendingSearchQueryRef = useRef<string | null>(null);
 
   const { substitutions, isLoading, error, metaResponse, resolvedDateKey, refetch } = useSubstitutions(selectedDate);
 
@@ -121,7 +123,16 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
 
   // Only sync search FROM URL (browser back/forward, shared link).
   useEffect(() => {
+    const pendingSearchQuery = pendingSearchQueryRef.current;
+    if (pendingSearchQuery !== null) {
+      if (querySearchParam === pendingSearchQuery) {
+        pendingSearchQueryRef.current = null;
+      }
+      return;
+    }
+
     setSearchQuery(querySearchParam);
+    searchQueryRef.current = querySearchParam;
   }, [querySearchParam]);
 
   const searchUrlTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -301,12 +312,18 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
+    searchQueryRef.current = value;
+    pendingSearchQueryRef.current = value;
 
-    // Debounce URL sync so typing stays responsive - filtering is already client-side.
+    // Debounce URL sync so typing stays responsive; filtering is already client-side.
     clearTimeout(searchUrlTimeoutRef.current);
     searchUrlTimeoutRef.current = setTimeout(() => {
-      const params = new URLSearchParams(guestSafeSearchParamsString);
+      const params = new URLSearchParams(window.location.search);
       params.delete('fromPush');
+
+      if (!isAuthenticated && queryScopeParam != null && queryScopeParam !== 'all') {
+        params.set(DASHBOARD_SCOPE_PARAM, 'all');
+      }
 
       if (value.trim()) {
         params.set('search', value);
@@ -314,7 +331,11 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
         params.delete('search');
       }
 
-      router.replace(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
+      const nextPath = `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+      window.history.replaceState(null, '', nextPath);
+      if (pendingSearchQueryRef.current === value) {
+        pendingSearchQueryRef.current = null;
+      }
     }, 300);
   };
 
@@ -331,6 +352,11 @@ export function DashboardClient({ initialScope, isAuthenticated, isDemoMode = fa
     params.delete('fromPush');
     params.set('date', formatDateForApi(normalized));
     params.set(DASHBOARD_SCOPE_PARAM, targetScope);
+    if (searchQueryRef.current.trim()) {
+      params.set('search', searchQueryRef.current);
+    } else {
+      params.delete('search');
+    }
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
