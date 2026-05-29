@@ -1,0 +1,22 @@
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant UI as Dashboard UI
+    participant A as /api/substitutions
+    participant T as /api/timetable
+    participant DB as PostgreSQL via Prisma
+    participant W as WebUntis
+    participant M as Matching
+
+    U->>UI: Öffnet Dashboard mit scope=personal
+    UI->>A: GET /api/substitutions?date=YYYYMMDD
+    A->>W: POST substitution/data
+    W-->>A: Vertretungs-Rohdaten
+    A-->>UI: normalisierte API-Antwort
+    UI->>T: GET /api/timetable
+    T->>DB: Stundenplan des Users laden
+    DB-->>T: TimetableEntry[]
+    T-->>UI: Stundenplan-Einträge
+    UI->>M: findRelevantSubstitutions(substitutions, entries, selectedDate)
+    M-->>UI: MatchResult[]
+    UI->>UI: gefilterte persönliche Liste rendern

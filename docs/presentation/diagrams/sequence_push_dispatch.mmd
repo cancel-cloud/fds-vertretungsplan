@@ -1,0 +1,42 @@
+sequenceDiagram
+    autonumber
+    participant Q as QStash
+    participant D as Dispatch Route
+    participant DB as PostgreSQL via Prisma
+    participant W as WebUntis
+    participant M as Matching
+    participant N as Notification State
+    participant P as Web Push
+    participant SW as Service Worker
+
+    Q->>D: POST /api/internal/push/dispatch
+    D->>D: Auth prüfen und Push-Zeitfenster prüfen
+    D->>DB: User mit notificationsEnabled, Stundenplan, PushSubscriptions laden
+    DB-->>D: Nutzerliste
+    D->>D: Ziel-Schultage pro Nutzer bestimmen
+    D->>W: Vertretungsdaten pro Zieldatum abrufen
+    W-->>D: Rohdaten
+    D->>D: processApiResponse normalisiert Zeilen
+
+    loop pro User und Zieldatum
+        D->>DB: NotificationState für User/Datum laden
+        DB-->>D: vorheriger Fingerprint
+        D->>M: findRelevantSubstitutions(substitutions, timetable, date)
+        M-->>D: relevante Matches
+        D->>N: canonicalizeMatchKeys + buildNotificationFingerprint
+        N-->>D: currentFingerprint
+        D->>N: resolveNotificationDeltaAction(previous, current, count)
+        N-->>D: send / skip / clear
+        alt send
+            D->>P: sendPushMessage(subscription, payload)
+            P->>SW: push event
+            SW->>SW: showNotification + broadcast to clients
+            D->>DB: NotificationState upsert + NotificationFingerprint createMany
+        else skip
+            D->>D: unverändert, kein Push
+        else clear
+            D->>DB: NotificationState löschen
+        end
+    end
+
+    D-->>Q: JSON Summary

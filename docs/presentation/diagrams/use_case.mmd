@@ -1,0 +1,28 @@
+flowchart LR
+    guest["Guest"]
+    user["User"]
+    admin["Admin"]
+    untis["WebUntis"]
+    qstash["QStash"]
+
+    subgraph app["FDS Vertretungsplan"]
+        ucAll(("Vertretungen ansehen"))
+        ucTimetable(("Stundenplan verwalten"))
+        ucPersonal(("Persönliche Vertretungen ansehen"))
+        ucPush(("Push aktivieren"))
+        ucAdmin(("Lehrer und User verwalten"))
+        ucDispatch(("Dispatch auslösen\nSecret/CLI;\nAdmin-UI nicht ersichtlich"))
+    end
+
+    guest --> ucAll
+    user --> ucAll
+    user --> ucTimetable
+    user --> ucPersonal
+    user --> ucPush
+    admin --> ucAdmin
+    admin --> ucDispatch
+    qstash --> ucDispatch
+
+    ucAll --> untis
+    ucPersonal --> untis
+    ucDispatch --> untis
