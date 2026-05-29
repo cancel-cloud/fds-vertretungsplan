@@ -71,6 +71,7 @@ Delta-based: fingerprint (hash of matching substitutions) is compared to `Notifi
 - Tailwind for all styling; no inline CSS or `<style>` tags.
 - Formatting: Prettier (2-space indent, trailing commas es5, Tailwind plugin).
 - Conventional Commits: `feat:`, `fix:`, `test:`, optionally scoped (`fix(csp): ...`).
+- Never check out, merge into, reset, rebase, delete, force-push, or otherwise tamper with the `abgabe` branch. Treat it as a frozen submission branch.
 
 ## Testing
 

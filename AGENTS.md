@@ -12,11 +12,7 @@ Configuration files are at the repo root (`next.config.ts`, `vitest.config.ts`, 
 
 ## Build, Test, and Development Commands
 - `npm run dev`: start local development server with Turbopack on `http://localhost:3000`.
-<<<<<<< ours
-- `npm run prebuild`: runs `prisma generate` automatically before `npm run build`.
-=======
 - `npm run prebuild`: generate Prisma client before build (runs automatically with `npm run build`).
->>>>>>> theirs
 - `npm run build`: create a production build.
 - `npm run start`: run the production server from the build output.
 - `npm run lint`: run ESLint (Next.js core-web-vitals + TypeScript rules).
@@ -46,6 +42,7 @@ Configuration files are at the repo root (`next.config.ts`, `vitest.config.ts`, 
 - Run `npm run test:run && npm run lint` before opening a PR.
 
 ## Commit & Pull Request Guidelines
+- Never check out, merge into, reset, rebase, delete, force-push, or otherwise tamper with the `abgabe` branch. Treat it as a frozen submission branch.
 - Follow Conventional Commit style seen in history: `feat:`, `fix:`, `test:`, optionally scoped (`fix(csp): ...`).
 - Keep commits focused and descriptive; avoid generic messages.
 - PRs should include:
