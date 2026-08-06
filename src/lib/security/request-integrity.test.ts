@@ -1,23 +1,14 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { enforceSameOrigin } from '@/lib/security/request-integrity';
 
-const originalNodeEnv = process.env.NODE_ENV;
-const originalAppMode = process.env.APP_MODE;
-
 afterEach(() => {
-  process.env.NODE_ENV = originalNodeEnv;
-  if (originalAppMode === undefined) {
-    delete process.env.APP_MODE;
-  } else {
-    process.env.APP_MODE = originalAppMode;
-  }
+  vi.unstubAllEnvs();
 });
 
 describe('request-integrity same-origin enforcement', () => {
   it('rejects mutating requests without origin in production mode', () => {
-    process.env.NODE_ENV = 'production';
-    delete process.env.APP_MODE;
+    vi.stubEnv('NODE_ENV', 'production');
 
     const request = new NextRequest('https://app.example/api/me', { method: 'PUT' });
     const response = enforceSameOrigin(request);
@@ -26,8 +17,7 @@ describe('request-integrity same-origin enforcement', () => {
   });
 
   it('allows matching origin in production mode', () => {
-    process.env.NODE_ENV = 'production';
-    delete process.env.APP_MODE;
+    vi.stubEnv('NODE_ENV', 'production');
 
     const request = new NextRequest('https://app.example/api/me', {
       method: 'PUT',
@@ -39,8 +29,8 @@ describe('request-integrity same-origin enforcement', () => {
   });
 
   it('bypasses origin checks in demo mode', () => {
-    process.env.NODE_ENV = 'production';
-    process.env.APP_MODE = 'demo';
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('APP_MODE', 'demo');
 
     const request = new NextRequest('https://app.example/api/me', { method: 'PUT' });
     const response = enforceSameOrigin(request);
