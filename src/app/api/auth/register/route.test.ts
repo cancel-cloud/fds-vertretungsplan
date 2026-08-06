@@ -22,9 +22,9 @@ describe('api/auth/register POST', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     __resetRateLimitStoreForTests();
-    process.env.NODE_ENV = 'test';
+    vi.stubEnv('NODE_ENV', 'test');
     process.env.ADMIN_EMAILS = 'bootstrap@example.com';
-    vi.spyOn(bcrypt, 'hash').mockResolvedValue('hashed-password');
+    vi.spyOn(bcrypt, 'hash').mockImplementation(async () => 'hashed-password');
 
     userFindUniqueMock.mockResolvedValue(null);
     userCountMock.mockResolvedValue(0);
