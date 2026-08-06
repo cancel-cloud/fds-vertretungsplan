@@ -45,7 +45,7 @@ describe('auth login throttling', () => {
   });
 
   it('throttles repeated login attempts per email+ip after threshold', async () => {
-    vi.spyOn(bcrypt, 'compare').mockImplementation(async () => false);
+    vi.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
     const authorize = await getAuthorize();
 
     for (let index = 0; index < 8; index += 1) {

@@ -24,7 +24,7 @@ describe('api/auth/register POST', () => {
     __resetRateLimitStoreForTests();
     vi.stubEnv('NODE_ENV', 'test');
     process.env.ADMIN_EMAILS = 'bootstrap@example.com';
-    vi.spyOn(bcrypt, 'hash').mockImplementation(async () => 'hashed-password');
+    vi.spyOn(bcrypt, 'hash').mockResolvedValue('hashed-password' as never);
 
     userFindUniqueMock.mockResolvedValue(null);
     userCountMock.mockResolvedValue(0);
