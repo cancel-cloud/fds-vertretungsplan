@@ -1,0 +1,17 @@
+Source deck inventory:
+- 14-slide 16:9 deck in a restrained white/dark navy/cyan style.
+- Reusable patterns: title slide, screenshot/problem slide, three-screenshot result slide, SMART table, three-card process slide, stacked architecture rows, left-to-right API pipeline, data-model diagram, algorithm/pseudocode slide, push process slide, security quadrants, test evidence slide, three-challenge reflection slide, dark final summary.
+
+Typography and spacing:
+- Keep existing Aptos/Calibri-like PowerPoint typography and the compact technical hierarchy.
+- Preserve the cyan top rule, footer, page number, and dark final slide treatment.
+
+Insertion contract:
+- Add content by duplicating existing source slides and editing inherited text boxes.
+- Use slide 4 for BLL expectation/status table.
+- Use slide 6 for framework/tool rationale.
+- Use slides 8 and 9 for SQL/data-model explanation.
+
+Inherited placeholders:
+- No visible default placeholder text found in rendered source slides.
+- Final QA must still inspect exported PPTX XML for empty structural placeholders.

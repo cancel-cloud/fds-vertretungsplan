@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   description:
     'Datenschutzerklärung - Informationen zum Datenschutz und zur Verarbeitung Ihrer Daten beim FDS Vertretungsplan',
   keywords: 'Datenschutz, DSGVO, Cookies, Server-Log Files, Rechte, Vertretungsplan',
+  robots: {
+    index: false,
+    follow: true,
+  },
 };
 
 export default function DatenschutzPage() {

@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: 'Impressum | FDS Vertretungsplan',
   description: 'Impressum von Lukas Dienst - Angaben gemäß § 5 TMG',
   keywords: 'Impressum, Lukas Dienst, DevBrew, FDS, Vertretungsplan',
+  robots: {
+    index: false,
+    follow: true,
+  },
 };
 
 export default function ImpressumPage() {

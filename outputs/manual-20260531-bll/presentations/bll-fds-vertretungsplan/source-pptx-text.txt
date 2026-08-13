@@ -1,0 +1,307 @@
+--- SLIDE 1 ---
+BESONDERE LERNLEISTUNG  ·  PRAKTISCHE INFORMATIK
+Moderne Webentwicklung am Beispiel
+einer alternativen Vertretungsplan-
+Anwendung
+Lukas Dienst
+Peter-Paul-Cahensly  ·  Abitur 2026
+
+--- SLIDE 2 ---
+KAPITEL 1  ·  AUSGANGSLAGE
+Das Problem: WebUntis im Schulalltag
+Original-Anzeige (WebUntis)
+Was funktioniert nicht?
+Lange Liste, automatisch durchlaufend
+Keine Suche, keine Kategorien-Filter
+Kein Bezug zum eigenen Stundenplan
+Auf dem Smartphone unübersichtlich
+Ziel: nicht die Daten ändern – die Zugänglichkeit verbessern.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+2
+
+--- SLIDE 3 ---
+KAPITEL 1  ·  ERGEBNIS
+Vom allgemeinen Plan zur persönlichen Ansicht
+Vorher: WebUntis
+ungefiltert, mobil schwer nutzbar
+Alle Vertretungen
+kategorisiert, durchsuchbar
+Meine Vertretungen
+nur Treffer zum Stundenplan
+Web-App: ohne Installation auf Smartphone, Tablet und Desktop nutzbar – zentral aktualisierbar.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+3
+
+--- SLIDE 4 ---
+KAPITEL 2  ·  ZIELSETZUNG
+SMART-Ziele und Status zum Abgabezeitpunkt
+S1
+Schneller Zugriff
+Vertretungen in max. 3 Klicks
+erfüllt
+S2
+Filter & Suche
+Kategorien + Volltextsuche stabil
+erfüllt
+S3
+API-Robustheit
+Rate-Limit, Retry, Fehlerpfade
+erfüllt
+S4
+Sicherheit
+CSP, Auth, geschützte Bereiche
+erfüllt
+S5
+Wartbarkeit
+Tests + dokumentierte Struktur
+weitgehend
+S1–S4 vollständig erreicht. S5 ist weitgehend erfüllt, einzelne UI-Randfälle bleiben als Ausbaupotenzial.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+4
+
+--- SLIDE 5 ---
+KAPITEL 2  ·  VORGEHEN
+Drei Versionen: Iteration statt Wasserfall
+V1
+Statische Seite
+Browser ruft WebUntis direkt auf.
+Keine Filter, keine Personalisierung.
+Erkenntnis: ohne Backend nicht erweiterbar.
+V2
+Next.js-Frontend
+Routing, aber ohne saubere API-Schicht
+und ohne Login.
+Erkenntnis: Trennung der Aufgaben fehlt.
+V3
+Vollständiger Neustart
+Vier-Schichten-Architektur, Auth, DB,
+API-Proxy, Push-Logik.
+Aktuelle, in dieser BLL dokumentierte Version.
+Frühe Versionen waren nicht überflüssig – sie haben Anforderungen sichtbar gemacht.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+5
+
+--- SLIDE 6 ---
+KAPITEL 3  ·  ARCHITEKTUR
+Vier Schichten – jede mit klarer Aufgabe
+1
+Benutzeroberfläche
+Startseite, Dashboard, Einstellungen, Admin-Bereich
+Next.js  ·  React  ·  TypeScript  ·  Tailwind
+2
+Client-Zustand
+Datenabruf, Client-Cache, Filterlogik, Abort-Steuerung
+React Hooks  ·  useSubstitutions
+3
+Server-API
+Validierung, Rate-Limit, Server-Cache, Auth, Fehlerpfade
+Next.js API-Routen  ·  NextAuth  ·  Prisma  ·  PostgreSQL
+4
+Externe Datenquelle
+WebUntis – nur über die eigene Server-API angesprochen
+untis-client.ts
+Trennung ermöglicht Erweiterungen wie Push, ohne dass alles gleichzeitig angefasst werden muss.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+6
+
+--- SLIDE 7 ---
+KAPITEL 3  ·  DATENBESCHAFFUNG
+WebUntis nur über den eigenen API-Proxy
+Browser
+useSubstitutions
+Client-Cache
+Treffer → sofort
+Server-API
+Validierung & Rate-Limit
+Server-Cache
+stale-while-revalidate
+WebUntis
+nur wenn nötig
+Drei klar unterschiedene Antworttypen
+substitution
+Daten vorhanden
+Liste anzeigen, Cache befüllen
+meta
+Kein Plan / unvollständig
+Hinweis statt Liste
+error
+Upstream-Fehler / 429
+Fehlermeldung + Retry-Hinweis
+Schnittstelle wurde durch Browser-Netzwerkanalyse erschlossen – keine offene Doku verfügbar.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+7
+
+--- SLIDE 8 ---
+KAPITEL 3  ·  DATENMODELL
+Was wird gespeichert – und was bewusst nicht
+Nutzer
+E-Mail, Rolle,
+Einstellungen
+Stundenplan-Eintrag
+Wochentag, Stunde, Fach, Lehrer, Raum, Wochenmodus
+Push-Gerät
+Endpoint, Auth-Keys, User-Agent
+Benachrichtigungs-Zustand
+letzter Fingerprint pro Tag (1 Zeile)
+Benachrichtigungs-Abdruck
+Audit-Log aller gesendeten Pushs
+Lehrer-Verzeichnis
+Kürzel → voller Name
+App-Einstellungen
+erlaubte E-Mail-Domains
+Vertretungen werden NICHT persistiert
++
+weniger Datenhaltung
+ 
+−
+weniger Historie für Debugging
+Persistente Tabellen: Nutzer, Stundenplan, Push-Geräte, Benachrichtigungs-Zustand. Vertretungen kommen jedes Mal frisch aus WebUntis (mit Cache).
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+8
+
+--- SLIDE 9 ---
+KAPITEL 3  ·  KERNLOGIK
+Matching: Ist diese Vertretung für mich relevant?
+Vier Prüfschritte pro Vertretung
+1
+Wochentag
+Datum der Vertretung → Wochentag des Stundenplan-Eintrags
+2
+Wochenmodus
+Jede Woche / gerade / ungerade – passt zur Kalenderwoche?
+3
+Stunden überlappen sich
+Stundenblock der Vertretung schneidet den eigenen Stundenblock?
+4
+Fach, Lehrer oder Raum
+Mindestens eines stimmt ausreichend überein
+Pseudocode
+function istRelevant(v, e):
+  // v = Vertretung,  e = Stundenplan-Eintrag
+ 
+  if v.wochentag != e.wochentag:
+      return false
+  if not wochenmodusPasst(v, e):
+      return false
+  if not stundenUeberlappen(v, e):
+      return false
+ 
+  return fachLehrerRaumPasst(v, e)
+Diese Funktion läuft auch im Hintergrund-Dispatch – sie entscheidet, ob jemand überhaupt eine Push-Benachrichtigung bekommt.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+9
+
+--- SLIDE 10 ---
+KAPITEL 3  ·  HINTERGRUNDPROZESS
+Push: nur bei tatsächlicher Änderung
+Aktuelle
+Vertretungen holen
+Matching mit
+Stundenplan
+Fingerprint
+berechnen
+Vergleich mit
+letztem Stand
+Drei mögliche Aktionen pro Nutzer
+SEND
+Fingerprint geändert / neu
+Push senden +
+neuen Stand speichern
+SKIP
+Fingerprint identisch
+Nichts tun –
+Nutzer nicht erneut nerven
+RESOLVE
+Keine Treffer mehr
+Alten Zustand löschen –
+Vertretung wurde aufgelöst
+Externer Scheduler (Upstash QStash) ruft den Dispatch alle 15 Minuten auf – Mo–Fr während der Schulzeit.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+10
+
+--- SLIDE 11 ---
+KAPITEL 3  ·  QUALITÄT
+Sicherheit & Datenschutz – als Querschnittsthema
+Authentifizierung
+Geschützte Bereiche nur für angemeldete Nutzer; Middleware + serverseitige Guards prüfen jeden Request.
+Browser-Härtung
+Content Security Policy, CSRF-Schutz auf mutierenden Requests, HTTPS in Produktion verpflichtend.
+Abuse-Schutz
+Rate-Limit auf Registrierung und Login (IP + E-Mail), Begrenzung externer Requests gegen WebUntis.
+Datenschutz technisch
+Minimale Datenhaltung, gehashte Passwörter (bcrypt), klare Rollentrennung, Pflichtseiten Impressum/Datenschutz.
+Sicherheit war kein Zusatzblock am Ende, sondern Teil jeder Architekturentscheidung.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+11
+
+--- SLIDE 12 ---
+KAPITEL 4  ·  QUALITÄT
+Tests sichern die Kernlogik ab
+134
+Testfälle
+34
+Testdateien
+3
+Teststufen
+Unit-, Integrations- und Komponententests. Laufen bei jeder Code-Änderung mit.
+Beispiel: Delta-Logik schützt vor Spam
+alter Fingerprint  
+abc123
+neuer Fingerprint  
+abc123
+→ Ergebnis: 
+SKIP
+  (kein Push)
+alter Fingerprint  
+abc123
+neuer Fingerprint  
+def456
+→ Ergebnis: 
+SEND
+  (Push wird ausgelöst)
+So bekommt der Nutzer nur eine Benachrichtigung, wenn sich der Plan tatsächlich geändert hat.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+12
+
+--- SLIDE 13 ---
+KAPITEL 5  ·  REFLEXION
+Drei zentrale Herausforderungen
+#1  Schnittstelle ohne Doku
+PROBLEM
+WebUntis bietet keine offene API für diesen Anwendungsfall.
+LÖSUNG
+Systematische Netzwerkanalyse, eigenes Datenmodell, Server-Proxy mit Validierung und Cache.
+#2  Push ohne Spam
+PROBLEM
+Naive Lösung würde alle 15 Minuten dieselben Inhalte verschicken.
+LÖSUNG
+Eigene Delta-Logik mit Fingerprints; drei Aktionen send/skip/resolve, persistenter Zustand.
+#3  Architektur-Wachstum
+PROBLEM
+V1 und V2 zerbrachen unter neuen Anforderungen wie Login und Personalisierung.
+LÖSUNG
+Bewusster Neustart als V3 mit klarer Schichten-Trennung – Datenmodell zuerst.
+BLL Vertretungsplan  ·  Lukas Dienst  ·  Abitur 2026
+13
+
+--- SLIDE 14 ---
+AUSBLICK  ·  FAZIT
+Priorisierung relevanter Änderungen
+HIGH
+Entfall / Verlegung
+echte Auswirkung auf den Tag
+MEDIUM
+Raum- oder Lehrerwechsel
+wichtig, aber Unterricht findet statt
+LOW
+Sonstige Hinweise
+informativ, kein Push nötig
+Technische Pipeline
+WebUntis
+Normalisierung
+Matching
+Priorität
+Sortierung
+Push (nur HIGH)
+Aus passiver Anzeige wurde eine aktive, alltagstaugliche Anwendung – die Eigenleistung steckt im Zusammenspiel von API-Proxy, Matching und Delta-basiertem Push.
+Vielen Dank für Ihre Aufmerksamkeit  ·  Lukas Dienst

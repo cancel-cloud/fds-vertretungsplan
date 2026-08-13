@@ -1,0 +1,211 @@
+{
+  "sourcePptx": "/Users/cancelcloud/Downloads/BLL_Vertretungsplan_v2.pptx",
+  "mapPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-frame-map.json",
+  "output": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter.pptx",
+  "outputBytes": 5419050,
+  "sourceSlideCount": 14,
+  "slideCount": 18,
+  "previewDir": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview",
+  "layoutDir": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout",
+  "contactSheet": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-contact-sheet.png",
+  "slides": [
+    {
+      "outputSlide": 1,
+      "sourceSlide": 1,
+      "narrativeRole": "opening thesis",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-01.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-01.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-01.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-01.layout.json"
+    },
+    {
+      "outputSlide": 2,
+      "sourceSlide": 4,
+      "narrativeRole": "BLL expectation map",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-02.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-02.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-02.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-02.layout.json"
+    },
+    {
+      "outputSlide": 3,
+      "sourceSlide": 2,
+      "narrativeRole": "problem evidence",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-03.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-03.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-03.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-03.layout.json"
+    },
+    {
+      "outputSlide": 4,
+      "sourceSlide": 3,
+      "narrativeRole": "product result comparison",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-04.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-04.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-04.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-04.layout.json"
+    },
+    {
+      "outputSlide": 5,
+      "sourceSlide": 4,
+      "narrativeRole": "SMART goals status",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-05.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-05.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-05.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-05.layout.json"
+    },
+    {
+      "outputSlide": 6,
+      "sourceSlide": 5,
+      "narrativeRole": "iteration timeline",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-06.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-06.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-06.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-06.layout.json"
+    },
+    {
+      "outputSlide": 7,
+      "sourceSlide": 5,
+      "narrativeRole": "technology rationale",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-07.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-07.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-07.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-07.layout.json"
+    },
+    {
+      "outputSlide": 8,
+      "sourceSlide": 6,
+      "narrativeRole": "architecture layers",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-08.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-08.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-08.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-08.layout.json"
+    },
+    {
+      "outputSlide": 9,
+      "sourceSlide": 7,
+      "narrativeRole": "api proxy flow",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-09.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-09.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-09.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-09.layout.json"
+    },
+    {
+      "outputSlide": 10,
+      "sourceSlide": 8,
+      "narrativeRole": "data model",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-10.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-10.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-10.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-10.layout.json"
+    },
+    {
+      "outputSlide": 11,
+      "sourceSlide": 8,
+      "narrativeRole": "SQL relation explanation",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-11.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-11.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-11.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-11.layout.json"
+    },
+    {
+      "outputSlide": 12,
+      "sourceSlide": 9,
+      "narrativeRole": "SQL query explanation",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-12.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-12.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-12.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-12.layout.json"
+    },
+    {
+      "outputSlide": 13,
+      "sourceSlide": 9,
+      "narrativeRole": "matching algorithm",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-13.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-13.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-13.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-13.layout.json"
+    },
+    {
+      "outputSlide": 14,
+      "sourceSlide": 10,
+      "narrativeRole": "push delta process",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-14.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-14.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-14.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-14.layout.json"
+    },
+    {
+      "outputSlide": 15,
+      "sourceSlide": 11,
+      "narrativeRole": "security quality",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-15.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-15.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-15.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-15.layout.json"
+    },
+    {
+      "outputSlide": 16,
+      "sourceSlide": 12,
+      "narrativeRole": "test evidence",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-16.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-16.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-16.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-16.layout.json"
+    },
+    {
+      "outputSlide": 17,
+      "sourceSlide": 13,
+      "narrativeRole": "challenge reflection",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-17.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-17.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-17.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-17.layout.json"
+    },
+    {
+      "outputSlide": 18,
+      "sourceSlide": 14,
+      "narrativeRole": "final synthesis",
+      "reuseMode": "duplicate-slide",
+      "editTargetCount": 1,
+      "previewPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-preview/starter-slide-18.png",
+      "previewRelativePath": "template-starter-preview/starter-slide-18.png",
+      "layoutPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout/starter-slide-18.layout.json",
+      "layoutRelativePath": "template-starter-layout/starter-slide-18.layout.json"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+Intentional deviations:
+- Output slide count expanded from 14 to 18 to support a 15-20 minute Kolloquium without overloading single slides.
+- Added BLL framing slide after title to connect the project to Hessen BLL expectations.
+- Added tool/framework rationale slide after iteration slide because the original deck named technologies but did not explain selection criteria clearly enough.
+- Added two SQL/database slides before matching logic so the database model and relational query idea are explicit.
+- Updated title/footer school reference from the prior deck text to Friedrich-Dessauer-Schule Limburg.

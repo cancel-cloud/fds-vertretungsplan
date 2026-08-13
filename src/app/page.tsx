@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { LandingHeader } from '@/components/layout/landing-header';
 import { DashboardClient } from '@/components/stundenplan/dashboard-client';
@@ -9,6 +10,18 @@ import {
   redirectIfAdminSetupRequired,
   redirectIfOnboardingIncomplete,
 } from '@/lib/stundenplan-page-guards';
+
+export const metadata: Metadata = {
+  title: 'Vertretungsplan - Dessauer Schule Limburg',
+  description: 'Hier finden Sie alle aktuellen Vertretungen und Änderungen für Ihre Klasse.',
+  alternates: {
+    canonical: 'https://fds.devbrew.dev/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 interface HomePageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

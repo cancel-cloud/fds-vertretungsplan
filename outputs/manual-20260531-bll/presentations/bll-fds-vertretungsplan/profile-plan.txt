@@ -1,0 +1,27 @@
+task mode: template-following
+primary deck-profile: template-following
+secondary gates: engineering-platform, product-platform
+
+required proof objects:
+- BLL frame aligned to Hessen OAVO expectations: self-designed task, implementation, reflection, documentation, Kolloquium.
+- Architecture and data-flow proof from repo and existing deck.
+- SQL/database explanation tied to prisma/schema.prisma.
+- Explicit tool/framework rationale.
+- Challenges and how they were solved.
+
+source/asset requirements:
+- Source PPTX: /Users/cancelcloud/Downloads/BLL_Vertretungsplan_v2.pptx
+- Documentation PDF: docs/BLL_FDS_Vertretungsplan.pdf
+- Repo sources: README.md, package.json, prisma/schema.prisma, src/app/api/*, docs/presentation/*
+
+brand authenticity constraints:
+- Preserve current dark/white/cyan visual system, typography, footer pattern, screenshots, and existing product screenshots.
+- Do not invent external metrics or fake UI screenshots.
+
+profile-specific QA gates:
+- 15-20 minute narrative with enough technical depth for Informatik BLL.
+- New SQL content must be understandable without derailing the story.
+- No text overflow or unfilled inherited placeholders.
+
+known missing inputs:
+- No oral speaking style preference supplied; use concise slide copy and leave explanatory depth to spoken delivery.

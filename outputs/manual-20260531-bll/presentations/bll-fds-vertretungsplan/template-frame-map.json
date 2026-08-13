@@ -1,0 +1,131 @@
+{
+  "outputSlides": [
+    {
+      "outputSlide": 1,
+      "sourceSlide": 1,
+      "narrativeRole": "opening thesis",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-1-title-text" }]
+    },
+    {
+      "outputSlide": 2,
+      "sourceSlide": 4,
+      "narrativeRole": "BLL expectation map",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "sh/dsji5sne" }]
+    },
+    {
+      "outputSlide": 3,
+      "sourceSlide": 2,
+      "narrativeRole": "problem evidence",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "sh/5gbq1ory" }]
+    },
+    {
+      "outputSlide": 4,
+      "sourceSlide": 3,
+      "narrativeRole": "product result comparison",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "sh/g3ex0nux" }]
+    },
+    {
+      "outputSlide": 5,
+      "sourceSlide": 4,
+      "narrativeRole": "SMART goals status",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "sh/dsji5sne" }]
+    },
+    {
+      "outputSlide": 6,
+      "sourceSlide": 5,
+      "narrativeRole": "iteration timeline",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "sh/je9cvixc" }]
+    },
+    {
+      "outputSlide": 7,
+      "sourceSlide": 5,
+      "narrativeRole": "technology rationale",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "sh/je9cvixc" }]
+    },
+    {
+      "outputSlide": 8,
+      "sourceSlide": 6,
+      "narrativeRole": "architecture layers",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "sh/dg7adsji" }]
+    },
+    {
+      "outputSlide": 9,
+      "sourceSlide": 7,
+      "narrativeRole": "api proxy flow",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "sh/r65wjudg" }]
+    },
+    {
+      "outputSlide": 10,
+      "sourceSlide": 8,
+      "narrativeRole": "data model",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-8-text" }]
+    },
+    {
+      "outputSlide": 11,
+      "sourceSlide": 8,
+      "narrativeRole": "SQL relation explanation",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-8-text" }]
+    },
+    {
+      "outputSlide": 12,
+      "sourceSlide": 9,
+      "narrativeRole": "SQL query explanation",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-9-text" }]
+    },
+    {
+      "outputSlide": 13,
+      "sourceSlide": 9,
+      "narrativeRole": "matching algorithm",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-9-text" }]
+    },
+    {
+      "outputSlide": 14,
+      "sourceSlide": 10,
+      "narrativeRole": "push delta process",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-10-text" }]
+    },
+    {
+      "outputSlide": 15,
+      "sourceSlide": 11,
+      "narrativeRole": "security quality",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-11-text" }]
+    },
+    {
+      "outputSlide": 16,
+      "sourceSlide": 12,
+      "narrativeRole": "test evidence",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-12-text" }]
+    },
+    {
+      "outputSlide": 17,
+      "sourceSlide": 13,
+      "narrativeRole": "challenge reflection",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-13-text" }]
+    },
+    {
+      "outputSlide": 18,
+      "sourceSlide": 14,
+      "narrativeRole": "final synthesis",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [{ "action": "rewrite", "sourceElementId": "source-slide-14-text" }]
+    }
+  ],
+  "omittedSourceSlides": []
+}

@@ -1,0 +1,142 @@
+{"kind":"slide","id":"sl/2x4nap4r","slide":2,"title":"BESONDERE LERNLEISTUNG  ·  PRAKTISCHE INFORMATIK","textShapes":3}
+{"kind":"shape","id":"sh/cvixczed","slide":2,"name":"Shape 0","bbox":[0,0,17.28,540]}
+{"kind":"textbox","id":"sh/5gbq1ory","slide":2,"textChars":48,"textLines":1}
+{"kind":"textbox","id":"sh/udg7adsj","slide":2,"textChars":80,"textLines":3}
+{"kind":"shape","id":"sh/nyd0z610","slide":2,"name":"Shape 3","bbox":[76.8,384,144,0]}
+{"kind":"textbox","id":"sh/cj6tovah","slide":2,"textChars":48,"textLines":2}
+{"kind":"slide","id":"sl/pg3ex0nu","slide":3,"title":"KAPITEL 1  ·  AUSGANGSLAGE","textShapes":11}
+{"kind":"shape","id":"sh/5o7qpg3e","slide":3,"name":"Shape 0","bbox":[0,0,960,7.68]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":3,"textChars":26,"textLines":1}
+{"kind":"textbox","id":"sh/r65wjudg","slide":3,"textChars":36,"textLines":1}
+{"kind":"textbox","id":"sh/9cvixcze","slide":3,"textChars":27,"textLines":1}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":3,"textChars":23,"textLines":1}
+{"kind":"textbox","id":"sh/yd0z6103","slide":3,"textChars":37,"textLines":1}
+{"kind":"textbox","id":"sh/lwval87e","slide":3,"textChars":36,"textLines":1}
+{"kind":"textbox","id":"sh/3q5o7qpg","slide":3,"textChars":34,"textLines":1}
+{"kind":"textbox","id":"sh/loj2t83i","slide":3,"textChars":34,"textLines":1}
+{"kind":"shape","id":"sh/ex0nuxc3","slide":3,"name":"Shape 9","bbox":[518.4,408,393.6,62.4]}
+{"kind":"textbox","id":"sh/3itgfmlk","slide":3,"textChars":61,"textLines":1}
+{"kind":"textbox","id":"sh/szqtcj6t","slide":3,"textChars":52,"textLines":1}
+{"kind":"textbox","id":"sh/lkjm1cfa","slide":3,"textChars":1,"textLines":1}
+{"kind":"image","id":"im/a5gbq1or","slide":3,"name":"Picture 24","bbox":[48,148.8,453.53,322.67]}
+{"kind":"image","id":"im/3m94fu18","slide":3,"name":"Image 1","bbox":[518.4,191.04,24,24]}
+{"kind":"image","id":"im/s72x4nap","slide":3,"name":"Image 2","bbox":[518.4,243.84,24,24]}
+{"kind":"image","id":"im/lszqtcj6","slide":3,"name":"Image 3","bbox":[518.4,296.64,24,24]}
+{"kind":"image","id":"im/adsji5sn","slide":3,"name":"Image 4","bbox":[518.4,349.44,24,24]}
+{"kind":"slide","id":"sl/s72x4nap","slide":4,"title":"KAPITEL 1  ·  ERGEBNIS","textShapes":11}
+{"kind":"shape","id":"sh/o7qpg3ex","slide":4,"name":"Shape 0","bbox":[0,0,960,7.68]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":4,"textChars":22,"textLines":1}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":4,"textChars":45,"textLines":1}
+{"kind":"shape","id":"sh/vy90je9c","slide":4,"name":"Shape 3","bbox":[38.4,144,283.2,340.8]}
+{"kind":"shape","id":"sh/oj2t83it","slide":4,"name":"Shape 4","bbox":[38.4,144,283.2,7.68]}
+{"kind":"shape","id":"sh/6hcrmhk3","slide":4,"name":"Shape 5","bbox":[57.6,422.4,244.8,0]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":4,"textChars":16,"textLines":1}
+{"kind":"textbox","id":"sh/vy90je9c","slide":4,"textChars":33,"textLines":1}
+{"kind":"shape","id":"sh/6dcbulwv","slide":4,"name":"Shape 8","bbox":[338.88,144,283.2,340.8]}
+{"kind":"shape","id":"sh/d4vmtwra","slide":4,"name":"Shape 9","bbox":[338.88,144,283.2,7.68]}
+{"kind":"shape","id":"sh/vmtwra5g","slide":4,"name":"Shape 10","bbox":[358.08,422.4,244.8,0]}
+{"kind":"textbox","id":"sh/61032lsz","slide":4,"textChars":17,"textLines":1}
+{"kind":"textbox","id":"sh/dsji5sne","slide":4,"textChars":27,"textLines":1}
+{"kind":"shape","id":"sh/o7qpg3ex","slide":4,"name":"Shape 13","bbox":[639.36,144,283.2,340.8]}
+{"kind":"shape","id":"sh/vahoza1g","slide":4,"name":"Shape 14","bbox":[639.36,144,283.2,7.68]}
+{"kind":"shape","id":"sh/epkzupwb","slide":4,"name":"Shape 15","bbox":[658.56,422.4,244.8,0]}
+{"kind":"textbox","id":"sh/7adsji5s","slide":4,"textChars":18,"textLines":1}
+{"kind":"textbox","id":"sh/wval87ed","slide":4,"textChars":27,"textLines":1}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":4,"textChars":95,"textLines":1}
+{"kind":"textbox","id":"sh/w7mp0bi9","slide":4,"textChars":52,"textLines":1}
+{"kind":"textbox","id":"sh/psfil0rq","slide":4,"textChars":1,"textLines":1}
+{"kind":"image","id":"im/h0fepkzu","slide":4,"name":"Image 0","bbox":[52.8,163.2,254.4,249.6]}
+{"kind":"image","id":"im/sfil0rqd","slide":4,"name":"Image 1","bbox":[353.28,185.04,254.4,205.91]}
+{"kind":"image","id":"im/ixczed8v","slide":4,"name":"Image 2","bbox":[653.76,163.2,254.4,249.6]}
+{"kind":"slide","id":"sl/val87ed8","slide":5,"title":"KAPITEL 2  ·  ZIELSETZUNG","textShapes":25}
+{"kind":"shape","id":"sh/qtcj6tov","slide":5,"name":"Shape 0","bbox":[0,0,960,7.68]}
+{"kind":"textbox","id":"sh/je9cvixc","slide":5,"textChars":25,"textLines":1}
+{"kind":"textbox","id":"sh/87ed8bat","slide":5,"textChars":42,"textLines":1}
+{"kind":"shape","id":"sh/xs72x4na","slide":5,"name":"Shape 3","bbox":[48,148.8,864,52.8]}
+{"kind":"shape","id":"sh/q1orytsv","slide":5,"name":"Shape 4","bbox":[48,148.8,67.2,52.8]}
+{"kind":"textbox","id":"sh/fmlkjm1c","slide":5,"textChars":2,"textLines":1}
+{"kind":"textbox","id":"sh/8jqh0fep","slide":5,"textChars":17,"textLines":1}
+{"kind":"textbox","id":"sh/x4nap4r6","slide":5,"textChars":29,"textLines":1}
+{"kind":"shape","id":"sh/1w7mp0bi","slide":5,"name":"Shape 8","bbox":[782.4,161.28,115.2,28.8]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":5,"textChars":7,"textLines":1}
+{"kind":"shape","id":"sh/jqh0fepk","slide":5,"name":"Shape 10","bbox":[48,208.32,864,52.8]}
+{"kind":"shape","id":"sh/q5o7qpg3","slide":5,"name":"Shape 11","bbox":[48,208.32,67.2,52.8]}
+{"kind":"textbox","id":"sh/18jqh0fe","slide":5,"textChars":2,"textLines":1}
+{"kind":"textbox","id":"sh/8nqxs72x","slide":5,"textChars":14,"textLines":1}
+{"kind":"textbox","id":"sh/j2t83itg","slide":5,"textChars":33,"textLines":1}
+{"kind":"shape","id":"sh/qh0fepkz","slide":5,"name":"Shape 15","bbox":[782.4,220.8,115.2,28.8]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":5,"textChars":7,"textLines":1}
+{"kind":"shape","id":"sh/crmhk3q5","slide":5,"name":"Shape 17","bbox":[48,267.84,864,52.8]}
+{"kind":"shape","id":"sh/sfil0rqd","slide":5,"name":"Shape 18","bbox":[48,267.84,67.2,52.8]}
+{"kind":"textbox","id":"sh/h0fepkzu","slide":5,"textChars":2,"textLines":1}
+{"kind":"textbox","id":"sh/a9w3m94f","slide":5,"textChars":14,"textLines":1}
+{"kind":"textbox","id":"sh/zupwb2hw","slide":5,"textChars":30,"textLines":1}
+{"kind":"shape","id":"sh/orytsvu9","slide":5,"name":"Shape 22","bbox":[782.4,280.32,115.2,28.8]}
+{"kind":"textbox","id":"sh/hcrmhk3q","slide":5,"textChars":7,"textLines":1}
+{"kind":"shape","id":"sh/al87ed8b","slide":5,"name":"Shape 24","bbox":[48,327.36,864,52.8]}
+{"kind":"shape","id":"sh/z61032ls","slide":5,"name":"Shape 25","bbox":[48,327.36,67.2,52.8]}
+{"kind":"textbox","id":"sh/oza1gvy9","slide":5,"textChars":2,"textLines":1}
+{"kind":"textbox","id":"sh/hk3q5o7q","slide":5,"textChars":10,"textLines":1}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":5,"textChars":30,"textLines":1}
+{"kind":"shape","id":"sh/e1w7mp0b","slide":5,"name":"Shape 29","bbox":[782.4,339.84,115.2,28.8]}
+{"kind":"textbox","id":"sh/psfil0rq","slide":5,"textChars":7,"textLines":1}
+{"kind":"shape","id":"sh/w7mp0bi9","slide":5,"name":"Shape 31","bbox":[48,386.88,864,52.8]}
+{"kind":"shape","id":"sh/7adsji5s","slide":5,"name":"Shape 32","bbox":[48,386.88,67.2,52.8]}
+{"kind":"textbox","id":"sh/epkzupwb","slide":5,"textChars":2,"textLines":1}
+{"kind":"textbox","id":"sh/pg3ex0nu","slide":5,"textChars":11,"textLines":1}
+{"kind":"textbox","id":"sh/wval87ed","slide":5,"textChars":30,"textLines":1}
+{"kind":"shape","id":"sh/36hcrmhk","slide":5,"name":"Shape 36","bbox":[782.4,399.36,115.2,28.8]}
+{"kind":"textbox","id":"sh/eloj2t83","slide":5,"textChars":10,"textLines":1}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":5,"textChars":105,"textLines":1}
+{"kind":"textbox","id":"sh/n29gr2p8","slide":5,"textChars":52,"textLines":1}
+{"kind":"textbox","id":"sh/gn29gr2p","slide":5,"textChars":1,"textLines":1}
+{"kind":"slide","id":"sl/mlkjm1cf","slide":6,"title":"KAPITEL 2  ·  VORGEHEN","textShapes":17}
+{"kind":"shape","id":"sh/ovahoza1","slide":6,"name":"Shape 0","bbox":[0,0,960,7.68]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":6,"textChars":22,"textLines":1}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":6,"textChars":42,"textLines":1}
+{"kind":"shape","id":"sh/z25kb6xk","slide":6,"name":"Shape 3","bbox":[48,148.8,283.2,326.4]}
+{"kind":"shape","id":"sh/onyd0z61","slide":6,"name":"Shape 4","bbox":[158.4,168,62.4,62.4]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":6,"textChars":2,"textLines":1}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":6,"textChars":15,"textLines":1}
+{"kind":"textbox","id":"sh/vy90je9c","slide":6,"textChars":71,"textLines":2}
+{"kind":"shape","id":"sh/nuxc3ylc","slide":6,"name":"Shape 8","bbox":[76.8,384,230.4,0]}
+{"kind":"textbox","id":"sh/y90je9cv","slide":6,"textChars":43,"textLines":1}
+{"kind":"shape","id":"sh/5wjudg7a","slide":6,"name":"Shape 10","bbox":[340.8,148.8,283.2,326.4]}
+{"kind":"shape","id":"sh/gbq1oryt","slide":6,"name":"Shape 11","bbox":[451.2,168,62.4,62.4]}
+{"kind":"textbox","id":"sh/n29gr2p8","slide":6,"textChars":2,"textLines":1}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":6,"textChars":16,"textLines":1}
+{"kind":"textbox","id":"sh/58z25kb6","slide":6,"textChars":54,"textLines":2}
+{"kind":"shape","id":"sh/gn29gr2p","slide":6,"name":"Shape 15","bbox":[369.6,384,230.4,0]}
+{"kind":"textbox","id":"sh/neloj2t8","slide":6,"textChars":40,"textLines":1}
+{"kind":"shape","id":"sh/ytsvu9kn","slide":6,"name":"Shape 17","bbox":[633.6,148.8,283.2,326.4]}
+{"kind":"shape","id":"sh/2x4nap4r","slide":6,"name":"Shape 18","bbox":[744,168,62.4,62.4]}
+{"kind":"textbox","id":"sh/vixczed8","slide":6,"textChars":2,"textLines":1}
+{"kind":"textbox","id":"sh/k3q5o7qp","slide":6,"textChars":22,"textLines":1}
+{"kind":"textbox","id":"sh/donyd0z6","slide":6,"textChars":60,"textLines":2}
+{"kind":"shape","id":"sh/6psfil0r","slide":6,"name":"Shape 22","bbox":[662.4,384,230.4,0]}
+{"kind":"textbox","id":"sh/val87ed8","slide":6,"textChars":46,"textLines":1}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":6,"textChars":83,"textLines":1}
+{"kind":"textbox","id":"sh/v6psfil0","slide":6,"textChars":52,"textLines":1}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":6,"textChars":1,"textLines":1}
+{"kind":"slide","id":"sl/58z25kb6","slide":7,"title":"KAPITEL 3  ·  ARCHITEKTUR","textShapes":21}
+{"kind":"shape","id":"sh/ylc7u54z","slide":7,"name":"Shape 0","bbox":[0,0,960,7.68]}
+{"kind":"textbox","id":"sh/r65wjudg","slide":7,"textChars":25,"textLines":1}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":7,"textChars":40,"textLines":1}
+{"kind":"shape","id":"sh/5o7qpg3e","slide":7,"name":"Shape 3","bbox":[48,144,52.8,67.2]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":7,"textChars":1,"textLines":1}
+{"kind":"shape","id":"sh/nih4byhg","slide":7,"name":"Shape 5","bbox":[100.8,144,811.2,67.2]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":7,"textChars":18,"textLines":1}
+{"kind":"textbox","id":"sh/9s36hcrm","slide":7,"textChars":51,"textLines":1}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":7,"textChars":45,"textLines":1}
+{"kind":"shape","id":"sh/onyd0z61","slide":7,"name":"Shape 9","bbox":[48,218.88,52.8,67.2]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":7,"textChars":1,"textLines":1}
+{"kind":"shape","id":"sh/6hcrmhk3","slide":7,"name":"Shape 11","bbox":[100.8,218.88,811.2,67.2]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":7,"textChars":14,"textLines":1}
+{"kind":"textbox","id":"sh/ovahoza1","slide":7,"textChars":54,"textLines":1}
+{"kind":"textbox","id":"sh/vahoza1g","slide":7,"textChars":32,"textLines":1}
+{"kind":"shape","id":"sh/6tovahoz","slide":7,"name":"Shape 15","bbox":[48,293.76,52.8,67.2]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":7,"textChars":1,"textLines":1}
+{"kind":"shape","id":"sh/o7qpg3ex","slide":7,"name":"Shape 17","bbox":[100.8,293.76,811.2,67.2]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":7,"textChars":10,"textLines":1}
+{"kind":"textbox","id":"sh/94fu18jq","slide":7,"textChars":56,"textLines":1}
+{"kind":"notice","message":"Truncated: omitted 281 lines. Increase maxChars or narrow target."}

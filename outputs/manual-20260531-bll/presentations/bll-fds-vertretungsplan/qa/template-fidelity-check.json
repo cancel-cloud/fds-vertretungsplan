@@ -1,0 +1,13 @@
+{
+  "status": "pass",
+  "checkedAt": "2026-05-31T15:37:31.691Z",
+  "workspace": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan",
+  "finalPptx": "/Users/cancelcloud/Downloads/BLL_Vertretungsplan_final.pptx",
+  "starterPptx": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter.pptx",
+  "mapPath": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-frame-map.json",
+  "starterLayoutDir": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/template-starter-layout",
+  "finalLayoutDir": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan/layout/final",
+  "editDir": "/Users/cancelcloud/Developer/personal/fds-vertretungsplan/outputs/manual-20260531-bll/presentations/bll-fds-vertretungsplan",
+  "issueCount": 0,
+  "issues": []
+}
