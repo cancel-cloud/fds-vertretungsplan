@@ -56,6 +56,14 @@ Configuration files are at the repo root (`next.config.ts`, `vitest.config.ts`, 
 - Prefer the provided wrapper scripts (`npm run prisma:*`, `npm run qstash:schedule`, `npm run demo:scheduler:*`) over raw CLI commands so demo/prod env resolution stays consistent.
 - When touching `src/app/api/substitutions/route.ts` or analytics code, preserve existing validation and CSP-related protections.
 
+## Cursor Cloud specific instructions
+
+- PostgreSQL 16 is installed in the image. The environment start script brings the cluster up, creates role `fds` and database `fds` when missing, writes a gitignored `.env.local` when that file is missing, runs `node --env-file=.env.local scripts/prisma-with-env.mjs db push --accept-data-loss --skip-generate`, then leaves `npm run dev` on port 3000.
+- Generated local credentials match the README database URL (`postgresql://fds:fds-password@127.0.0.1:5432/fds?schema=public`). `ADMIN_EMAILS` is `bootstrap-admin@example.com`; the first account must use that address. `BCRYPT_ROUNDS=10` stays inside the app's allowed 10–14 range.
+- Public plan is `/`. Authenticated hello-world is `/stundenplan/register`, then add one teacher on `/stundenplan/admin-setup`.
+- Untis defaults to `friedrich-dessauer-schule-limburg` (`https://*.webuntis.com`). QStash and PostHog are optional and stay unset for local dev.
+- Install is `npm ci` plus `npx prisma generate`. Do not commit `.env.local`.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
